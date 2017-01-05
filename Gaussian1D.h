@@ -53,6 +53,13 @@ namespace dznl {
                    hermiteHe(n, aInv * (g2.c - g1.c));
         }
 
+    public: // ======================================================== PRINTING
+
+        friend std::ostream &operator<<(std::ostream &os, const Gaussian1D &g) {
+            os << "Gaussian1D(" << g.a << ", " << g.c << ")";
+            return os;
+        }
+
     };
 
 } // namespace dznl
