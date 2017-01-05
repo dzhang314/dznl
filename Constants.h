@@ -24,7 +24,7 @@ namespace dznl {
         const double tau = 6.2831853071795864769;
         const double e = 2.7182818284590452354;
 
-        /* Technically we don't know if these two are irrational,
+        /* Technically it isn't proven whether these two are irrational,
          * let alone transcendental, but they almost certainly are. */
         const double euler_gamma = 0.57721566490153286061;
         const double catalan_g = 0.91596559417721901505;
