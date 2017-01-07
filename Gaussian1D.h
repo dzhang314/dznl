@@ -29,6 +29,10 @@ namespace dznl {
             return std::exp(-0.5 * a * dist * dist);
         }
 
+        double operator()(double x) const {
+            return evaluateAt(x);
+        }
+
     public: // ================================================= MATRIX ELEMENTS
 
         static double innerProduct(const Gaussian1D &g1, const Gaussian1D &g2) {
@@ -36,6 +40,10 @@ namespace dznl {
             const double dist = g2.c - g1.c;
             return std::sqrt(constants::tau / aSum) *
                    std::exp(-0.5 * g1.a * g2.a * dist * dist / aSum);
+        }
+
+        double operator*(const Gaussian1D &g) const {
+            return innerProduct(*this, g);
         }
 
         static double xMatrixElement(const Gaussian1D &g1, const Gaussian1D &g2,
@@ -51,6 +59,38 @@ namespace dznl {
             const double aInv = sqrt(g1.a * g2.a / (g1.a + g2.a));
             return innerProduct(g1, g2) * pow(aInv, n) *
                    hermiteHe(n, aInv * (g2.c - g1.c));
+        }
+
+    public: // ========================================= COMPARISON AND ORDERING
+
+        bool operator==(const Gaussian1D &g) const {
+            return (a == g.a) && (c == g.c);
+        }
+
+        bool operator!=(const Gaussian1D &g) const {
+            return !(*this == g);
+        }
+
+        bool operator<(const Gaussian1D &g) const {
+            if (c < g.c) {
+                return true;
+            } else if (c > g.c) {
+                return false;
+            } else {
+                return a < g.a;
+            }
+        }
+
+        bool operator>(const Gaussian1D &g) const {
+            return g < *this;
+        }
+
+        bool operator<=(const Gaussian1D &g) const {
+            return (*this < g) || (*this == g);
+        }
+
+        bool operator>=(const Gaussian1D &g) const {
+            return (*this > g) || (*this == g);
         }
 
     public: // ======================================================== PRINTING
