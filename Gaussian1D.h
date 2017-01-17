@@ -102,7 +102,7 @@ namespace dznl {
             return os;
         }
 
-    };
+    }; // class Gaussian1D
 
 } // namespace dznl
 
