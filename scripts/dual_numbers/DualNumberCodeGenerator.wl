@@ -161,7 +161,7 @@ dualExpDefinition[n_Integer?NonNegative] := Block[
 		exponentialPolynomials = exponentialPolynomials /.
 			t -> \[FormalT]@Length[temporaryVariables]]];
 	temporaryCounts = Counts@Cases[
-		{exponentialPolynomials, temporaryVariables}, _\[FormalT], All];
+		{exponentialPolynomials, temporaryVariables}, Blank[\[FormalT]], All];
 	temporaryGroups = GroupBy[
 		\[FormalT] /@ Range@Length[temporaryVariables],
 		GreaterThan[1] @* temporaryCounts];
