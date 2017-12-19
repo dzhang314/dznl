@@ -12,10 +12,10 @@ dualComponentNames[n_Integer?NonNegative] := Prepend[
 	"dual" <> StringJoin[ToString /@ #]& /@ Rest@BinarySubsets[n],
 	"real"];
 
-dualTypeName[0] := "real_t";
-dualTypeName[1] := "dual_t";
-dualTypeName[2] := "hyperdual_t";
-dualTypeName[n_Integer?NonNegative] := "hyperdual" <> ToString[n] <> "_t";
+dualTypeName[0] := "real";
+dualTypeName[1] := "dual";
+dualTypeName[2] := "hyperdual";
+dualTypeName[n_Integer?NonNegative] := "hyperdual" <> ToString[n];
 
 dualStructDefinition[n_Integer?NonNegative] := Join[
 	{TemplateApply["struct `` {\n", dualTypeName[n]]},
