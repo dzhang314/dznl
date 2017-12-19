@@ -95,10 +95,10 @@ dualDivDefinition[n_Integer?NonNegative] := Block[
 				StringTemplate["y.``"] /@ Rest@dualComponentNames[n]}]];
 	quotientPolynomials = DualFunctionComponents[
 		n, 2, Divide, {\[FormalX], \[FormalY]}] /. Join[
-			Thread@Rule[Thread[Subscript[\[FormalX], #]& /@ Range[0, 2^n - 1]],
-				Subscript[\[FormalY], 0] * \[FormalU][#]& /@ Range[0, 2^n - 1]],
-			Thread@Rule[Thread[Subscript[\[FormalY], #]& /@ Range[2^n - 1]],
-				Subscript[\[FormalY], 0] * \[FormalV][#]& /@ Range[2^n-1]]];
+			Thread@Rule[Thread@Subscript[\[FormalX], Range[0, 2^n - 1]],
+				Subscript[\[FormalY], 0] * Thread@\[FormalU]@Range[0, 2^n - 1]],
+			Thread@Rule[Thread@Subscript[\[FormalY], Range[2^n - 1]],
+				Subscript[\[FormalY], 0] * Thread@\[FormalV]@Range[2^n - 1]]];
 	quotientExpressions = Table[Block[{
 		termPairs = MapAt[StringJoin@Riffle[#, " * "]&,
 			MapAt[Switch[Head[#],
@@ -185,4 +185,49 @@ dualExpDefinition[n_Integer?NonNegative] := Block[
 			First@dualComponentNames[n]]},
 		MapThread[StringTemplate["        .`` = ``,\n"],
 			{Rest@dualComponentNames[n], exponentialExpressions}],
+		{"    };\n", "}\n"}]];
+
+dualLogDefinition[n_Integer?NonNegative] := Block[
+	{logarithmPolynomials, logarithmExpressions,
+		temporaryVariableTemplate, temporaryVariableDeclarations},
+	logarithmPolynomials = Rest@DualFunctionComponents[
+		n, Log, \[FormalX]] /. Thread@Rule[
+			Thread@Subscript[\[FormalX], Range[2^n - 1]],
+				Subscript[\[FormalX], 0] * Thread@\[FormalT]@Range[2^n - 1]];
+	temporaryVariableTemplate = StringTemplate["    const auto `` = `` / " <>
+		"x." <> First@dualComponentNames[n] <> ";\n"];
+	temporaryVariableDeclarations = MapThread[temporaryVariableTemplate, {
+		"t" <> StringJoin[ToString /@ #]& /@ Rest@BinarySubsets[n],
+		StringTemplate["x.``"] /@ Rest@dualComponentNames[n]}];
+	logarithmExpressions = Table[Block[{
+		termPairs = MapAt[StringJoin@Riffle[#, " * "]&,
+			MapAt[Switch[Head[#],
+					Integer, ToString[#] <> ".0",
+					\[FormalT], "t" <> StringJoin[ToString /@
+						(1 + BinaryIndices@First[#])]]&,
+				signPair /@ termList[expr],
+				{All, 2, All}],
+			{All, 2}]},
+		StringJoin@Riffle[
+			MapIndexed[If[#2 === {1},
+					Switch[#1, Plus, "", Minus, "-"],
+					Switch[#1, Plus, " + ", Minus, " - "],
+					Switch[#1, Plus, " + ", Minus, " - "]]&,
+				termPairs[[All, 1]]],
+			termPairs[[All, 2]]]],
+		{expr, logarithmPolynomials}];
+	Join[
+		{TemplateApply[
+			"`1` log(const `1` &x) {\n",
+			dualTypeName[n]]},
+		{TemplateApply[
+			"    const auto t0 = log(x.``);\n",
+			First@dualComponentNames[n]]},
+		temporaryVariableDeclarations,
+		{"    return {\n"},
+		{TemplateApply[
+			"        .`` = t0,\n",
+			First@dualComponentNames[n]]},
+		MapThread[StringTemplate["        .`` = ``,\n"],
+			{Rest@dualComponentNames[n], logarithmExpressions}],
 		{"    };\n", "}\n"}]];
