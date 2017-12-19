@@ -6,15 +6,16 @@ ClearAll[dualComponentNames, dualTypeName, dualStructDefinition,
 	dualMulDefinition,
 	termList, signPair, dualDivDefinition];
 
-dualComponentNames[0] := {"re"};
-dualComponentNames[1] := {"re", "du"};
+dualComponentNames[0] := {"real"};
+dualComponentNames[1] := {"real", "dual"};
 dualComponentNames[n_Integer?NonNegative] := Prepend[
-	"du" <> StringJoin[ToString /@ #]& /@ Rest@BinarySubsets[n],
-	"re"];
+	"dual" <> StringJoin[ToString /@ #]& /@ Rest@BinarySubsets[n],
+	"real"];
 
 dualTypeName[0] := "real_t";
 dualTypeName[1] := "dual_t";
-dualTypeName[n_Integer?NonNegative] := "dual" <> ToString[n] <> "_t";
+dualTypeName[2] := "hyperdual_t";
+dualTypeName[n_Integer?NonNegative] := "hyperdual" <> ToString[n] <> "_t";
 
 dualStructDefinition[n_Integer?NonNegative] := Join[
 	{TemplateApply["struct `` {\n", dualTypeName[n]]},
