@@ -17,10 +17,11 @@ dualTypeName[1] := "dual";
 dualTypeName[2] := "hyperdual";
 dualTypeName[n_Integer?NonNegative] := "hyperdual" <> ToString[n];
 
-dualStructDefinition[n_Integer?NonNegative] := Join[
-	{TemplateApply["struct `` {\n", dualTypeName[n]]},
-	StringTemplate["    double ``;\n"] /@ dualComponentNames[n],
-	{"};\n"}];
+dualStructDefinition[n_Integer?NonNegative] := {
+	TemplateApply["struct `` {\n", dualTypeName[n]],
+	TemplateApply["    double ``;\n",
+		StringJoin@Riffle[dualComponentNames[n], ", "]],
+	"};\n"};
 
 dualPosDefinition[n_Integer?NonNegative] := Join[
 	{TemplateApply[
@@ -64,10 +65,10 @@ dualMulDefinition[n_Integer?NonNegative] := Join[
 			DualFunctionComponents[n, 2, Times, {\[FormalX], \[FormalY]}] /. {
 				Times -> (Inactive[StringJoin] @@ Riffle[{##}, " * "]&),
 				Plus -> (Inactive[StringJoin] @@ Riffle[{##}, " + "]&)} /. Join[
-				Thread@Rule[Subscript[\[FormalX],#]&/@Range[0,2^n-1],
-					StringTemplate["x.``"]/@dualComponentNames[n]],
-				Thread@Rule[Subscript[\[FormalY],#]&/@Range[0,2^n-1],
-					StringTemplate["y.``"]/@dualComponentNames[n]]]]}],
+				Thread@Rule[Subscript[\[FormalX], #]& /@ Range[0, 2^n - 1],
+					StringTemplate["x.``"] /@ dualComponentNames[n]],
+				Thread@Rule[Subscript[\[FormalY], #]& /@ Range[0, 2^n - 1],
+					StringTemplate["y.``"] /@ dualComponentNames[n]]]]}],
 	{"    };\n", "}\n"}];
 
 termList[expr_] := If[Head[expr] === Plus, List @@ expr, {expr}, {expr}];
@@ -101,7 +102,7 @@ dualDivDefinition[n_Integer?NonNegative] := Block[
 	quotientExpressions = Table[Block[{
 		termPairs = MapAt[StringJoin@Riffle[#, " * "]&,
 			MapAt[Switch[Head[#],
-					Integer, ToString[#],
+					Integer, ToString[#] <> ".0",
 					\[FormalU], "u" <> StringJoin[ToString /@
 						(1 + BinaryIndices@First[#])],
 					\[FormalV], "v" <> StringJoin[ToString /@
@@ -125,4 +126,63 @@ dualDivDefinition[n_Integer?NonNegative] := Block[
 		{"    return {\n"},
 		MapThread[StringTemplate["        .`` = ``,\n"],
 			{dualComponentNames[n], quotientExpressions}],
+		{"    };\n", "}\n"}]];
+
+dualExpDefinition[n_Integer?NonNegative] := Block[
+	{exponentialPolynomials, temporaryVariables,
+		temporaryCounts, temporaryGroups,
+		necessaryTemporaries, unnecessaryTemporaries,
+		variableNameRules, temporaryVariableDeclarations,
+		exponentialExpressions},
+	exponentialPolynomials = Expand[
+		Rest@DualFunctionComponents[n, Exp, \[FormalX]] /
+			Exp@Subscript[\[FormalX], 0]];
+	temporaryVariables = {};
+	While[True, With[
+		{t = FirstCase[exponentialPolynomials, Times[_, __], Null, All]},
+		If[t === Null, Break[]];
+		AppendTo[temporaryVariables, t];
+		exponentialPolynomials = exponentialPolynomials /.
+			t -> \[FormalT]@Length[temporaryVariables]]];
+	temporaryCounts = Counts@Cases[
+		{exponentialPolynomials, temporaryVariables}, _\[FormalT], All];
+	temporaryGroups = GroupBy[
+		\[FormalT] /@ Range@Length[temporaryVariables],
+		GreaterThan[1] @* temporaryCounts];
+	necessaryTemporaries = Lookup[temporaryGroups, True, {}];
+	unnecessaryTemporaries = Lookup[temporaryGroups, False, {}];
+	exponentialPolynomials = exponentialPolynomials /. Thread@Rule[
+		unnecessaryTemporaries,
+		Extract[temporaryVariables, List @@@ unnecessaryTemporaries]];
+	variableNameRules = Join[
+		Thread@Rule[Subscript[\[FormalX], #]& /@ Range[0, 2^n - 1],
+			StringTemplate["x.``"] /@ dualComponentNames[n]],
+		Thread@Rule[necessaryTemporaries,
+			StringTemplate["t``"] @@@ necessaryTemporaries]];
+	temporaryVariableDeclarations = MapThread[
+		StringTemplate["    const auto `` = ``;\n"], {
+		StringTemplate["t``"] @@@ necessaryTemporaries,
+		Map[StringJoin@Riffle[#, " * "]&,
+			List @@@ Extract[temporaryVariables,
+				List @@@ necessaryTemporaries] /. variableNameRules]}];
+	exponentialExpressions = Map[
+		"t0 * (" <> StringJoin@Riffle[#, " + "] <> ")"&,
+		termList /@ exponentialPolynomials /.
+			Times -> Inactive[Times] /.
+			variableNameRules /.
+			Inactive[Times] -> (StringJoin@Riffle[{##}, " * "]&)];
+	Join[
+		{TemplateApply[
+			"`1` exp(const `1` &x) {\n",
+			dualTypeName[n]]},
+		{TemplateApply[
+			"    const auto t0 = exp(x.``);\n",
+			First@dualComponentNames[n]]},
+		temporaryVariableDeclarations,
+		{"    return {\n"},
+		{TemplateApply[
+			"        .`` = t0,\n",
+			First@dualComponentNames[n]]},
+		MapThread[StringTemplate["        .`` = ``,\n"],
+			{Rest@dualComponentNames[n], exponentialExpressions}],
 		{"    };\n", "}\n"}]];
