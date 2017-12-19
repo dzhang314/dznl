@@ -1,18 +1,41 @@
 (* ::Package:: *)
 
-ClearAll[dualComponentNames, dualTypeName, dualStructDeclaration,
-	dualAddDefinition, dualSubDefinition, dualMulDefinition,
+ClearAll[dualComponentNames, dualTypeName, dualStructDefinition,
+	dualPosDefinition, dualNegDefinition,
+	dualAddDefinition, dualSubDefinition,
+	dualMulDefinition,
 	termList, signPair, dualDivDefinition];
 
-dualComponentNames[n_Integer?NonNegative] :=
-	Prepend["dual" <> StringJoin[ToString /@ #]& /@ Rest@BinarySubsets[n], "real"];
+dualComponentNames[0] := {"re"};
+dualComponentNames[1] := {"re", "du"};
+dualComponentNames[n_Integer?NonNegative] := Prepend[
+	"du" <> StringJoin[ToString /@ #]& /@ Rest@BinarySubsets[n],
+	"re"];
 
-dualTypeName[n_Integer?NonNegative] := "hyperdual" <> ToString[n] <> "_t";
+dualTypeName[0] := "real_t";
+dualTypeName[1] := "dual_t";
+dualTypeName[n_Integer?NonNegative] := "dual" <> ToString[n] <> "_t";
 
-dualStructDeclaration[n_Integer?NonNegative] := Join[
-	{TemplateApply["struct dual``_t {\n", n]},
+dualStructDefinition[n_Integer?NonNegative] := Join[
+	{TemplateApply["struct `` {\n", dualTypeName[n]]},
 	StringTemplate["    double ``;\n"] /@ dualComponentNames[n],
 	{"};\n"}];
+
+dualPosDefinition[n_Integer?NonNegative] := Join[
+	{TemplateApply[
+			"`1` operator+(const `1` &x) {\n",
+			dualTypeName[n]],
+		"    return {\n"},
+	StringTemplate["        .`1` = +x.`1`,\n"] /@ dualComponentNames[n],
+	{"    };\n", "}\n"}];
+
+dualNegDefinition[n_Integer?NonNegative] := Join[
+	{TemplateApply[
+			"`1` operator-(const `1` &x) {\n",
+			dualTypeName[n]],
+		"    return {\n"},
+	StringTemplate["        .`1` = -x.`1`,\n"] /@ dualComponentNames[n],
+	{"    };\n", "}\n"}];
 
 dualAddDefinition[n_Integer?NonNegative] := Join[
 	{TemplateApply[
