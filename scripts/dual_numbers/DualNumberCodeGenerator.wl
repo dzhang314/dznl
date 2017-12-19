@@ -81,6 +81,22 @@ signPair[expr_] := If[Head[expr] === Times,
 	{Plus, {expr}},
 	{Plus, {expr}}];
 
+toExactDecimalString[n_Integer] := ToString[n] <> ".0";
+toExactDecimalString[q_Rational] := Block[{mantissa, exponent},
+	{mantissa, exponent} = RealDigits[q];
+	Assert[Head@Last[mantissa] === Integer];
+	StringJoin[
+		If[exponent <= 0,
+			"0",
+			StringJoin[ToString /@ mantissa[[;; exponent]]]],
+		".",
+		If[exponent < 0,
+			StringJoin@ConstantArray["0", -exponent],
+			""],
+		StringJoin[ToString /@ If[exponent > 0,
+			mantissa[[exponent + 1 ;;]],
+			mantissa]]]];
+
 dualDivDefinition[n_Integer?NonNegative] := Block[
 	{temporaryVariableTemplate, temporaryVariableDeclarations,
 		quotientPolynomials, quotientExpressions},
@@ -102,7 +118,7 @@ dualDivDefinition[n_Integer?NonNegative] := Block[
 	quotientExpressions = Table[Block[{
 		termPairs = MapAt[StringJoin@Riffle[#, " * "]&,
 			MapAt[Switch[Head[#],
-					Integer, ToString[#] <> ".0",
+					Integer, toExactDecimalString[#],
 					\[FormalU], "u" <> StringJoin[ToString /@
 						(1 + BinaryIndices@First[#])],
 					\[FormalV], "v" <> StringJoin[ToString /@
@@ -188,12 +204,12 @@ dualExpDefinition[n_Integer?NonNegative] := Block[
 		{"    };\n", "}\n"}]];
 
 dualLogDefinition[n_Integer?NonNegative] := Block[
-	{logarithmPolynomials, logarithmExpressions,
-		temporaryVariableTemplate, temporaryVariableDeclarations},
+	{temporaryVariableTemplate, temporaryVariableDeclarations,
+		logarithmPolynomials, logarithmExpressions},
 	logarithmPolynomials = Rest@DualFunctionComponents[
 		n, Log, \[FormalX]] /. Thread@Rule[
 			Thread@Subscript[\[FormalX], Range[2^n - 1]],
-				Subscript[\[FormalX], 0] * Thread@\[FormalT]@Range[2^n - 1]];
+			Subscript[\[FormalX], 0] * Thread@\[FormalT]@Range[2^n - 1]];
 	temporaryVariableTemplate = StringTemplate["    const auto `` = `` / " <>
 		"x." <> First@dualComponentNames[n] <> ";\n"];
 	temporaryVariableDeclarations = MapThread[temporaryVariableTemplate, {
@@ -202,7 +218,7 @@ dualLogDefinition[n_Integer?NonNegative] := Block[
 	logarithmExpressions = Table[Block[{
 		termPairs = MapAt[StringJoin@Riffle[#, " * "]&,
 			MapAt[Switch[Head[#],
-					Integer, ToString[#] <> ".0",
+					Integer, toExactDecimalString[#],
 					\[FormalT], "t" <> StringJoin[ToString /@
 						(1 + BinaryIndices@First[#])]]&,
 				signPair /@ termList[expr],
@@ -230,4 +246,51 @@ dualLogDefinition[n_Integer?NonNegative] := Block[
 			First@dualComponentNames[n]]},
 		MapThread[StringTemplate["        .`` = ``,\n"],
 			{Rest@dualComponentNames[n], logarithmExpressions}],
+		{"    };\n", "}\n"}]];
+
+dualSqrtDefinition[n_Integer?NonNegative] := Block[
+	{temporaryVariableTemplate, temporaryVariableDeclarations,
+		squareRootPolynomials, squareRootExpressions},
+	squareRootPolynomials = Expand[
+		Rest@DualFunctionComponents[n, Sqrt, \[FormalX]] /
+			Sqrt@Subscript[\[FormalX], 0]] /. Thread@Rule[
+				Thread@Subscript[\[FormalX], Range[2^n - 1]],
+				Subscript[\[FormalX], 0] * Thread@\[FormalT]@Range[2^n - 1]];
+	temporaryVariableTemplate = StringTemplate["    const auto `` = `` / " <>
+		"x." <> First@dualComponentNames[n] <> ";\n"];
+	temporaryVariableDeclarations = MapThread[temporaryVariableTemplate, {
+		"t" <> StringJoin[ToString /@ #]& /@ Rest@BinarySubsets[n],
+		StringTemplate["x.``"] /@ Rest@dualComponentNames[n]}];
+	squareRootExpressions = Table[Block[{
+		termPairs = MapAt[StringJoin@Riffle[#, " * "]&,
+			MapAt[Switch[Head[#],
+					Integer, toExactDecimalString[#],
+					Rational, toExactDecimalString[#],
+					\[FormalT], "t" <> StringJoin[ToString /@
+						(1 + BinaryIndices@First[#])]]&,
+				signPair /@ termList[expr],
+				{All, 2, All}],
+			{All, 2}]},
+		"t0 * (" <> StringJoin@Riffle[
+			MapIndexed[If[#2 === {1},
+					Switch[#1, Plus, "", Minus, "-"],
+					Switch[#1, Plus, " + ", Minus, " - "],
+					Switch[#1, Plus, " + ", Minus, " - "]]&,
+				termPairs[[All, 1]]],
+			termPairs[[All, 2]]] <> ")"],
+		{expr, squareRootPolynomials}];
+	Join[
+		{TemplateApply[
+			"`1` sqrt(const `1` &x) {\n",
+			dualTypeName[n]]},
+		{TemplateApply[
+			"    const auto t0 = sqrt(x.``);\n",
+			First@dualComponentNames[n]]},
+		temporaryVariableDeclarations,
+		{"    return {\n"},
+		{TemplateApply[
+			"        .`` = t0,\n",
+			First@dualComponentNames[n]]},
+		MapThread[StringTemplate["        .`` = ``,\n"],
+			{Rest@dualComponentNames[n], squareRootExpressions}],
 		{"    };\n", "}\n"}]];
