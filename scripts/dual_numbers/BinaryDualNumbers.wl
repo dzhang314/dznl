@@ -1,7 +1,9 @@
 (* ::Package:: *)
 
 ClearAll[BinaryIndices, BinarySubsets, BinaryDecomposition,
-	BitwisePartitions, DualFunctionComponents];
+	BitwiseSubnumbers, BitwisePartitions,
+	DualQuotientPolynomial, DualExponentialComponent,
+	DualFunctionComponents];
 
 BinaryIndices = Compile[{{n, _Integer}},
 	Module[{input = n, output = 0, binaryAddends = Table[0, 0]},
@@ -22,12 +24,31 @@ BinaryDecomposition = Compile[{{n, _Integer}},
 			output = 2 * output];
 		binaryAddends]];
 
+BitwiseSubnumbers[0] = {0};
+BitwiseSubnumbers[n_Integer?Positive] :=
+	BitwiseSubnumbers[n] = If[EvenQ[n],
+		2 * BitwiseSubnumbers[n / 2],
+		Riffle[BitwiseSubnumbers[n - 1],
+			BitwiseSubnumbers[n - 1] + 1]];
+
 BitwisePartitions[0] = {{}};
 BitwisePartitions[n_Integer?Positive] :=
 	BitwisePartitions[n] = If[EvenQ[n],
 		2 * BitwisePartitions[n / 2],
 		Join @@ Table[Prepend[j] /@ BitwisePartitions[n - j],
-			{j, n - Total /@ Subsets@Rest@BinaryDecomposition[n]}]];
+			{j, 2 * BitwiseSubnumbers@BitShiftRight[n] + 1}]];
+
+DualQuotientPolynomial[n_Integer?NonNegative] := Total[Join @@ Table[
+		(-1)^Length[#] * Factorial@Length[#] * \[FormalU][k] *
+			(Times @@ \[FormalV] /@ #)& /@ BitwisePartitions[n - k],
+		{k, BitwiseSubnumbers[n]}]];
+
+DualExponentialComponent[0] = Exp[\[FormalX][0]];
+DualExponentialComponent[n_Integer?Positive] :=
+	DualExponentialComponent[n] = If[EvenQ[n],
+		DualExponentialComponent[n / 2] /. k_Integer :> 2 * k,
+		Sum[\[FormalX][k] * \[FormalY][n - k],
+			{k, 2 * BitwiseSubnumbers@BitShiftRight[n] + 1}]];
 
 DualFunctionComponents[n_Integer, f_, x_List] /; Length[x] === 2^n :=
 	Module[{i, indexList}, Table[
