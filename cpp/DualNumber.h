@@ -5,49 +5,49 @@
 
 namespace dznl {
 
-    template<typename TNum>
+    template<typename T>
     class DualNumber {
 
     public: // ==================================================== DATA MEMBERS
 
-        TNum real;
-        TNum dual;
+        T real;
+        T dual;
 
     public: // ==================================================== CONSTRUCTORS
 
         DualNumber() : real(), dual() {}
 
-        DualNumber(const TNum &re) : real(re), dual() {}
+        DualNumber(const T &re) : real(re), dual() {}
 
-        DualNumber(const TNum &re, const TNum &du) : real(re), dual(du) {}
+        DualNumber(const T &re, const T &du) : real(re), dual(du) {}
 
     public: // ======================================== REAL ASSIGNMENT OPERATOR
 
-        DualNumber &operator=(const TNum &a) {
+        DualNumber &operator=(const T &a) {
             real = a;
-            dual = TNum();
+            dual = T();
             return *this;
         }
 
     public: // ============================== REAL COMPOUND ASSIGNMENT OPERATORS
 
-        DualNumber &operator+=(const TNum &a) {
+        DualNumber &operator+=(const T &a) {
             real += a;
             return *this;
         }
 
-        DualNumber &operator-=(const TNum &a) {
+        DualNumber &operator-=(const T &a) {
             real -= a;
             return *this;
         }
 
-        DualNumber &operator*=(const TNum &a) {
+        DualNumber &operator*=(const T &a) {
             real *= a;
             dual *= a;
             return *this;
         }
 
-        DualNumber &operator/=(const TNum &a) {
+        DualNumber &operator/=(const T &a) {
             real /= a;
             dual /= a;
             return *this;
@@ -55,38 +55,38 @@ namespace dznl {
 
     public: // ======================================= REAL ARITHMETIC OPERATORS
 
-        DualNumber operator+(const TNum &a) const {
+        DualNumber operator+(const T &a) const {
             return DualNumber(real + a, dual);
         }
 
-        DualNumber operator-(const TNum &a) const {
+        DualNumber operator-(const T &a) const {
             return DualNumber(real - a, dual);
         }
 
-        DualNumber operator*(const TNum &a) const {
+        DualNumber operator*(const T &a) const {
             return DualNumber(real * a, dual * a);
         }
 
-        DualNumber operator/(const TNum &a) const {
+        DualNumber operator/(const T &a) const {
             return DualNumber(real / a, dual / a);
         }
 
     public: // ================================ FRIEND REAL ARITHMETIC OPERATORS
 
-        friend DualNumber operator+(const TNum &a, const DualNumber &b) {
+        friend DualNumber operator+(const T &a, const DualNumber &b) {
             return DualNumber(a + b.real, b.dual);
         }
 
-        friend DualNumber operator-(const TNum &a, const DualNumber &b) {
+        friend DualNumber operator-(const T &a, const DualNumber &b) {
             return DualNumber(a - b.real, -b.dual);
         }
 
-        friend DualNumber operator*(const TNum &a, const DualNumber &b) {
+        friend DualNumber operator*(const T &a, const DualNumber &b) {
             return DualNumber(a * b.real, a * b.dual);
         }
 
-        friend DualNumber operator/(const TNum &a, const DualNumber &b) {
-            const TNum quot = a / b.real;
+        friend DualNumber operator/(const T &a, const DualNumber &b) {
+            const T quot = a / b.real;
             return DualNumber(quot, -quot * b.dual / b.real);
         }
 
@@ -134,7 +134,7 @@ namespace dznl {
         }
 
         DualNumber operator/(const DualNumber &a) const {
-            const TNum quot = real / a.real;
+            const T quot = real / a.real;
             return DualNumber(quot, dual - quot * a.dual / a.real);
         }
 

@@ -5,49 +5,49 @@
 
 namespace dznl {
 
-    template<typename TNum>
+    template<typename T>
     class ComplexNumber {
 
     public: // ==================================================== DATA MEMBERS
 
-        TNum real;
-        TNum imag;
+        T real;
+        T imag;
 
     public: // ==================================================== CONSTRUCTORS
 
         ComplexNumber() : real(), imag() {}
 
-        ComplexNumber(const TNum &re) : real(re), imag() {}
+        ComplexNumber(const T &re) : real(re), imag() {}
 
-        ComplexNumber(const TNum &re, const TNum &im) : real(re), imag(im) {}
+        ComplexNumber(const T &re, const T &im) : real(re), imag(im) {}
 
     public: // ======================================== REAL ASSIGNMENT OPERATOR
 
-        ComplexNumber &operator=(const TNum &a) {
+        ComplexNumber &operator=(const T &a) {
             real = a;
-            imag = TNum();
+            imag = T();
             return *this;
         }
 
     public: // ============================== REAL COMPOUND ASSIGNMENT OPERATORS
 
-        ComplexNumber &operator+=(const TNum &a) {
+        ComplexNumber &operator+=(const T &a) {
             real += a;
             return *this;
         }
 
-        ComplexNumber &operator-=(const TNum &a) {
+        ComplexNumber &operator-=(const T &a) {
             real -= a;
             return *this;
         }
 
-        ComplexNumber &operator*=(const TNum &a) {
+        ComplexNumber &operator*=(const T &a) {
             real *= a;
             imag *= a;
             return *this;
         }
 
-        ComplexNumber &operator/=(const TNum &a) {
+        ComplexNumber &operator/=(const T &a) {
             real /= a;
             imag /= a;
             return *this;
@@ -55,38 +55,38 @@ namespace dznl {
 
     public: // ======================================= REAL ARITHMETIC OPERATORS
 
-        ComplexNumber operator+(const TNum &a) const {
+        ComplexNumber operator+(const T &a) const {
             return ComplexNumber(real + a, imag);
         }
 
-        ComplexNumber operator-(const TNum &a) const {
+        ComplexNumber operator-(const T &a) const {
             return ComplexNumber(real - a, imag);
         }
 
-        ComplexNumber operator*(const TNum &a) const {
+        ComplexNumber operator*(const T &a) const {
             return ComplexNumber(real * a, imag * a);
         }
 
-        ComplexNumber operator/(const TNum &a) const {
+        ComplexNumber operator/(const T &a) const {
             return ComplexNumber(real / a, imag / a);
         }
 
     public: // ================================ FRIEND REAL ARITHMETIC OPERATORS
 
-        friend ComplexNumber operator+(const TNum &a, const ComplexNumber &b) {
+        friend ComplexNumber operator+(const T &a, const ComplexNumber &b) {
             return ComplexNumber(a + b.real, b.imag);
         }
 
-        friend ComplexNumber operator-(const TNum &a, const ComplexNumber &b) {
+        friend ComplexNumber operator-(const T &a, const ComplexNumber &b) {
             return ComplexNumber(a - b.real, -b.imag);
         }
 
-        friend ComplexNumber operator*(const TNum &a, const ComplexNumber &b) {
+        friend ComplexNumber operator*(const T &a, const ComplexNumber &b) {
             return ComplexNumber(a * b.real, a * b.imag);
         }
 
-        friend ComplexNumber operator/(const TNum &a, const ComplexNumber &b) {
-            const TNum denom = b.abs2();
+        friend ComplexNumber operator/(const T &a, const ComplexNumber &b) {
+            const T denom = b.abs2();
             return ComplexNumber(a * b.real / denom, -a * b.imag / denom);
         }
 
@@ -134,7 +134,7 @@ namespace dznl {
         }
 
         ComplexNumber operator/(const ComplexNumber &a) const {
-            const TNum denom = a.abs2();
+            const T denom = a.abs2();
             return ComplexNumber((real * a.real + imag * a.imag) / denom,
                                  (imag * a.real - real * a.imag) / denom);
         }
@@ -145,7 +145,7 @@ namespace dznl {
             return ComplexNumber(real, -imag);
         }
 
-        TNum abs2() const {
+        T abs2() const {
             return real * real + imag * imag;
         }
 
