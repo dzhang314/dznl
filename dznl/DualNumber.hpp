@@ -1,7 +1,8 @@
 #ifndef DZNL_DUAL_NUMBER_HPP_INCLUDED
 #define DZNL_DUAL_NUMBER_HPP_INCLUDED
 
-#include <iostream>
+// C++ standard library headers
+#include <iostream> // for std::ostream
 
 namespace dznl {
 
