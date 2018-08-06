@@ -1,5 +1,5 @@
-#ifndef DZNL_COMPLEXNUMBER_H
-#define DZNL_COMPLEXNUMBER_H
+#ifndef DZNL_COMPLEX_NUMBER_HPP_INCLUDED
+#define DZNL_COMPLEX_NUMBER_HPP_INCLUDED
 
 #include <iostream>
 
@@ -161,4 +161,4 @@ namespace dznl {
 
 } // namespace dznl
 
-#endif // DZNL_COMPLEXNUMBER_H
+#endif // DZNL_COMPLEX_NUMBER_HPP_INCLUDED

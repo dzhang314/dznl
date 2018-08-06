@@ -1,5 +1,5 @@
-#ifndef DZNL_DUALNUMBER_H
-#define DZNL_DUALNUMBER_H
+#ifndef DZNL_DUAL_NUMBER_HPP_INCLUDED
+#define DZNL_DUAL_NUMBER_HPP_INCLUDED
 
 #include <iostream>
 
@@ -150,4 +150,4 @@ namespace dznl {
 
 } // namespace dznl
 
-#endif // DZNL_DUALNUMBER_H
+#endif // DZNL_DUAL_NUMBER_HPP_INCLUDED
