@@ -2,30 +2,26 @@
 #define DZNL_AMOEBA_OPTIMIZER_HPP_INCLUDED
 
 // C++ standard library headers
-#include <algorithm> // for std::sort
-#include <cstddef> // for std::size_t
+#include <algorithm>  // for std::sort
+#include <cstddef>    // for std::size_t
 #include <functional> // for std::function
-#include <utility> // for std::pair
+#include <utility>    // for std::pair
 #include <vector>
 
 namespace dznl {
 
     template <typename T>
     class AmoebaOptimizer {
-
     private: // =============================================== MEMBER VARIABLES
-
         const std::size_t n;
         std::function<T(const T *)> f;
         std::vector<std::pair<T, std::vector<T>>> x;
 
     public: // ===================================================== CONSTRUCTOR
-
-        AmoebaOptimizer(
-                const T *initial_point,
-                std::size_t num_dimensions,
-                T initial_step_size,
-                std::function<T(const T *)> objective_function)
+        AmoebaOptimizer(const T *initial_point,
+                        std::size_t num_dimensions,
+                        T initial_step_size,
+                        std::function<T(const T *)> objective_function)
                 : n(num_dimensions), f(std::move(objective_function)) {
             std::vector<T> y(n);
             for (std::size_t i = 0; i < n + 1; ++i) {
@@ -38,17 +34,15 @@ namespace dznl {
         }
 
     private: // ======================================================= MUTATORS
-
         void sort() {
-            std::sort(x.begin(), x.end(), [](
-                    const std::pair<T, std::vector<T>> &p,
-                    const std::pair<T, std::vector<T>> &q) {
-                return p.first < q.first;
-            });
+            std::sort(x.begin(), x.end(),
+                      [](const std::pair<T, std::vector<T>> &p,
+                         const std::pair<T, std::vector<T>> &q) {
+                          return p.first < q.first;
+                      });
         }
 
     public: // ======================================================= ACCESSORS
-
         T current_minimum(T *current_point) {
             sort();
             for (std::size_t i = 0; i < n; ++i) {
@@ -58,7 +52,6 @@ namespace dznl {
         }
 
     private: // ======================================= GEOMETRIC HELPER METHODS
-
         std::vector<T> compute_centroid() const {
             std::vector<T> centroid(n, 0.0);
             for (std::size_t i = 0; i < n; ++i) {
@@ -70,9 +63,8 @@ namespace dznl {
             return centroid;
         }
 
-        std::vector<T> compute_reflection(
-                const std::vector<T> &p,
-                const std::vector<T> &q) const {
+        std::vector<T> compute_reflection(const std::vector<T> &p,
+                                          const std::vector<T> &q) const {
             std::vector<T> reflected_point(n);
             for (std::size_t i = 0; i < n; ++i) {
                 reflected_point[i] = 2 * q[i] - p[i];
@@ -80,9 +72,8 @@ namespace dznl {
             return reflected_point;
         }
 
-        std::vector<T> compute_midpoint(
-                const std::vector<T> &p,
-                const std::vector<T> &q) const {
+        std::vector<T> compute_midpoint(const std::vector<T> &p,
+                                        const std::vector<T> &q) const {
             std::vector<T> midpoint(n);
             for (std::size_t i = 0; i < n; ++i) {
                 midpoint[i] = (p[i] + q[i]) / 2;
@@ -91,7 +82,6 @@ namespace dznl {
         }
 
     public: // ============================================ OPTIMIZATION METHODS
-
         T step() {
             sort();
             const T &best_value = x[0].first;
@@ -128,8 +118,8 @@ namespace dznl {
                 if (contracted_value < worst_value) {
                     worst_value = contracted_value;
                     worst_point = contracted_point;
-                    return (contracted_value < best_value)
-                           ? contracted_value : best_value;
+                    return (contracted_value < best_value) ? contracted_value
+                                                           : best_value;
                 }
             }
             T best_shrunk_value = best_value;

@@ -2,9 +2,9 @@
 #define DZNL_MPFR_QUADRATIC_LINE_SEARCHER_HPP_INCLUDED
 
 // C++ standard library headers
-#include <cstddef> // for std::size_t
+#include <cstddef>    // for std::size_t
 #include <functional> // for std::function
-#include <stdexcept> // for std::invalid_argument
+#include <stdexcept>  // for std::invalid_argument
 
 // GNU MPFR multiprecision library headers
 #include <mpfr.h>
@@ -15,15 +15,11 @@
 namespace dznl {
 
     class MPFRQuadraticLineSearcher {
-
     private: // ========================================== INTERNAL TYPE ALIASES
-
-        typedef std::function<
-                void(mpfr_t, mpfr_t *, mpfr_prec_t, mpfr_rnd_t)>
+        typedef std::function<void(mpfr_t, mpfr_t *, mpfr_prec_t, mpfr_rnd_t)>
                 objective_function_t;
 
     private: // =============================================== MEMBER VARIABLES
-
         const std::size_t n;
         const objective_function_t f;
         const mpfr_prec_t precision;
@@ -46,7 +42,6 @@ namespace dznl {
         mpfr_t denom;
 
     public: // ===================================================== CONSTRUCTOR
-
         explicit MPFRQuadraticLineSearcher(
                 mpfr_t &final_objective_value,
                 mpfr_t &final_step_size,
@@ -55,17 +50,17 @@ namespace dznl {
                 const mpfr_t &initial_objective_value,
                 const MPFRVector &step_direction,
                 mpfr_prec_t prec,
-                mpfr_rnd_t rnd) :
-                n(initial_point.size()),
-                f(objective_function),
-                precision(prec),
-                rounding_mode(rnd),
-                x0(initial_point),
-                xt(n, precision),
-                dx(step_direction),
-                f0(initial_objective_value),
-                best_objective_value(final_objective_value),
-                best_step_size(final_step_size) {
+                mpfr_rnd_t rnd)
+                : n(initial_point.size()),
+                  f(objective_function),
+                  precision(prec),
+                  rounding_mode(rnd),
+                  x0(initial_point),
+                  xt(n, precision),
+                  dx(step_direction),
+                  f0(initial_objective_value),
+                  best_objective_value(final_objective_value),
+                  best_step_size(final_step_size) {
             if (initial_point.size() != step_direction.size()) {
                 throw std::invalid_argument(
                         "dznl::QuadraticLineSearcher constructor received "
@@ -84,11 +79,10 @@ namespace dznl {
         }
 
     public: // =========================================================== BIG 3
-
         MPFRQuadraticLineSearcher(const MPFRQuadraticLineSearcher &) = delete;
 
-        MPFRQuadraticLineSearcher &operator=(
-                const MPFRQuadraticLineSearcher &) = delete;
+        MPFRQuadraticLineSearcher &
+        operator=(const MPFRQuadraticLineSearcher &) = delete;
 
         ~MPFRQuadraticLineSearcher() {
             mpfr_clear(f1);
@@ -100,7 +94,6 @@ namespace dznl {
         }
 
     private: // ===================================== LINE SEARCH HELPER METHODS
-
         void evaluate_objective_function(mpfr_t objective_value,
                                          mpfr_t t,
                                          bool *changed = nullptr) {
@@ -121,7 +114,6 @@ namespace dznl {
         }
 
     public: // ============================================= LINE SEARCH METHODS
-
         void search(mpfr_t initial_step_size, std::size_t max_increases = 4) {
             const mpfr_rnd_t rnd = rounding_mode;
             mpfr_set(step_size, initial_step_size, rnd);

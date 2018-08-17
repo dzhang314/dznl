@@ -2,7 +2,7 @@
 #define DZNL_BFGS_OPTIMIZER_HPP_INCLUDED
 
 // C++ standard library headers
-#include <cstddef> // for std::size_t
+#include <cstddef>    // for std::size_t
 #include <functional> // for std::function
 
 // Eigen linear algebra library headers
@@ -13,15 +13,11 @@
 
 namespace dznl {
 
-    enum class StepType {
-        NONE, GRAD, BFGS
-    };
+    enum class StepType { NONE, GRAD, BFGS };
 
     template <typename T>
     class BFGSOptimizer {
-
     private: // ========================================== INTERNAL TYPE ALIASES
-
         typedef std::function<T(const T *)> objective_function_t;
         typedef std::function<void(T *, const T *)> objective_gradient_t;
 
@@ -29,7 +25,6 @@ namespace dznl {
         typedef Eigen::Matrix<T, Eigen::Dynamic, 1> VectorXT;
 
     private: // =============================================== MEMBER VARIABLES
-
         const std::size_t n;
         const objective_function_t f;
         const objective_gradient_t g;
@@ -49,20 +44,27 @@ namespace dznl {
         StepType last_step_type;
 
     public: // ===================================================== CONSTRUCTOR
-
         BFGSOptimizer(std::size_t num_dimensions,
                       const objective_function_t &objective_function,
-                      const objective_gradient_t &objective_gradient) :
-                n(num_dimensions),
-                f(objective_function), g(objective_gradient),
-                x(n), fx(0), gx(n), dg(n),
-                step_size(0), step_dir(n), grad_dir(n), hess_inv(n, n),
-                temp(n), iter_count(0), last_step_type(StepType::NONE) {
+                      const objective_gradient_t &objective_gradient)
+                : n(num_dimensions),
+                  f(objective_function),
+                  g(objective_gradient),
+                  x(n),
+                  fx(0),
+                  gx(n),
+                  dg(n),
+                  step_size(0),
+                  step_dir(n),
+                  grad_dir(n),
+                  hess_inv(n, n),
+                  temp(n),
+                  iter_count(0),
+                  last_step_type(StepType::NONE) {
             hess_inv.setIdentity();
         }
 
     public: // ======================================================= ACCESSORS
-
         const VectorXT &get_current_point() { return x; }
 
         T get_current_objective_value() { return fx; }
@@ -76,7 +78,6 @@ namespace dznl {
         StepType get_last_step_type() { return last_step_type; }
 
     public: // ======================================================== MUTATORS
-
         void set_current_point(const VectorXT &p) {
             x = p;
             fx = f(p.data());
@@ -88,7 +89,6 @@ namespace dznl {
         void set_step_size(const T &h) { step_size = h; }
 
     private: // ==================================== OPTIMIZATION HELPER METHODS
-
         void reset_hessian() { hess_inv.setIdentity(); }
 
         void update_inverse_hessian() {
@@ -120,11 +120,10 @@ namespace dznl {
         }
 
     public: // ============================================ OPTIMIZATION METHODS
-
         bool step() {
             grad_dir = -gx.normalized();
-            step_dir = -(
-                    hess_inv.template selfadjointView<Eigen::Upper>() * gx);
+            step_dir =
+                    -(hess_inv.template selfadjointView<Eigen::Upper>() * gx);
             step_dir.normalize();
             const T new_step_size = competitive_line_search();
             if (new_step_size == 0) { return false; }
