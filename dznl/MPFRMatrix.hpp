@@ -20,6 +20,8 @@ namespace dznl {
 
     public: // ===================================================== CONSTRUCTOR
 
+        MPFRMatrix() = delete;
+
         explicit MPFRMatrix(std::size_t n, mpfr_prec_t prec) :
                 n(n), entries(n * n), precision(prec) {
             for (mpfr_t &x : entries) { mpfr_init2(x, precision); }

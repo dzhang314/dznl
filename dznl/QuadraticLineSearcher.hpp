@@ -2,6 +2,7 @@
 #define DZNL_QUADRATIC_LINE_SEARCHER_HPP_INCLUDED
 
 // C++ standard library headers
+#include <cstddef> // for std::size_t
 #include <functional> // for std::function
 #include <stdexcept> // for std::invalid_argument
 
@@ -27,8 +28,6 @@ namespace dznl {
         const VectorXT dx;
 
         const T f0;
-        T f1;
-        T f2;
 
         T best_objective_value;
         T best_step_size;
@@ -41,7 +40,7 @@ namespace dznl {
                 : n(static_cast<std::size_t>(initial_point.size())),
                   f(objective_function),
                   x0(initial_point), xt(n), dx(step_direction),
-                  f0(objective_function(initial_point.data())), f1(0), f2(0),
+                  f0(objective_function(initial_point.data())),
                   best_objective_value(f0), best_step_size(0) {
             if (initial_point.size() != step_direction.size()) {
                 throw std::invalid_argument(
@@ -79,7 +78,8 @@ namespace dznl {
     public: // ============================================= LINE SEARCH METHODS
 
         void search(T step_size, std::size_t max_increases = 4) {
-            f1 = evaluate_objective_function(step_size);
+            T f1 = evaluate_objective_function(step_size);
+            T f2;
             if (f1 < f0) {
                 std::size_t num_increases = 0;
                 while (true) {

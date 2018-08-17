@@ -20,13 +20,15 @@ namespace dznl {
     template <typename T>
     class BFGSOptimizer {
 
-    private: // =============================================== MEMBER VARIABLES
+    private: // ========================================== INTERNAL TYPE ALIASES
 
         typedef std::function<T(const T *)> objective_function_t;
         typedef std::function<void(T *, const T *)> objective_gradient_t;
 
         typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> MatrixXT;
         typedef Eigen::Matrix<T, Eigen::Dynamic, 1> VectorXT;
+
+    private: // =============================================== MEMBER VARIABLES
 
         const std::size_t n;
         const objective_function_t f;
