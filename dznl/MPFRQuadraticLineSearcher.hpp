@@ -9,7 +9,7 @@
 // GNU MPFR multiprecision library headers
 #include <mpfr.h>
 
-// DZNL headers
+// Project-specific headers
 #include "MPFRVector.hpp"
 
 namespace dznl {
