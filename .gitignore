@@ -2,3 +2,4 @@
 /dznl/CMakeLists.txt
 /dznl/cmake-build-debug
 /dznl/__dummy__.cpp
+.DS_Store
