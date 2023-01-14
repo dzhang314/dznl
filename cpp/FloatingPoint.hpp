@@ -1,47 +1,10 @@
 #ifndef DZNL_FLOATING_POINT_HPP_INCLUDED
 #define DZNL_FLOATING_POINT_HPP_INCLUDED
 
+#include "Arithmetic.hpp" // for pow_slow
+#include "Constants.hpp"  // for one
+
 namespace dznl {
-
-
-/**
- * @brief Given a number x (of any type T, integer or floating-point) and a
- * natural number n, compute and return x^n.
- *
- * This function does NOT use the exponentiation-by-squaring optimization, so
- * it performs fully-left-associated multiplications (e.g., ((x * x) * x) * x)
- * in the computation of x^n.
- */
-template <typename T>
-constexpr T pow_slow(T base, unsigned int exponent) {
-    T result = static_cast<T>(1.0);
-    for (unsigned int i = 0; i < exponent; ++i) {
-        result *= base;
-    }
-    return result;
-}
-
-
-/**
- * @brief Given a number x (of any type T, integer or floating-point) and a
- * natural number n, compute and return x^n.
- *
- * This function uses the exponentiation-by-squaring optimization, so it may
- * reassociate multiplications in the computation of x^n.
- */
-template <typename T>
-constexpr T pow(T base, unsigned int exponent) {
-    T accum = base;
-    T result = static_cast<T>(1.0);
-    while (exponent) {
-        if (exponent & 1) {
-            result *= accum;
-        }
-        accum *= accum;
-        exponent >>= 1;
-    }
-    return result;
-}
 
 
 /**
@@ -51,12 +14,12 @@ constexpr T pow(T base, unsigned int exponent) {
  * We say that a floating-point number x is "large" if the least significant
  * digit of x has magnitude greater than one, i.e., ulp(x) > 1.
  */
-template <typename T>
-constexpr unsigned int compute_large_exponent(T base) {
-    constexpr T one = static_cast<T>(1.0);
-    T power = one;
-    unsigned int result = 0;
-    while ((power + one) - power == one) {
+template <typename T, typename U>
+constexpr U compute_large_exponent(T base) {
+    constexpr T ONE = one<T>();
+    T power = ONE;
+    U result = zero<U>();
+    while ((power + ONE) - power == ONE) {
         power *= base;
         ++result;
     }
@@ -71,14 +34,14 @@ constexpr unsigned int compute_large_exponent(T base) {
  * For example, conventional binary floating-point types have radix 2, and
  * decimal floating-point types have radix 10.
  */
-template <typename T>
+template <typename T, typename U>
 constexpr T compute_radix() noexcept {
-    constexpr T one = static_cast<T>(1.0);
-    constexpr T two = static_cast<T>(2.0);
-    constexpr T large_pow2 = pow_slow(two, compute_large_exponent<T>(two));
-    T result = one;
+    constexpr T ONE = one<T>();
+    constexpr T TWO = ONE + ONE;
+    constexpr T large_pow2 = pow_slow(TWO, compute_large_exponent<T, U>(TWO));
+    T result = ONE;
     while ((large_pow2 + result) - large_pow2 != result) {
-        result += one;
+        result += ONE;
     }
     return result;
 }
@@ -92,9 +55,9 @@ constexpr T compute_radix() noexcept {
  * has precision 24. The IEEE 754-2008 binary64 type, usually called "double"
  * in C, has precision 53.
  */
-template <typename T>
-constexpr unsigned int compute_precision() noexcept {
-    return compute_large_exponent<T>(compute_radix<T>());
+template <typename T, typename U>
+constexpr U compute_precision() noexcept {
+    return compute_large_exponent<T, U>(compute_radix<T, U>());
 }
 
 

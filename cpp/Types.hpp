@@ -1,6 +1,8 @@
 #ifndef DZNL_TYPES_HPP_INCLUDED
 #define DZNL_TYPES_HPP_INCLUDED
 
+#include "Constants.hpp" // for zero, one
+
 namespace dznl {
 
 
@@ -28,9 +30,6 @@ static_assert(sizeof(f32) == 4);
 static_assert(sizeof(f64) == 8);
 
 
-template <typename T>
-constexpr T zero() noexcept;
-
 // clang-format off
 template <> constexpr i8 zero<i8>() noexcept { return 0; }
 template <> constexpr i16 zero<i16>() noexcept { return 0; }
@@ -44,9 +43,6 @@ template <> constexpr f32 zero<f32>() noexcept { return 0.0f; }
 template <> constexpr f64 zero<f64>() noexcept { return 0.0; }
 // clang-format on
 
-
-template <typename T>
-constexpr T one() noexcept;
 
 // clang-format off
 template <> constexpr i8 one<i8>() noexcept { return 1; }
