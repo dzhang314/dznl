@@ -45,6 +45,11 @@ constexpr T pow(T base, U exponent) {
 }
 
 
+float sqrt(float x) { return __builtin_sqrtf(x); }
+double sqrt(double x) { return __builtin_sqrt(x); }
+long double sqrt(long double x) { return __builtin_sqrtl(x); }
+
+
 } // namespace dznl
 
 #endif // DZNL_ARITHMETIC_HPP_INCLUDED
