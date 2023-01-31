@@ -27,29 +27,69 @@ compute_f64_precision() {
 }
 
 
-__attribute__((export_name("random_fill_f32"))) void
-random_fill_f32(dznl::f32 *__restrict__ result, dznl::u32 length,
-                dznl::u64 seed) {
+__attribute__((export_name("fast_two_sum_f32")))
+dznl::Pair<dznl::f32, dznl::f32>
+fast_two_sum_f32(dznl::f32 a, dznl::f32 b) {
+    return dznl::fast_two_sum(a, b);
+}
+
+
+__attribute__((export_name("fast_two_sum_f64")))
+dznl::Pair<dznl::f64, dznl::f64>
+fast_two_sum_f64(dznl::f64 a, dznl::f64 b) {
+    return dznl::fast_two_sum(a, b);
+}
+
+
+__attribute__((export_name("two_sum_f32"))) dznl::Pair<dznl::f32, dznl::f32>
+two_sum_f32(dznl::f32 a, dznl::f32 b) {
+    return dznl::two_sum(a, b);
+}
+
+
+__attribute__((export_name("two_sum_f64"))) dznl::Pair<dznl::f64, dznl::f64>
+two_sum_f64(dznl::f64 a, dznl::f64 b) {
+    return dznl::two_sum(a, b);
+}
+
+
+__attribute__((export_name("two_prod_f32"))) dznl::Pair<dznl::f32, dznl::f32>
+two_prod_f32(dznl::f32 a, dznl::f32 b) {
+    return dznl::two_prod(a, b);
+}
+
+
+__attribute__((export_name("two_prod_f64"))) dznl::Pair<dznl::f64, dznl::f64>
+two_prod_f64(dznl::f64 a, dznl::f64 b) {
+    return dznl::two_prod(a, b);
+}
+
+
+__attribute__((export_name("random_fill_f32"))) void random_fill_f32(
+    dznl::f32 *__restrict__ result, dznl::u32 length, dznl::u64 seed
+) {
     dznl::random_fill(result, length, seed);
 }
 
 
-__attribute__((export_name("random_fill_f64"))) void
-random_fill_f64(dznl::f64 *__restrict__ result, dznl::u32 length,
-                dznl::u64 seed) {
+__attribute__((export_name("random_fill_f64"))) void random_fill_f64(
+    dznl::f64 *__restrict__ result, dznl::u32 length, dznl::u64 seed
+) {
     dznl::random_fill(result, length, seed);
 }
 
 
 __attribute__((export_name("random_fill_sphere_f32"))) void
-random_fill_sphere_f32(dznl::f32 *__restrict__ result, dznl::u32 num_points,
-                       dznl::u64 seed) {
+random_fill_sphere_f32(
+    dznl::f32 *__restrict__ result, dznl::u32 num_points, dznl::u64 seed
+) {
     dznl::random_fill_sphere<3>(result, num_points, seed);
 }
 
 
 __attribute__((export_name("random_fill_sphere_f64"))) void
-random_fill_sphere_f64(dznl::f64 *__restrict__ result, dznl::u32 num_points,
-                       dznl::u64 seed) {
+random_fill_sphere_f64(
+    dznl::f64 *__restrict__ result, dznl::u32 num_points, dznl::u64 seed
+) {
     dznl::random_fill_sphere<3>(result, num_points, seed);
 }
