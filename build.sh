@@ -2,7 +2,7 @@ set -e
 
 clang \
     -std=c++20 -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic \
-    -Wno-unsafe-buffer-usage -Wno-float-equal -Wno-missing-prototypes \
+    -Wno-float-equal \
     --target=wasm32 -mmultivalue -Xclang=-target-abi -Xclang=experimental-mv \
     -nostdlib -Wl,--no-entry \
     -Icpp \
