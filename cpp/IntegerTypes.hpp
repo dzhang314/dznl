@@ -25,15 +25,12 @@ template <> constexpr  i8 one< i8>() noexcept { return '\1'; }
 template <> constexpr i16 one<i16>() noexcept { return 1;    }
 template <> constexpr i32 one<i32>() noexcept { return 1;    }
 template <> constexpr i64 one<i64>() noexcept { return 1L;   }
-template <> constexpr bool is_zero< i8>(const  i8 &x) noexcept { return x == zero< i8>(); }
-template <> constexpr bool is_zero<i16>(const i16 &x) noexcept { return x == zero<i16>(); }
-template <> constexpr bool is_zero<i32>(const i32 &x) noexcept { return x == zero<i32>(); }
-template <> constexpr bool is_zero<i64>(const i64 &x) noexcept { return x == zero<i64>(); }
-template <> constexpr bool is_one< i8>(const  i8 &x) noexcept { return x == one< i8>(); }
-template <> constexpr bool is_one<i16>(const i16 &x) noexcept { return x == one<i16>(); }
-template <> constexpr bool is_one<i32>(const i32 &x) noexcept { return x == one<i32>(); }
-template <> constexpr bool is_one<i64>(const i64 &x) noexcept { return x == one<i64>(); }
 // clang-format on
+
+DZNL_DEFAULT_NUMERIC_TYPE_INTERFACE_IMPLEMENTATIONS(i8)
+DZNL_DEFAULT_NUMERIC_TYPE_INTERFACE_IMPLEMENTATIONS(i16)
+DZNL_DEFAULT_NUMERIC_TYPE_INTERFACE_IMPLEMENTATIONS(i32)
+DZNL_DEFAULT_NUMERIC_TYPE_INTERFACE_IMPLEMENTATIONS(i64)
 
 
 using u8 = unsigned char;
@@ -55,15 +52,12 @@ template <> constexpr  u8 one< u8>() noexcept { return '\1'; }
 template <> constexpr u16 one<u16>() noexcept { return 1U;   }
 template <> constexpr u32 one<u32>() noexcept { return 1U;   }
 template <> constexpr u64 one<u64>() noexcept { return 1UL;  }
-template <> constexpr bool is_zero< u8>(const  u8 &x) noexcept { return x == zero< u8>(); }
-template <> constexpr bool is_zero<u16>(const u16 &x) noexcept { return x == zero<u16>(); }
-template <> constexpr bool is_zero<u32>(const u32 &x) noexcept { return x == zero<u32>(); }
-template <> constexpr bool is_zero<u64>(const u64 &x) noexcept { return x == zero<u64>(); }
-template <> constexpr bool is_one< u8>(const  u8 &x) noexcept { return x == one< u8>(); }
-template <> constexpr bool is_one<u16>(const u16 &x) noexcept { return x == one<u16>(); }
-template <> constexpr bool is_one<u32>(const u32 &x) noexcept { return x == one<u32>(); }
-template <> constexpr bool is_one<u64>(const u64 &x) noexcept { return x == one<u64>(); }
 // clang-format on
+
+DZNL_DEFAULT_NUMERIC_TYPE_INTERFACE_IMPLEMENTATIONS(u8)
+DZNL_DEFAULT_NUMERIC_TYPE_INTERFACE_IMPLEMENTATIONS(u16)
+DZNL_DEFAULT_NUMERIC_TYPE_INTERFACE_IMPLEMENTATIONS(u32)
+DZNL_DEFAULT_NUMERIC_TYPE_INTERFACE_IMPLEMENTATIONS(u64)
 
 
 } // namespace dznl
