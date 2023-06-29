@@ -16,6 +16,7 @@ WASM_FLAGS=(
 WARNING_FLAGS=(
     -Weverything
     -Wno-c++98-compat
+    -Wno-c++98-compat-pedantic
     -Wno-float-equal
 )
 
