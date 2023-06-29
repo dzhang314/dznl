@@ -1,6 +1,18 @@
 #include "MathematicalFunctions.hpp"
 
 
+__attribute__((export_name("min_f32"))) dznl::f32 min_f32(dznl::f32, dznl::f32);
+__attribute__((export_name("min_f64"))) dznl::f64 min_f64(dznl::f64, dznl::f64);
+dznl::f32 min_f32(dznl::f32 x, dznl::f32 y) { return dznl::min(x, y); }
+dznl::f64 min_f64(dznl::f64 x, dznl::f64 y) { return dznl::min(x, y); }
+
+
+__attribute__((export_name("max_f32"))) dznl::f32 max_f32(dznl::f32, dznl::f32);
+__attribute__((export_name("max_f64"))) dznl::f64 max_f64(dznl::f64, dznl::f64);
+dznl::f32 max_f32(dznl::f32 x, dznl::f32 y) { return dznl::max(x, y); }
+dznl::f64 max_f64(dznl::f64 x, dznl::f64 y) { return dznl::max(x, y); }
+
+
 __attribute__((export_name("round_f32"))) dznl::f32 round_f32(dznl::f32);
 __attribute__((export_name("round_f64"))) dznl::f64 round_f64(dznl::f64);
 dznl::f32 round_f32(dznl::f32 x) { return dznl::round(x); }
