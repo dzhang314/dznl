@@ -16,7 +16,7 @@ namespace dznl {
  */
 template <typename T, typename U>
 constexpr pair<T, U> compute_large_power(const T &base) noexcept {
-    constexpr T ONE = one<T>();
+    const T ONE = one<T>();
     T power = ONE;
     U exponent = zero<U>();
     while ((power + ONE) - power == ONE) {
@@ -35,9 +35,8 @@ constexpr pair<T, U> compute_large_power(const T &base) noexcept {
  */
 template <typename T, typename U>
 constexpr T compute_radix() noexcept {
-    constexpr T ONE = one<T>();
-    constexpr T large_power_of_two =
-        compute_large_power<T, U>(double_value<T>(ONE)).first;
+    const T ONE = one<T>();
+    const T large_power_of_two = compute_large_power<T, U>(ONE + ONE).first;
     T radix = ONE;
     while ((large_power_of_two + radix) - large_power_of_two != radix) {
         radix += ONE;
