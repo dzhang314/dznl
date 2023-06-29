@@ -7,97 +7,12 @@
 namespace dznl {
 
 
-#define DZNL_DECLARE_UNARY_F32_FUNCTION(NAME, BUILTIN)                         \
-    static inline __attribute__((always_inline)) f32 NAME(f32 x) noexcept {    \
-        return BUILTIN(x);                                                     \
-    }
-
-#define DZNL_DECLARE_UNARY_F64_FUNCTION(NAME, BUILTIN)                         \
-    static inline __attribute__((always_inline)) f64 NAME(f64 x) noexcept {    \
-        return BUILTIN(x);                                                     \
-    }
-
-#define DZNL_DECLARE_BINARY_F32_FUNCTION(NAME, BUILTIN)                        \
-    static inline __attribute__((always_inline)) f32 NAME(                     \
-        f32 x, f32 y                                                           \
-    ) noexcept {                                                               \
-        return BUILTIN(x, y);                                                  \
-    }
-
-#define DZNL_DECLARE_BINARY_F64_FUNCTION(NAME, BUILTIN)                        \
-    static inline __attribute__((always_inline)) f64 NAME(                     \
-        f64 x, f64 y                                                           \
-    ) noexcept {                                                               \
-        return BUILTIN(x, y);                                                  \
-    }
-
-
-#if __has_builtin(__builtin_wasm_min_f32)
-DZNL_DECLARE_BINARY_F32_FUNCTION(min, __builtin_wasm_min_f32)
-#else
-DZNL_DECLARE_BINARY_F32_FUNCTION(min, __builtin_fminf)
-#endif
-
-#if __has_builtin(__builtin_wasm_min_f64)
-DZNL_DECLARE_BINARY_F64_FUNCTION(min, __builtin_wasm_min_f64)
-#else
-DZNL_DECLARE_BINARY_F64_FUNCTION(min, __builtin_fmin)
-#endif
-
-
-#if __has_builtin(__builtin_wasm_max_f32)
-DZNL_DECLARE_BINARY_F32_FUNCTION(max, __builtin_wasm_max_f32)
-#else
-DZNL_DECLARE_BINARY_F32_FUNCTION(max, __builtin_fmaxf)
-#endif
-
-#if __has_builtin(__builtin_wasm_max_f64)
-DZNL_DECLARE_BINARY_F64_FUNCTION(max, __builtin_wasm_max_f64)
-#else
-DZNL_DECLARE_BINARY_F64_FUNCTION(max, __builtin_fmax)
-#endif
-
-
-#if __has_builtin(__builtin_roundevenf)
-DZNL_DECLARE_UNARY_F32_FUNCTION(round, __builtin_roundevenf)
-#else
-DZNL_DECLARE_UNARY_F32_FUNCTION(round, __builtin_roundf)
-#endif
-
-#if __has_builtin(__builtin_roundeven)
-DZNL_DECLARE_UNARY_F64_FUNCTION(round, __builtin_roundeven)
-#else
-DZNL_DECLARE_UNARY_F64_FUNCTION(round, __builtin_round)
-#endif
-
-
-DZNL_DECLARE_UNARY_F32_FUNCTION(ceil, __builtin_ceilf)
-DZNL_DECLARE_UNARY_F64_FUNCTION(ceil, __builtin_ceil)
-DZNL_DECLARE_UNARY_F32_FUNCTION(floor, __builtin_floorf)
-DZNL_DECLARE_UNARY_F64_FUNCTION(floor, __builtin_floor)
-DZNL_DECLARE_UNARY_F32_FUNCTION(trunc, __builtin_truncf)
-DZNL_DECLARE_UNARY_F64_FUNCTION(trunc, __builtin_trunc)
-DZNL_DECLARE_UNARY_F32_FUNCTION(abs, __builtin_fabsf)
-DZNL_DECLARE_UNARY_F64_FUNCTION(abs, __builtin_fabs)
-DZNL_DECLARE_UNARY_F32_FUNCTION(sqrt, __builtin_sqrtf)
-DZNL_DECLARE_UNARY_F64_FUNCTION(sqrt, __builtin_sqrt)
-DZNL_DECLARE_BINARY_F32_FUNCTION(copysign, __builtin_copysignf)
-DZNL_DECLARE_BINARY_F64_FUNCTION(copysign, __builtin_copysign)
-
-
-#undef DZNL_DECLARE_UNARY_F32_FUNCTION
-#undef DZNL_DECLARE_UNARY_F64_FUNCTION
-#undef DZNL_DECLARE_BINARY_F32_FUNCTION
-#undef DZNL_DECLARE_BINARY_F64_FUNCTION
-
-
 /**
- * @brief Given a number x (of any type T, integer or floating-point) and a
- * natural number n, compute and return x^n.
+ * @brief Given an element x of a numeric type T and a nonnegative integer n,
+ *        compute and return x raised to the nth power.
  *
- * This function does NOT use the exponentiation-by-squaring optimization, so
- * it performs fully-left-associated multiplications (e.g., ((x * x) * x) * x)
- * in the computation of x^n.
+ * This function does NOT perform exponentiation by squaring. It computes x^n
+ * using fully left-associated multiplications (e.g., ((x * x) * x) * x).
  */
 template <typename T, typename U>
 constexpr T pow_slow(T base, U exponent) {
@@ -109,24 +24,94 @@ constexpr T pow_slow(T base, U exponent) {
 
 
 /**
- * @brief Given a number x (of any type T, integer or floating-point) and a
- * natural number n, compute and return x^n.
+ * @brief Given an element x of a numeric type T and a nonnegative integer n,
+ *        compute and return x raised to the nth power.
  *
- * This function uses the exponentiation-by-squaring optimization, so it may
- * reassociate multiplications in the computation of x^n.
+ * This function performs exponentiation by squaring.
+ * It may reassociate multiplications in the computation of x^n.
  */
 template <typename T, typename U>
 constexpr T pow(T base, U exponent) {
     constexpr U ZERO = zero<U>();
     constexpr U ONE = one<U>();
-    T accum = base;
     T result = one<T>();
+    T accum = base;
     for (; exponent > ZERO; exponent >>= ONE) {
         if (exponent & ONE) { result *= accum; }
         accum *= accum;
     }
     return result;
 }
+
+
+#define DZNL_DECLARE_INLINE_UNARY_FUNCTION(NAME, TYPE, FUNCTION)               \
+    static inline __attribute__((always_inline)) TYPE NAME(TYPE x) noexcept {  \
+        return FUNCTION(x);                                                    \
+    }
+
+#define DZNL_DECLARE_INLINE_BINARY_FUNCTION(NAME, TYPE, FUNCTION)              \
+    static inline __attribute__((always_inline)) TYPE NAME(                    \
+        TYPE x, TYPE y                                                         \
+    ) noexcept {                                                               \
+        return FUNCTION(x, y);                                                 \
+    }
+
+
+#if __has_builtin(__builtin_wasm_min_f32)
+DZNL_DECLARE_INLINE_BINARY_FUNCTION(min, f32, __builtin_wasm_min_f32)
+#else
+DZNL_DECLARE_INLINE_BINARY_FUNCTION(min, f32, __builtin_fminf)
+#endif
+
+#if __has_builtin(__builtin_wasm_min_f64)
+DZNL_DECLARE_INLINE_BINARY_FUNCTION(min, f64, __builtin_wasm_min_f64)
+#else
+DZNL_DECLARE_INLINE_BINARY_FUNCTION(min, f64, __builtin_fmin)
+#endif
+
+
+#if __has_builtin(__builtin_wasm_max_f32)
+DZNL_DECLARE_INLINE_BINARY_FUNCTION(max, f32, __builtin_wasm_max_f32)
+#else
+DZNL_DECLARE_INLINE_BINARY_FUNCTION(max, f32, __builtin_fmaxf)
+#endif
+
+#if __has_builtin(__builtin_wasm_max_f64)
+DZNL_DECLARE_INLINE_BINARY_FUNCTION(max, f64, __builtin_wasm_max_f64)
+#else
+DZNL_DECLARE_INLINE_BINARY_FUNCTION(max, f64, __builtin_fmax)
+#endif
+
+
+#if __has_builtin(__builtin_roundevenf)
+DZNL_DECLARE_INLINE_UNARY_FUNCTION(round, f32, __builtin_roundevenf)
+#else
+DZNL_DECLARE_INLINE_UNARY_FUNCTION(round, f32, __builtin_roundf)
+#endif
+
+#if __has_builtin(__builtin_roundeven)
+DZNL_DECLARE_INLINE_UNARY_FUNCTION(round, f64, __builtin_roundeven)
+#else
+DZNL_DECLARE_INLINE_UNARY_FUNCTION(round, f64, __builtin_round)
+#endif
+
+
+DZNL_DECLARE_INLINE_UNARY_FUNCTION(ceil, f32, __builtin_ceilf)
+DZNL_DECLARE_INLINE_UNARY_FUNCTION(ceil, f64, __builtin_ceil)
+DZNL_DECLARE_INLINE_UNARY_FUNCTION(floor, f32, __builtin_floorf)
+DZNL_DECLARE_INLINE_UNARY_FUNCTION(floor, f64, __builtin_floor)
+DZNL_DECLARE_INLINE_UNARY_FUNCTION(trunc, f32, __builtin_truncf)
+DZNL_DECLARE_INLINE_UNARY_FUNCTION(trunc, f64, __builtin_trunc)
+DZNL_DECLARE_INLINE_UNARY_FUNCTION(abs, f32, __builtin_fabsf)
+DZNL_DECLARE_INLINE_UNARY_FUNCTION(abs, f64, __builtin_fabs)
+DZNL_DECLARE_INLINE_UNARY_FUNCTION(sqrt, f32, __builtin_sqrtf)
+DZNL_DECLARE_INLINE_UNARY_FUNCTION(sqrt, f64, __builtin_sqrt)
+DZNL_DECLARE_INLINE_BINARY_FUNCTION(copysign, f32, __builtin_copysignf)
+DZNL_DECLARE_INLINE_BINARY_FUNCTION(copysign, f64, __builtin_copysign)
+
+
+#undef DZNL_DECLARE_INLINE_UNARY_FUNCTION
+#undef DZNL_DECLARE_INLINE_BINARY_FUNCTION
 
 
 } // namespace dznl
