@@ -1,3 +1,6 @@
+#include "FloatingPointProperties.hpp"
+#include "FloatingPointTypes.hpp"
+#include "IntegerTypes.hpp"
 #include "MathematicalFunctions.hpp"
 
 
@@ -56,4 +59,20 @@ dznl::f32 copysign_f32(dznl::f32 x, dznl::f32 y) {
 }
 dznl::f64 copysign_f64(dznl::f64 x, dznl::f64 y) {
     return dznl::copysign(x, y);
+}
+
+
+dznl::f32 compute_radix_f32();
+dznl::f64 compute_radix_f64();
+dznl::f32 compute_radix_f32() { return dznl::compute_radix<dznl::f32, int>(); }
+dznl::f64 compute_radix_f64() { return dznl::compute_radix<dznl::f64, int>(); }
+
+
+dznl::f32 compute_precision_f32();
+dznl::f64 compute_precision_f64();
+dznl::f32 compute_precision_f32() {
+    return dznl::compute_precision<dznl::f32, int>();
+}
+dznl::f64 compute_precision_f64() {
+    return dznl::compute_precision<dznl::f64, int>();
 }

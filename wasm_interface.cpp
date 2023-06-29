@@ -1,3 +1,6 @@
+#include "FloatingPointProperties.hpp"
+#include "FloatingPointTypes.hpp"
+#include "IntegerTypes.hpp"
 #include "MathematicalFunctions.hpp"
 
 
@@ -61,28 +64,22 @@ dznl::f64 copysign_f64(dznl::f64 x, dznl::f64 y) {
 }
 
 
-// __attribute__((export_name("compute_f32_radix"))) dznl::f32
-// compute_f32_radix() {
-//     return dznl::compute_radix<dznl::f32, dznl::u32>();
-// }
+__attribute__((export_name("compute_radix_f32"))) dznl::f32 compute_radix_f32();
+__attribute__((export_name("compute_radix_f64"))) dznl::f64 compute_radix_f64();
+dznl::f32 compute_radix_f32() { return dznl::compute_radix<dznl::f32, int>(); }
+dznl::f64 compute_radix_f64() { return dznl::compute_radix<dznl::f64, int>(); }
 
 
-// __attribute__((export_name("compute_f64_radix"))) dznl::f64
-// compute_f64_radix() {
-//     return dznl::compute_radix<dznl::f64, dznl::u32>();
-// }
-
-
-// __attribute__((export_name("compute_f32_precision"))) dznl::u32
-// compute_f32_precision() {
-//     return dznl::compute_precision<dznl::f32, dznl::u32>();
-// }
-
-
-// __attribute__((export_name("compute_f64_precision"))) dznl::u32
-// compute_f64_precision() {
-//     return dznl::compute_precision<dznl::f64, dznl::u32>();
-// }
+__attribute__((export_name("compute_precision_f32"))) dznl::f32
+compute_precision_f32();
+__attribute__((export_name("compute_precision_f64"))) dznl::f64
+compute_precision_f64();
+dznl::f32 compute_precision_f32() {
+    return dznl::compute_precision<dznl::f32, int>();
+}
+dznl::f64 compute_precision_f64() {
+    return dznl::compute_precision<dznl::f64, int>();
+}
 
 
 // __attribute__((export_name("fast_two_sum_f32")))
