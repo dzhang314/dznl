@@ -3,9 +3,8 @@
 
 #include "Containers.hpp"
 #include "FloatingPointProperties.hpp"
-#include "IntegerTypes.hpp"
 #include "MathematicalFunctions.hpp"
-#include "NumericTypeInterface.hpp"
+#include "NumericTypes.hpp"
 
 namespace dznl {
 

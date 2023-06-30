@@ -2,7 +2,7 @@
 #define DZNL_FLOATING_POINT_PROPERTIES_HPP_INCLUDED
 
 #include "Containers.hpp"
-#include "NumericTypeInterface.hpp"
+#include "NumericTypes.hpp"
 
 namespace dznl {
 

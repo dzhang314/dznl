@@ -1,6 +1,4 @@
 #include "FloatingPointProperties.hpp"
-#include "FloatingPointTypes.hpp"
-#include "IntegerTypes.hpp"
 #include "MathematicalFunctions.hpp"
 
 
