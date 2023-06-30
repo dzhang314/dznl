@@ -55,13 +55,6 @@ constexpr T square(const T &) noexcept;
 
 
 /**
- * @brief Return the additive inverse of a given element of a numeric type T.
- */
-template <typename T>
-constexpr T negate(const T &) noexcept;
-
-
-/**
  * @brief Return the multiplicative inverse of a given element
  *        of a numeric type T.
  */
@@ -85,10 +78,6 @@ constexpr T inv(const T &) noexcept;
     template <>                                                                \
     constexpr TYPE square(const TYPE &x) noexcept {                            \
         return x * x;                                                          \
-    }                                                                          \
-    template <>                                                                \
-    constexpr TYPE negate(const TYPE &x) noexcept {                            \
-        return -x;                                                             \
     }
 
 
