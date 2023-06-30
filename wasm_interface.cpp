@@ -1,5 +1,5 @@
-#include "FloatingPointProperties.hpp"
-#include "MathematicalFunctions.hpp"
+#include <dznl/FloatingPointProperties.hpp>
+#include <dznl/MathematicalFunctions.hpp>
 
 
 __attribute__((export_name("min_f32"))) dznl::f32 min_f32(dznl::f32, dznl::f32);

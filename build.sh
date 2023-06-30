@@ -21,11 +21,11 @@ WARNING_FLAGS=(
 )
 
 clang++ -std=c++20 ${NATIVE_FLAGS[*]} ${WARNING_FLAGS[*]} -O3 \
-    -nostdlib -Icpp native_interface.cpp -o dznl.o
+    -nostdlib -isystem . native_interface.cpp -o dznl.o
 
 objdump -M intel -d --no-show-raw-insn dznl.o
 
 clang++ -std=c++20 ${WASM_FLAGS[*]} ${WARNING_FLAGS[*]} -O3 \
-    -nostdlib -Icpp wasm_interface.cpp -o dznl.wasm
+    -nostdlib -isystem . wasm_interface.cpp -o dznl.wasm
 
 wasm2wat dznl.wasm
