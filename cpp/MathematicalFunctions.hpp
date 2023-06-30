@@ -15,7 +15,7 @@ namespace dznl {
  * using fully left-associated multiplications (e.g., ((x * x) * x) * x).
  */
 template <typename T, typename U>
-constexpr T pow_slow(T base, U exponent) noexcept {
+constexpr T pow_slow(const T &base, U exponent) noexcept {
     constexpr U ZERO = zero<U>();
     T result = one<T>();
     for (; exponent > ZERO; --exponent) { result *= base; }
@@ -35,10 +35,9 @@ constexpr T pow(T base, U exponent) noexcept {
     constexpr U ZERO = zero<U>();
     constexpr U ONE = one<U>();
     T result = one<T>();
-    T accum = base;
     for (; exponent > ZERO; exponent >>= ONE) {
-        if (exponent & ONE) { result *= accum; }
-        accum *= accum;
+        if (exponent & ONE) { result *= base; }
+        base *= base;
     }
     return result;
 }

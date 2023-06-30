@@ -1,7 +1,18 @@
-template <typename T, typename U, U lo_width>
-constexpr Pair<T, T> veltkamp_split(T x) noexcept {
+#ifndef DZNL_ERROR_FREE_TRANSFORMATIONS_HPP_INCLUDED
+#define DZNL_ERROR_FREE_TRANSFORMATIONS_HPP_INCLUDED
+
+#include "Containers.hpp"
+#include "FloatingPointProperties.hpp"
+#include "MathematicalFunctions.hpp"
+#include "NumericTypeInterface.hpp"
+
+namespace dznl {
+
+
+template <typename T, typename U, U width>
+constexpr pair<T, T> veltkamp_split(const T &x) noexcept {
     constexpr T veltkamp_constant =
-        pow_slow<T, U>(compute_radix<T, U>(), lo_width) + one<T>();
+        pow<T, U>(compute_radix<T, U>(), width) + one<T>();
     const T vx = veltkamp_constant * x;
     const T x_hi = vx - (vx - x);
     const T x_lo = x - x_hi;
@@ -10,7 +21,7 @@ constexpr Pair<T, T> veltkamp_split(T x) noexcept {
 
 
 template <typename T>
-constexpr Pair<T, T> fast_two_sum(T a, T b) noexcept {
+constexpr pair<T, T> fast_two_sum(T a, T b) noexcept {
     const T sum = a + b;
     const T b_prime = sum - a;
     const T err = b - b_prime;
@@ -19,7 +30,7 @@ constexpr Pair<T, T> fast_two_sum(T a, T b) noexcept {
 
 
 template <typename T>
-constexpr Pair<T, T> two_sum(T a, T b) noexcept {
+constexpr pair<T, T> two_sum(T a, T b) noexcept {
     const T sum = a + b;
     const T a_prime = sum - b;
     const T b_prime = sum - a_prime;
@@ -31,7 +42,7 @@ constexpr Pair<T, T> two_sum(T a, T b) noexcept {
 
 
 template <typename T>
-constexpr Pair<T, T> two_prod(T a, T b) noexcept {
+constexpr pair<T, T> two_prod(T a, T b) noexcept {
     constexpr int half_width = (compute_precision<T, int>() + 1) / 2;
     const auto [a_hi, a_lo] = veltkamp_split<T, int, half_width>(a);
     const auto [b_hi, b_lo] = veltkamp_split<T, int, half_width>(b);
@@ -46,3 +57,8 @@ constexpr Pair<T, T> two_prod(T a, T b) noexcept {
     const T err = err_3 + lo_lo;
     return {prod, err};
 }
+
+
+} // namespace dznl
+
+#endif // DZNL_ERROR_FREE_TRANSFORMATIONS_HPP_INCLUDED
