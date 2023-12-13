@@ -4,7 +4,7 @@
 #include "Containers.hpp"
 #include "FloatingPointProperties.hpp"
 #include "MathematicalFunctions.hpp"
-#include "NumericTypes.hpp"
+#include "NumericTypeInterface.hpp"
 
 namespace dznl {
 
@@ -30,6 +30,15 @@ constexpr Pair<T, T> fast_two_sum(const T &a, const T &b) noexcept {
 
 
 template <typename T>
+constexpr Pair<T, T> fast_two_diff(const T &a, const T &b) noexcept {
+    const T diff = a - b;
+    const T b_prime = a - diff;
+    const T err = b_prime - b;
+    return {diff, err};
+}
+
+
+template <typename T>
 constexpr Pair<T, T> two_sum(const T &a, const T &b) noexcept {
     const T sum = a + b;
     const T a_prime = sum - b;
@@ -42,10 +51,22 @@ constexpr Pair<T, T> two_sum(const T &a, const T &b) noexcept {
 
 
 template <typename T>
+constexpr Pair<T, T> two_diff(const T &a, const T &b) noexcept {
+    const T diff = a - b;
+    const T a_prime = diff + b;
+    const T b_prime = a_prime - diff;
+    const T a_err = a - a_prime;
+    const T b_err = b_prime - b;
+    const T err = a_err + b_err;
+    return {diff, err};
+}
+
+
+template <typename T>
 constexpr Pair<T, T> two_prod(const T &a, const T &b) noexcept {
-    constexpr u64 half_width = (compute_precision<T, u64>() + 1) / 2;
-    const auto [a_hi, a_lo] = veltkamp_split<T, u64, half_width>(a);
-    const auto [b_hi, b_lo] = veltkamp_split<T, u64, half_width>(b);
+    constexpr unsigned half_width = (compute_precision<T, unsigned>() + 1) / 2;
+    const auto [a_hi, a_lo] = veltkamp_split<T, unsigned, half_width>(a);
+    const auto [b_hi, b_lo] = veltkamp_split<T, unsigned, half_width>(b);
     const T hi_hi = a_hi * b_hi;
     const T hi_lo = a_hi * b_lo;
     const T lo_hi = a_lo * b_hi;
