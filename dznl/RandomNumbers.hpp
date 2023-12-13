@@ -2,6 +2,7 @@
 #define DZNL_RANDOM_NUMBERS_HPP
 
 #include "MathematicalFunctions.hpp"
+#include "NumericTypeInterface.hpp"
 #include "NumericTypes.hpp"
 
 namespace dznl {

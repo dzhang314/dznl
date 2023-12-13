@@ -1,6 +1,7 @@
 #ifndef DZNL_MATHEMATICAL_FUNCTIONS_HPP_INCLUDED
 #define DZNL_MATHEMATICAL_FUNCTIONS_HPP_INCLUDED
 
+#include "NumericTypeInterface.hpp"
 #include "NumericTypes.hpp"
 
 namespace dznl {
