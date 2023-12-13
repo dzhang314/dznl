@@ -1,0 +1,59 @@
+#ifndef DZNL_DUAL_NUMBERS_HPP_INCLUDED
+#define DZNL_DUAL_NUMBERS_HPP_INCLUDED
+
+namespace dznl {
+
+
+template <typename T>
+struct DualNumber {
+
+    T real;
+    T dual;
+
+    constexpr DualNumber &operator+=(const DualNumber &rhs) noexcept {
+        real += rhs.real;
+        dual += rhs.dual;
+        return *this;
+    }
+
+    constexpr DualNumber &operator+=(const T &rhs) noexcept {
+        real += rhs;
+        return *this;
+    }
+
+    constexpr DualNumber &operator-=(const DualNumber &rhs) noexcept {
+        real -= rhs.real;
+        dual -= rhs.dual;
+        return *this;
+    }
+
+    constexpr DualNumber &operator-=(const T &rhs) noexcept {
+        real -= rhs;
+        return *this;
+    }
+
+    constexpr DualNumber &operator*=(const T &rhs) noexcept {
+        real *= rhs;
+        dual *= rhs;
+        return *this;
+    }
+
+    constexpr DualNumber &operator/=(const T &rhs) noexcept {
+        real /= rhs;
+        dual /= rhs;
+        return *this;
+    }
+
+}; // struct DualNumber<T>
+
+
+template <typename T>
+constexpr DualNumber<T>
+operator*(const DualNumber<T> &lhs, const DualNumber<T> &rhs) noexcept {
+    return {lhs.real * rhs.real, lhs.real * rhs.dual + lhs.dual * rhs.real};
+}
+
+
+} // namespace dznl
+
+#endif // DZNL_DUAL_NUMBERS_HPP_INCLUDED
