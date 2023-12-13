@@ -10,7 +10,7 @@ namespace dznl {
 
 
 template <typename T, typename U, U width>
-constexpr pair<T, T> veltkamp_split(const T &x) noexcept {
+constexpr Pair<T, T> veltkamp_split(const T &x) noexcept {
     constexpr T veltkamp_constant =
         pow<T, U>(compute_radix<T, U>(), width) + one<T>();
     const T vx = veltkamp_constant * x;
@@ -21,7 +21,7 @@ constexpr pair<T, T> veltkamp_split(const T &x) noexcept {
 
 
 template <typename T>
-constexpr pair<T, T> fast_two_sum(const T &a, const T &b) noexcept {
+constexpr Pair<T, T> fast_two_sum(const T &a, const T &b) noexcept {
     const T sum = a + b;
     const T b_prime = sum - a;
     const T err = b - b_prime;
@@ -30,7 +30,7 @@ constexpr pair<T, T> fast_two_sum(const T &a, const T &b) noexcept {
 
 
 template <typename T>
-constexpr pair<T, T> two_sum(const T &a, const T &b) noexcept {
+constexpr Pair<T, T> two_sum(const T &a, const T &b) noexcept {
     const T sum = a + b;
     const T a_prime = sum - b;
     const T b_prime = sum - a_prime;
@@ -42,7 +42,7 @@ constexpr pair<T, T> two_sum(const T &a, const T &b) noexcept {
 
 
 template <typename T>
-constexpr pair<T, T> two_prod(const T &a, const T &b) noexcept {
+constexpr Pair<T, T> two_prod(const T &a, const T &b) noexcept {
     constexpr u64 half_width = (compute_precision<T, u64>() + 1) / 2;
     const auto [a_hi, a_lo] = veltkamp_split<T, u64, half_width>(a);
     const auto [b_hi, b_lo] = veltkamp_split<T, u64, half_width>(b);

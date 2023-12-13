@@ -8,9 +8,9 @@
 #define DZNL_WASM_EXPORT(NAME) __attribute__((export_name(NAME)))
 
 
-using dznl::u64;
 using dznl::f32;
 using dznl::f64;
+using dznl::u64;
 
 
 DZNL_WASM_EXPORT("min_f32") f32 min_f32(f32, f32);
@@ -65,20 +65,26 @@ u64 compute_precision_f32() { return dznl::compute_precision<f32, u64>(); }
 u64 compute_precision_f64() { return dznl::compute_precision<f64, u64>(); }
 
 
-DZNL_WASM_EXPORT("fast_two_sum_f32") dznl::pair<f32, f32> fast_two_sum_f32(f32, f32);
-DZNL_WASM_EXPORT("fast_two_sum_f64") dznl::pair<f64, f64> fast_two_sum_f64(f64, f64);
-DZNL_WASM_EXPORT("two_sum_f32") dznl::pair<f32, f32> two_sum_f32(f32, f32);
-DZNL_WASM_EXPORT("two_sum_f64") dznl::pair<f64, f64> two_sum_f64(f64, f64);
-DZNL_WASM_EXPORT("two_prod_f32") dznl::pair<f32, f32> two_prod_f32(f32, f32);
-DZNL_WASM_EXPORT("two_prod_f64") dznl::pair<f64, f64> two_prod_f64(f64, f64);
+DZNL_WASM_EXPORT("fast_two_sum_f32")
+dznl::Pair<f32, f32> fast_two_sum_f32(f32, f32);
+DZNL_WASM_EXPORT("fast_two_sum_f64")
+dznl::Pair<f64, f64> fast_two_sum_f64(f64, f64);
+DZNL_WASM_EXPORT("two_sum_f32") dznl::Pair<f32, f32> two_sum_f32(f32, f32);
+DZNL_WASM_EXPORT("two_sum_f64") dznl::Pair<f64, f64> two_sum_f64(f64, f64);
+DZNL_WASM_EXPORT("two_prod_f32") dznl::Pair<f32, f32> two_prod_f32(f32, f32);
+DZNL_WASM_EXPORT("two_prod_f64") dznl::Pair<f64, f64> two_prod_f64(f64, f64);
 
 
-dznl::pair<f32, f32> fast_two_sum_f32(f32 a, f32 b) { return dznl::fast_two_sum(a, b); }
-dznl::pair<f64, f64> fast_two_sum_f64(f64 a, f64 b) { return dznl::fast_two_sum(a, b); }
-dznl::pair<f32, f32> two_sum_f32(f32 a, f32 b) { return dznl::two_sum(a, b); }
-dznl::pair<f64, f64> two_sum_f64(f64 a, f64 b) { return dznl::two_sum(a, b); }
-dznl::pair<f32, f32> two_prod_f32(f32 a, f32 b) { return dznl::two_prod(a, b); }
-dznl::pair<f64, f64> two_prod_f64(f64 a, f64 b) { return dznl::two_prod(a, b); }
+dznl::Pair<f32, f32> fast_two_sum_f32(f32 a, f32 b) {
+    return dznl::fast_two_sum(a, b);
+}
+dznl::Pair<f64, f64> fast_two_sum_f64(f64 a, f64 b) {
+    return dznl::fast_two_sum(a, b);
+}
+dznl::Pair<f32, f32> two_sum_f32(f32 a, f32 b) { return dznl::two_sum(a, b); }
+dznl::Pair<f64, f64> two_sum_f64(f64 a, f64 b) { return dznl::two_sum(a, b); }
+dznl::Pair<f32, f32> two_prod_f32(f32 a, f32 b) { return dznl::two_prod(a, b); }
+dznl::Pair<f64, f64> two_prod_f64(f64 a, f64 b) { return dznl::two_prod(a, b); }
 
 
 // DZNL_WASM_EXPORT("random_fill_f32") void random_fill_f32(

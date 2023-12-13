@@ -15,7 +15,7 @@ namespace dznl {
  * digit of x has magnitude greater than one, i.e., ulp(x) > 1.
  */
 template <typename T, typename U>
-constexpr pair<T, U> compute_large_power(const T &base) noexcept {
+constexpr Pair<T, U> compute_large_power(const T &base) noexcept {
     const T ONE = one<T>();
     T power = ONE;
     U exponent = zero<U>();

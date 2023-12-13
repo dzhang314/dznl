@@ -5,7 +5,7 @@ namespace dznl {
 
 
 template <typename T, typename U>
-struct pair {
+struct Pair {
     T first;
     U second;
 };
