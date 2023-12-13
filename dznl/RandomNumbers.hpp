@@ -20,7 +20,7 @@ constexpr f64 random_advance(u64 &seed) noexcept {
 
 template <typename T, typename I>
 void random_fill(T *__restrict__ result, I length, u64 seed) noexcept {
-    for (; length > 0; --length) {
+    for (; !is_zero(length); --length) {
         *result++ = static_cast<T>(random_advance(seed));
     }
 }
@@ -30,7 +30,7 @@ template <int dimension, typename T, typename I>
 void random_fill_sphere(
     T *__restrict__ result, I num_points, u64 seed
 ) noexcept {
-    for (; num_points > 0; --num_points) {
+    for (; !is_zero(num_points); --num_points) {
         T point[dimension];
         while (true) {
             f64 norm_squared = 0.0;
