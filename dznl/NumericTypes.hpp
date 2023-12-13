@@ -37,11 +37,14 @@ constexpr bool is_one(const T &) noexcept;
 /**
  * @brief Return the sum of a given element of a numeric type T with itself.
  *
- * The expressions double_value(x) and x + x should always be equivalent, but
- * double_value(x) can be computed more efficiently than x + x for some types T.
+ * The expressions twice(x) and x + x should always be equivalent, but
+ * twice(x) can be computed more efficiently than x + x for some types T.
+ *
+ * I would prefer to name this function "double,"
+ * but "double" is a reserved keyword in C++.
  */
 template <typename T>
-constexpr T double_value(const T &) noexcept;
+constexpr T twice(const T &) noexcept;
 
 
 /**
@@ -72,7 +75,7 @@ constexpr T inv(const T &) noexcept;
         return x == one<TYPE>();                                               \
     }                                                                          \
     template <>                                                                \
-    constexpr TYPE double_value(const TYPE &x) noexcept {                      \
+    constexpr TYPE twice(const TYPE &x) noexcept {                             \
         return x + x;                                                          \
     }                                                                          \
     template <>                                                                \

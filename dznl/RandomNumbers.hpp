@@ -35,7 +35,7 @@ void random_fill_sphere(
             f64 norm_squared = 0.0;
             for (int j = 0; j < dimension; ++j) {
                 const f64 random_value =
-                    double_value(random_advance(seed)) - one<f64>();
+                    twice(random_advance(seed)) - one<f64>();
                 point[j] = static_cast<T>(random_value);
                 norm_squared += square(random_value);
             }
