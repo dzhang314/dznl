@@ -66,25 +66,29 @@ u64 compute_precision_f64() { return dznl::compute_precision<f64, u64>(); }
 
 
 DZNL_WASM_EXPORT("fast_two_sum_f32")
-dznl::Pair<f32, f32> fast_two_sum_f32(f32, f32);
+dznl::Tuple<f32, f32> fast_two_sum_f32(f32, f32);
 DZNL_WASM_EXPORT("fast_two_sum_f64")
-dznl::Pair<f64, f64> fast_two_sum_f64(f64, f64);
-DZNL_WASM_EXPORT("two_sum_f32") dznl::Pair<f32, f32> two_sum_f32(f32, f32);
-DZNL_WASM_EXPORT("two_sum_f64") dznl::Pair<f64, f64> two_sum_f64(f64, f64);
-DZNL_WASM_EXPORT("two_prod_f32") dznl::Pair<f32, f32> two_prod_f32(f32, f32);
-DZNL_WASM_EXPORT("two_prod_f64") dznl::Pair<f64, f64> two_prod_f64(f64, f64);
+dznl::Tuple<f64, f64> fast_two_sum_f64(f64, f64);
+DZNL_WASM_EXPORT("two_sum_f32") dznl::Tuple<f32, f32> two_sum_f32(f32, f32);
+DZNL_WASM_EXPORT("two_sum_f64") dznl::Tuple<f64, f64> two_sum_f64(f64, f64);
+DZNL_WASM_EXPORT("two_prod_f32") dznl::Tuple<f32, f32> two_prod_f32(f32, f32);
+DZNL_WASM_EXPORT("two_prod_f64") dznl::Tuple<f64, f64> two_prod_f64(f64, f64);
 
 
-dznl::Pair<f32, f32> fast_two_sum_f32(f32 a, f32 b) {
+dznl::Tuple<f32, f32> fast_two_sum_f32(f32 a, f32 b) {
     return dznl::fast_two_sum(a, b);
 }
-dznl::Pair<f64, f64> fast_two_sum_f64(f64 a, f64 b) {
+dznl::Tuple<f64, f64> fast_two_sum_f64(f64 a, f64 b) {
     return dznl::fast_two_sum(a, b);
 }
-dznl::Pair<f32, f32> two_sum_f32(f32 a, f32 b) { return dznl::two_sum(a, b); }
-dznl::Pair<f64, f64> two_sum_f64(f64 a, f64 b) { return dznl::two_sum(a, b); }
-dznl::Pair<f32, f32> two_prod_f32(f32 a, f32 b) { return dznl::two_prod(a, b); }
-dznl::Pair<f64, f64> two_prod_f64(f64 a, f64 b) { return dznl::two_prod(a, b); }
+dznl::Tuple<f32, f32> two_sum_f32(f32 a, f32 b) { return dznl::two_sum(a, b); }
+dznl::Tuple<f64, f64> two_sum_f64(f64 a, f64 b) { return dznl::two_sum(a, b); }
+dznl::Tuple<f32, f32> two_prod_f32(f32 a, f32 b) {
+    return dznl::two_prod(a, b);
+}
+dznl::Tuple<f64, f64> two_prod_f64(f64 a, f64 b) {
+    return dznl::two_prod(a, b);
+}
 
 
 // DZNL_WASM_EXPORT("random_fill_f32") void random_fill_f32(

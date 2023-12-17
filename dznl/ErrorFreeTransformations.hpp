@@ -10,7 +10,7 @@ namespace dznl {
 
 
 template <typename T, typename U, U width>
-constexpr Pair<T, T> veltkamp_split(const T &x) noexcept {
+constexpr Tuple<T, T> veltkamp_split(const T &x) noexcept {
     constexpr T veltkamp_constant =
         pow<T, U>(compute_radix<T, U>(), width) + one<T>();
     const T vx = veltkamp_constant * x;
@@ -21,7 +21,7 @@ constexpr Pair<T, T> veltkamp_split(const T &x) noexcept {
 
 
 template <typename T>
-constexpr Pair<T, T> fast_two_sum(const T &a, const T &b) noexcept {
+constexpr Tuple<T, T> fast_two_sum(const T &a, const T &b) noexcept {
     const T sum = a + b;
     const T b_prime = sum - a;
     const T err = b - b_prime;
@@ -30,7 +30,7 @@ constexpr Pair<T, T> fast_two_sum(const T &a, const T &b) noexcept {
 
 
 template <typename T>
-constexpr Pair<T, T> fast_two_diff(const T &a, const T &b) noexcept {
+constexpr Tuple<T, T> fast_two_diff(const T &a, const T &b) noexcept {
     const T diff = a - b;
     const T b_prime = a - diff;
     const T err = b_prime - b;
@@ -39,7 +39,7 @@ constexpr Pair<T, T> fast_two_diff(const T &a, const T &b) noexcept {
 
 
 template <typename T>
-constexpr Pair<T, T> two_sum(const T &a, const T &b) noexcept {
+constexpr Tuple<T, T> two_sum(const T &a, const T &b) noexcept {
     const T sum = a + b;
     const T a_prime = sum - b;
     const T b_prime = sum - a_prime;
@@ -51,7 +51,7 @@ constexpr Pair<T, T> two_sum(const T &a, const T &b) noexcept {
 
 
 template <typename T>
-constexpr Pair<T, T> two_diff(const T &a, const T &b) noexcept {
+constexpr Tuple<T, T> two_diff(const T &a, const T &b) noexcept {
     const T diff = a - b;
     const T a_prime = diff + b;
     const T b_prime = a_prime - diff;
@@ -63,7 +63,7 @@ constexpr Pair<T, T> two_diff(const T &a, const T &b) noexcept {
 
 
 template <typename T>
-constexpr Pair<T, T> two_prod(const T &a, const T &b) noexcept {
+constexpr Tuple<T, T> two_prod(const T &a, const T &b) noexcept {
     constexpr unsigned half_width = (compute_precision<T, unsigned>() + 1) / 2;
     const auto [a_hi, a_lo] = veltkamp_split<T, unsigned, half_width>(a);
     const auto [b_hi, b_lo] = veltkamp_split<T, unsigned, half_width>(b);

@@ -4,15 +4,29 @@
 namespace dznl {
 
 
+template <typename...>
+struct Tuple;
+
+
+template <>
+struct Tuple<> {};
+
+
+template <typename T1>
+struct Tuple<T1> {
+    T1 first;
+};
+
+
 template <typename T1, typename T2>
-struct Pair {
+struct Tuple<T1, T2> {
     T1 first;
     T2 second;
 };
 
 
 template <typename T1, typename T2, typename T3>
-struct Triple {
+struct Tuple<T1, T2, T3> {
     T1 first;
     T2 second;
     T3 third;
@@ -20,7 +34,7 @@ struct Triple {
 
 
 template <typename T1, typename T2, typename T3, typename T4>
-struct Quadruple {
+struct Tuple<T1, T2, T3, T4> {
     T1 first;
     T2 second;
     T3 third;
@@ -29,7 +43,7 @@ struct Quadruple {
 
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5>
-struct Quintuple {
+struct Tuple<T1, T2, T3, T4, T5> {
     T1 first;
     T2 second;
     T3 third;
