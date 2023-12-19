@@ -1,7 +1,7 @@
 #ifndef DZNL_COMPLEX_NUMBERS_HPP_INCLUDED
 #define DZNL_COMPLEX_NUMBERS_HPP_INCLUDED
 
-#include "NumericTypeInterface.hpp"
+#include "NumericFunctions.hpp"
 
 namespace dznl {
 
