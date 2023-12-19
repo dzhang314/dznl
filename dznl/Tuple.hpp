@@ -1,5 +1,5 @@
-#ifndef DZNL_CONTAINERS_HPP_INCLUDED
-#define DZNL_CONTAINERS_HPP_INCLUDED
+#ifndef DZNL_TUPLE_HPP_INCLUDED
+#define DZNL_TUPLE_HPP_INCLUDED
 
 namespace dznl {
 
@@ -54,4 +54,4 @@ struct Tuple<T1, T2, T3, T4, T5> {
 
 } // namespace dznl
 
-#endif // DZNL_CONTAINERS_HPP_INCLUDED
+#endif // DZNL_TUPLE_HPP_INCLUDED

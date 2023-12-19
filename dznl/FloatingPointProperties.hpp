@@ -1,8 +1,8 @@
 #ifndef DZNL_FLOATING_POINT_PROPERTIES_HPP_INCLUDED
 #define DZNL_FLOATING_POINT_PROPERTIES_HPP_INCLUDED
 
-#include "Containers.hpp"
 #include "NumericTypeInterface.hpp"
+#include "Tuple.hpp"
 
 namespace dznl {
 
