@@ -1,3 +1,4 @@
+/*
 #ifndef DZNL_RANDOM_NUMBERS_HPP
 #define DZNL_RANDOM_NUMBERS_HPP
 
@@ -56,3 +57,4 @@ void random_fill_sphere(
 } // namespace dznl
 
 #endif // DZNL_RANDOM_NUMBERS_HPP
+*/

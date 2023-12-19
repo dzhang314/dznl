@@ -1,3 +1,4 @@
+/*
 #ifndef DZNL_ERROR_FREE_TRANSFORMATIONS_HPP_INCLUDED
 #define DZNL_ERROR_FREE_TRANSFORMATIONS_HPP_INCLUDED
 
@@ -83,3 +84,4 @@ constexpr Tuple<T, T> two_prod(const T &a, const T &b) noexcept {
 } // namespace dznl
 
 #endif // DZNL_ERROR_FREE_TRANSFORMATIONS_HPP_INCLUDED
+*/

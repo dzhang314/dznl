@@ -1,5 +1,5 @@
-#ifndef DZNL_NUMERIC_TYPE_INTERFACE_HPP_INCLUDED
-#define DZNL_NUMERIC_TYPE_INTERFACE_HPP_INCLUDED
+#ifndef DZNL_NUMERIC_FUNCTIONS_HPP_INCLUDED
+#define DZNL_NUMERIC_FUNCTIONS_HPP_INCLUDED
 
 namespace dznl {
 
@@ -171,6 +171,34 @@ constexpr long double sqrt<long double>(const long double &x) noexcept {
 #endif
 
 
+/**
+ * @brief Return the absolute value of a given element of a numeric type T.
+ */
+template <typename T>
+constexpr T abs(const T &) noexcept;
+
+#if __has_builtin(__builtin_fabsf)
+template <>
+constexpr float abs<float>(const float &x) noexcept {
+    return __builtin_fabsf(x);
+}
+#endif
+
+#if __has_builtin(__builtin_fabs)
+template <>
+constexpr double abs<double>(const double &x) noexcept {
+    return __builtin_fabs(x);
+}
+#endif
+
+#if __has_builtin(__builtin_fabsl)
+template <>
+constexpr long double abs<long double>(const long double &x) noexcept {
+    return __builtin_fabsl(x);
+}
+#endif
+
+
 } // namespace dznl
 
-#endif // DZNL_NUMERIC_TYPE_INTERFACE_HPP_INCLUDED
+#endif // DZNL_NUMERIC_FUNCTIONS_HPP_INCLUDED
