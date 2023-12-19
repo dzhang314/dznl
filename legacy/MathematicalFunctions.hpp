@@ -103,8 +103,6 @@ DZNL_DECLARE_INLINE_UNARY_FUNCTION(trunc, f32, __builtin_truncf)
 DZNL_DECLARE_INLINE_UNARY_FUNCTION(trunc, f64, __builtin_trunc)
 DZNL_DECLARE_INLINE_UNARY_FUNCTION(abs, f32, __builtin_fabsf)
 DZNL_DECLARE_INLINE_UNARY_FUNCTION(abs, f64, __builtin_fabs)
-DZNL_DECLARE_INLINE_UNARY_FUNCTION(sqrt, f32, __builtin_sqrtf)
-DZNL_DECLARE_INLINE_UNARY_FUNCTION(sqrt, f64, __builtin_sqrt)
 DZNL_DECLARE_INLINE_BINARY_FUNCTION(copysign, f32, __builtin_copysignf)
 DZNL_DECLARE_INLINE_BINARY_FUNCTION(copysign, f64, __builtin_copysign)
 
