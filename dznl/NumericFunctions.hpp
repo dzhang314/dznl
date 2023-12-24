@@ -8,13 +8,17 @@ namespace dznl {
  * @brief Return the additive identity element of a given numeric type T.
  */
 template <typename T>
-constexpr T zero() noexcept;
+constexpr T zero() noexcept {
+    return static_cast<T>(0);
+}
 
 /**
  * @brief Return the multiplicative identity element of a given numeric type T.
  */
 template <typename T>
-constexpr T one() noexcept;
+constexpr T one() noexcept {
+    return static_cast<T>(1);
+}
 
 #define DZNL_DEFINE_NUMERIC_CONSTANT(TYPE, NAME, VALUE)                        \
     template <>                                                                \
@@ -54,21 +58,25 @@ DZNL_DEFINE_NUMERIC_CONSTANT(long double, one, 1.0L);
 
 
 /**
- * @brief Test whether a given element of a numeric type T
+ * @brief Test whether a given element x of a numeric type T
  *        is an additive identity element.
  */
 template <typename T>
-constexpr bool is_zero(const T &) noexcept;
+constexpr bool is_zero(const T &x) noexcept {
+    return x == zero<T>();
+}
 
 /**
- * @brief Test whether a given element of a numeric type T
+ * @brief Test whether a given element x of a numeric type T
  *        is a multiplicative identity element.
  */
 template <typename T>
-constexpr bool is_one(const T &) noexcept;
+constexpr bool is_one(const T &x) noexcept {
+    return x == one<T>();
+}
 
 /**
- * @brief Return the sum of a given element of a numeric type T with itself.
+ * @brief Return the sum of a given element x of a numeric type T with itself.
  *
  * The expressions twice(x) and x + x should always be equivalent, but
  * twice(x) can be computed more efficiently than x + x for some types T.
@@ -77,70 +85,30 @@ constexpr bool is_one(const T &) noexcept;
  * but "double" is a reserved keyword in C++.
  */
 template <typename T>
-constexpr T twice(const T &) noexcept;
+constexpr T twice(const T &x) noexcept {
+    return x + x;
+}
 
 /**
- * @brief Return the product of a given element of a numeric type T with itself.
+ * @brief Return the product of a given element x
+ *        of a numeric type T with itself.
  *
  * The expressions square(x) and x * x should always be equivalent, but
  * square(x) can be computed more efficiently than x * x for some types T.
  */
 template <typename T>
-constexpr T square(const T &) noexcept;
-
-#define DZNL_DEFAULT_NUMERIC_FUNCTION_IMPLEMENTATIONS(TYPE)                    \
-    template <>                                                                \
-    constexpr bool is_zero(const TYPE &x) noexcept {                           \
-        return x == zero<TYPE>();                                              \
-    }                                                                          \
-    template <>                                                                \
-    constexpr bool is_one(const TYPE &x) noexcept {                            \
-        return x == one<TYPE>();                                               \
-    }                                                                          \
-    template <>                                                                \
-    constexpr TYPE twice(const TYPE &x) noexcept {                             \
-        return x + x;                                                          \
-    }                                                                          \
-    template <>                                                                \
-    constexpr TYPE square(const TYPE &x) noexcept {                            \
-        return x * x;                                                          \
-    }
-
-DZNL_DEFAULT_NUMERIC_FUNCTION_IMPLEMENTATIONS(signed char)
-DZNL_DEFAULT_NUMERIC_FUNCTION_IMPLEMENTATIONS(unsigned char)
-DZNL_DEFAULT_NUMERIC_FUNCTION_IMPLEMENTATIONS(signed short int)
-DZNL_DEFAULT_NUMERIC_FUNCTION_IMPLEMENTATIONS(unsigned short int)
-DZNL_DEFAULT_NUMERIC_FUNCTION_IMPLEMENTATIONS(signed int)
-DZNL_DEFAULT_NUMERIC_FUNCTION_IMPLEMENTATIONS(unsigned int)
-DZNL_DEFAULT_NUMERIC_FUNCTION_IMPLEMENTATIONS(signed long int)
-DZNL_DEFAULT_NUMERIC_FUNCTION_IMPLEMENTATIONS(unsigned long int)
-DZNL_DEFAULT_NUMERIC_FUNCTION_IMPLEMENTATIONS(signed long long int)
-DZNL_DEFAULT_NUMERIC_FUNCTION_IMPLEMENTATIONS(unsigned long long int)
-DZNL_DEFAULT_NUMERIC_FUNCTION_IMPLEMENTATIONS(float)
-DZNL_DEFAULT_NUMERIC_FUNCTION_IMPLEMENTATIONS(double)
-DZNL_DEFAULT_NUMERIC_FUNCTION_IMPLEMENTATIONS(long double)
-
-#undef DZNL_DEFAULT_NUMERIC_TYPE_INTERFACE_IMPLEMENTATIONS
-
+constexpr T square(const T &x) noexcept {
+    return x * x;
+}
 
 /**
- * @brief Return the multiplicative inverse of a given element
+ * @brief Return the multiplicative inverse of a given element x
  *        of a numeric type T.
  */
 template <typename T>
-constexpr T inv(const T &) noexcept;
-
-#define DZNL_DEFAULT_INV_IMPLEMENTATION(TYPE)                                  \
-    template <>                                                                \
-    constexpr TYPE inv(const TYPE &x) noexcept {                               \
-        return one<TYPE>() / x;                                                \
-    }
-
-DZNL_DEFAULT_INV_IMPLEMENTATION(float)
-DZNL_DEFAULT_INV_IMPLEMENTATION(double)
-DZNL_DEFAULT_INV_IMPLEMENTATION(long double)
-
-#undef DZNL_DEFAULT_INV_IMPLEMENTATION
+constexpr T inv(const T &x) noexcept {
+    return one<TYPE>() / x;
+}
 
 
 /**
