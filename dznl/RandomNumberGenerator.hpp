@@ -1,5 +1,5 @@
-#ifndef DZNL_RANDOM_NUMBER_GENERATOR_HPP
-#define DZNL_RANDOM_NUMBER_GENERATOR_HPP
+#ifndef DZNL_RANDOM_NUMBER_GENERATOR_HPP_INCLUDED
+#define DZNL_RANDOM_NUMBER_GENERATOR_HPP_INCLUDED
 
 #include "FixedSizeArray.hpp"
 #include "NumericFunctions.hpp"
@@ -46,11 +46,11 @@ public:
             }
             if (norm_squared <= one<f64>()) { break; }
         }
-        REAL_T norm = zero<REAL_T>();
+        REAL_T norm_squared = zero<REAL_T>();
         for (INDEX_T i = zero<INDEX_T>(); i < DIMENSION; ++i) {
-            norm += square(result[i]);
+            norm_squared += square(result[i]);
         }
-        norm = sqrt(norm);
+        const REAL_T norm = sqrt(norm_squared);
         for (INDEX_T i = zero<INDEX_T>(); i < DIMENSION; ++i) {
             result[i] /= norm;
         }
@@ -62,4 +62,4 @@ public:
 
 } // namespace dznl
 
-#endif // DZNL_RANDOM_NUMBER_GENERATOR_HPP
+#endif // DZNL_RANDOM_NUMBER_GENERATOR_HPP_INCLUDED
