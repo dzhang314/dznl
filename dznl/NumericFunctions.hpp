@@ -107,7 +107,7 @@ constexpr T square(const T &x) noexcept {
  */
 template <typename T>
 constexpr T inv(const T &x) noexcept {
-    return one<TYPE>() / x;
+    return one<T>() / x;
 }
 
 
