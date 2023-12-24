@@ -35,15 +35,18 @@ compute_float_dominant_power(const FLOAT_T &base) noexcept {
  * decimal floating-point types have radix 10.
  */
 template <typename FLOAT_T, typename INTEGER_T>
-constexpr FLOAT_T compute_float_radix() noexcept {
-    const FLOAT_T ONE = one<FLOAT_T>();
-    const FLOAT_T large_power_of_two =
-        compute_float_dominant_power<FLOAT_T, INTEGER_T>(ONE + ONE).first;
-    FLOAT_T radix = ONE;
-    while ((large_power_of_two + radix) - large_power_of_two != radix) {
-        radix += ONE;
+constexpr Tuple<FLOAT_T, INTEGER_T> compute_float_radix() noexcept {
+    const FLOAT_T FLOAT_ONE = one<FLOAT_T>();
+    const FLOAT_T FLOAT_TWO = FLOAT_ONE + FLOAT_ONE;
+    const FLOAT_T dominant_number =
+        compute_float_dominant_power<FLOAT_T, INTEGER_T>(FLOAT_TWO).first;
+    FLOAT_T float_radix = FLOAT_ONE;
+    INTEGER_T integer_radix = one<INTEGER_T>();
+    while ((dominant_number + float_radix) - dominant_number != float_radix) {
+        float_radix += FLOAT_ONE;
+        ++integer_radix;
     }
-    return radix;
+    return {float_radix, integer_radix};
 }
 
 
@@ -56,7 +59,7 @@ constexpr FLOAT_T compute_float_radix() noexcept {
  */
 template <typename FLOAT_T, typename INTEGER_T>
 constexpr INTEGER_T compute_float_precision() noexcept {
-    const FLOAT_T radix = compute_float_radix<FLOAT_T, INTEGER_T>();
+    const FLOAT_T radix = compute_float_radix<FLOAT_T, INTEGER_T>().first;
     return compute_float_dominant_power<FLOAT_T, INTEGER_T>(radix).second;
 }
 

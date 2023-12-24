@@ -2,12 +2,35 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("compute_float_radix") {
-    REQUIRE(dznl::compute_float_radix<float, int>() == 2.0f);
-    REQUIRE(dznl::compute_float_radix<double, int>() == 2.0);
+
+TEST_CASE("compute_float_radix (IEEE binary)") {
+    REQUIRE(dznl::compute_float_radix<float, int>().second == 2);
+    REQUIRE(dznl::compute_float_radix<double, int>().second == 2);
 }
 
-TEST_CASE("compute_float_precision") {
+
+TEST_CASE("compute_float_precision (IEEE binary)") {
     REQUIRE(dznl::compute_float_precision<float, int>() == 24);
     REQUIRE(dznl::compute_float_precision<double, int>() == 53);
 }
+
+
+#if defined(__GNUC__) && !defined(__clang__)
+
+#include <decimal/decimal>
+
+TEST_CASE("compute_float_radix (IEEE decimal)") {
+    using namespace std::decimal;
+    REQUIRE(dznl::compute_float_radix<decimal32, int>().second == 10);
+    REQUIRE(dznl::compute_float_radix<decimal64, int>().second == 10);
+    REQUIRE(dznl::compute_float_radix<decimal128, int>().second == 10);
+}
+
+TEST_CASE("compute_float_precision (IEEE decimal)") {
+    using namespace std::decimal;
+    REQUIRE(dznl::compute_float_precision<decimal32, int>() == 7);
+    REQUIRE(dznl::compute_float_precision<decimal64, int>() == 16);
+    REQUIRE(dznl::compute_float_precision<decimal128, int>() == 34);
+}
+
+#endif
