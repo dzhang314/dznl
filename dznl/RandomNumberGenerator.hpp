@@ -1,24 +1,11 @@
 #ifndef DZNL_RANDOM_NUMBER_GENERATOR_HPP
 #define DZNL_RANDOM_NUMBER_GENERATOR_HPP
 
+#include "FixedSizeArray.hpp"
 #include "NumericFunctions.hpp"
 #include "NumericTypes.hpp"
 
 namespace dznl {
-
-
-template <typename ITEM_T, typename INDEX_T, INDEX_T SIZE>
-struct Array {
-
-    ITEM_T items[SIZE];
-
-    ITEM_T &operator[](INDEX_T index) noexcept { return items[index]; }
-
-    const ITEM_T &operator[](INDEX_T index) const noexcept {
-        return items[index];
-    }
-
-}; // struct Array<ITEM_T, INDEX_T, SIZE>
 
 
 class RandomNumberGenerator {
@@ -47,8 +34,9 @@ public:
     }
 
     template <typename REAL_T, typename INDEX_T, INDEX_T DIMENSION>
-    constexpr Array<REAL_T, INDEX_T, DIMENSION> random_sphere_point() noexcept {
-        Array<REAL_T, INDEX_T, DIMENSION> result;
+    constexpr FixedSizeArray<REAL_T, INDEX_T, DIMENSION>
+    random_sphere_point() noexcept {
+        FixedSizeArray<REAL_T, INDEX_T, DIMENSION> result;
         while (true) {
             f64 norm_squared = zero<f64>();
             for (INDEX_T i = zero<INDEX_T>(); i < DIMENSION; ++i) {
