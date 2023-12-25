@@ -36,9 +36,9 @@ DZNL_DEFINE_NUMERIC_CONSTANT(signed long int, zero, 0L)
 DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long int, zero, 0UL)
 DZNL_DEFINE_NUMERIC_CONSTANT(signed long long int, zero, 0LL)
 DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long long int, zero, 0ULL)
-DZNL_DEFINE_NUMERIC_CONSTANT(float, zero, 0.0F);
-DZNL_DEFINE_NUMERIC_CONSTANT(double, zero, 0.0);
-DZNL_DEFINE_NUMERIC_CONSTANT(long double, zero, 0.0L);
+DZNL_DEFINE_NUMERIC_CONSTANT(float, zero, 0.0F)
+DZNL_DEFINE_NUMERIC_CONSTANT(double, zero, 0.0)
+DZNL_DEFINE_NUMERIC_CONSTANT(long double, zero, 0.0L)
 
 DZNL_DEFINE_NUMERIC_CONSTANT(signed char, one, '\1')
 DZNL_DEFINE_NUMERIC_CONSTANT(unsigned char, one, '\1')
@@ -50,9 +50,9 @@ DZNL_DEFINE_NUMERIC_CONSTANT(signed long int, one, 1L)
 DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long int, one, 1UL)
 DZNL_DEFINE_NUMERIC_CONSTANT(signed long long int, one, 1LL)
 DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long long int, one, 1ULL)
-DZNL_DEFINE_NUMERIC_CONSTANT(float, one, 1.0F);
-DZNL_DEFINE_NUMERIC_CONSTANT(double, one, 1.0);
-DZNL_DEFINE_NUMERIC_CONSTANT(long double, one, 1.0L);
+DZNL_DEFINE_NUMERIC_CONSTANT(float, one, 1.0F)
+DZNL_DEFINE_NUMERIC_CONSTANT(double, one, 1.0)
+DZNL_DEFINE_NUMERIC_CONSTANT(long double, one, 1.0L)
 
 #undef DZNL_DEFINE_NUMERIC_CONSTANT
 
@@ -117,23 +117,48 @@ constexpr T inv(const T &x) noexcept {
 template <typename T>
 constexpr T sqrt(const T &) noexcept;
 
-#if __has_builtin(__builtin_sqrtf)
+// In these implementations, we prefer inline assembly when possible
+// because __builtin_sqrt() and friends can interact with errno.
+
+#ifdef __x86_64__
 template <>
-constexpr float sqrt<float>(const float &x) noexcept {
+float sqrt<float>(const float &x) noexcept {
+    float y;
+    asm("sqrtss %1, %0" : "=x"(y) : "x"(x));
+    return y;
+}
+#elif __has_builtin(__builtin_sqrtf)
+template <>
+float sqrt<float>(const float &x) noexcept {
     return __builtin_sqrtf(x);
 }
 #endif
 
-#if __has_builtin(__builtin_sqrt)
+#ifdef __x86_64__
 template <>
-constexpr double sqrt<double>(const double &x) noexcept {
+double sqrt<double>(const double &x) noexcept {
+    double y;
+    asm("sqrtsd %1, %0" : "=x"(y) : "x"(x));
+    return y;
+}
+
+#elif __has_builtin(__builtin_sqrt)
+template <>
+double sqrt<double>(const double &x) noexcept {
     return __builtin_sqrt(x);
 }
 #endif
 
-#if __has_builtin(__builtin_sqrtl)
+#ifdef __x86_64__
 template <>
-constexpr long double sqrt<long double>(const long double &x) noexcept {
+long double sqrt<long double>(const long double &x) noexcept {
+    long double y;
+    asm("fsqrt" : "=t"(y) : "0"(x));
+    return y;
+}
+#elif __has_builtin(__builtin_sqrtl)
+template <>
+long double sqrt<long double>(const long double &x) noexcept {
     return __builtin_sqrtl(x);
 }
 #endif
