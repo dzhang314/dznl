@@ -1,17 +1,21 @@
+#include <cfloat>
+
 #include <dznl/FloatingPointProperties.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
 
 TEST_CASE("compute_float_radix (IEEE binary)") {
-    REQUIRE(dznl::compute_float_radix<float, int>().second == 2);
-    REQUIRE(dznl::compute_float_radix<double, int>().second == 2);
+    REQUIRE(dznl::compute_float_radix<float, int>().second == FLT_RADIX);
+    REQUIRE(dznl::compute_float_radix<double, int>().second == FLT_RADIX);
+    REQUIRE(dznl::compute_float_radix<long double, int>().second == FLT_RADIX);
 }
 
 
 TEST_CASE("compute_float_precision (IEEE binary)") {
-    REQUIRE(dznl::compute_float_precision<float, int>() == 24);
-    REQUIRE(dznl::compute_float_precision<double, int>() == 53);
+    REQUIRE(dznl::compute_float_precision<float, int>() == FLT_MANT_DIG);
+    REQUIRE(dznl::compute_float_precision<double, int>() == DBL_MANT_DIG);
+    REQUIRE(dznl::compute_float_precision<long double, int>() == LDBL_MANT_DIG);
 }
 
 
