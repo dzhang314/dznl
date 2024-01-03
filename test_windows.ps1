@@ -20,3 +20,15 @@ clang++ -std=c++17 $ClangWarningFlags `
     -o bin\TestFloatingPointPropertiesClang
 
 .\bin\TestFloatingPointPropertiesClang
+
+g++ -std=c++17 -Wall -Wextra -Werror -pedantic -pedantic-errors `
+    -I. test\TestRandomNumberGenerator.cpp -lCatch2Main -lCatch2 `
+    -o bin\TestRandomNumberGeneratorGCC
+
+.\bin\TestRandomNumberGeneratorGCC
+
+clang++ -std=c++17 $ClangWarningFlags `
+    -I. test\TestRandomNumberGenerator.cpp -lCatch2Main -lCatch2 `
+    -o bin\TestRandomNumberGeneratorClang
+
+.\bin\TestRandomNumberGeneratorClang

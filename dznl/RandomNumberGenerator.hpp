@@ -8,29 +8,36 @@
 namespace dznl {
 
 
-class RandomNumberGenerator {
+struct RandomNumberGenerator {
 
     static constexpr u64 MULTIPLIER = 6364136223846793005ULL;
     static constexpr u64 INCREMENT = 1442695040888963407ULL;
-    static constexpr f64 DENOMINATOR = 1.0 / 18446744073709551616.0;
+    static constexpr f32 F32_DENOMINATOR = 1.0f / 4294967296.0f;
+    static constexpr f64 F64_DENOMINATOR = 1.0 / 4294967296.0;
 
     u64 state;
 
-public:
-
     explicit constexpr RandomNumberGenerator(u64 seed) noexcept
-        : state(seed) {}
-
-    constexpr u64 random_integer() noexcept {
-        state *= MULTIPLIER;
-        state += INCREMENT;
-        return state;
+        : state(0) {
+        random_u32();
+        state += seed;
+        random_u32();
     }
 
-    constexpr f64 random_real() noexcept {
-        state *= MULTIPLIER;
-        state += INCREMENT;
-        return static_cast<f64>(state) * DENOMINATOR;
+    constexpr u32 random_u32() noexcept {
+        const u64 last = state;
+        state = MULTIPLIER * last + INCREMENT;
+        const u32 xorshift = static_cast<u32>(((last >> 18) ^ last) >> 27);
+        const u32 rotation = static_cast<u32>(last >> 59);
+        return (xorshift >> rotation) | (xorshift << ((-rotation) & 31));
+    }
+
+    constexpr f32 random_f32() noexcept {
+        return static_cast<f32>(random_u32()) * F32_DENOMINATOR;
+    }
+
+    constexpr f64 random_f64() noexcept {
+        return static_cast<f64>(random_u32()) * F64_DENOMINATOR;
     }
 
     template <typename REAL_T, typename INDEX_T, INDEX_T DIMENSION>
@@ -38,13 +45,13 @@ public:
     random_sphere_point() noexcept {
         FixedSizeArray<REAL_T, INDEX_T, DIMENSION> result;
         while (true) {
-            f64 norm_squared = zero<f64>();
+            f64 norm_squared = 0.0;
             for (INDEX_T i = zero<INDEX_T>(); i < DIMENSION; ++i) {
-                const f64 x = twice(random_real()) - one<f64>();
+                const f64 x = twice(random_f64()) - 1.0;
                 result[i] = static_cast<REAL_T>(x);
                 norm_squared += square(x);
             }
-            if (norm_squared <= one<f64>()) { break; }
+            if (norm_squared <= 1.0) { break; }
         }
         REAL_T norm_squared = zero<REAL_T>();
         for (INDEX_T i = zero<INDEX_T>(); i < DIMENSION; ++i) {
@@ -57,7 +64,7 @@ public:
         return result;
     }
 
-}; // class RandomNumberGenerator
+}; // struct RandomNumberGenerator
 
 
 } // namespace dznl
