@@ -8,23 +8,23 @@ namespace dznl {
 
 
 /**
- * @brief Given a floating-point number b, compute and return the first
- *        nonnegative integer n such that b^n is dominant.
+ * @brief Given a floating-point number x, compute and return the first
+ *        nonnegative integer n such that x^n is dominant.
  *
- * We say that a floating-point number x is "dominant" if the least significant
- * digit of x has magnitude greater than one, i.e., ulp(x) > 1.
+ * We say that a floating-point number is "dominant" if its least
+ * significant digit has magnitude greater than one, i.e., ulp(x^n) > 1.
  */
 template <typename FLOAT_T, typename INTEGER_T>
 constexpr Tuple<FLOAT_T, INTEGER_T>
-compute_float_dominant_power(const FLOAT_T &base) noexcept {
-    const FLOAT_T ONE = one<FLOAT_T>();
-    FLOAT_T power = ONE;
-    INTEGER_T exponent = zero<INTEGER_T>();
-    while ((power + ONE) - power == ONE) {
-        power *= base;
-        ++exponent;
+compute_float_dominant_power(const FLOAT_T &x) noexcept {
+    const FLOAT_T FLOAT_ONE = one<FLOAT_T>();
+    INTEGER_T n = zero<INTEGER_T>();
+    FLOAT_T x_pow_n = FLOAT_ONE;
+    while ((x_pow_n + FLOAT_ONE) - x_pow_n == FLOAT_ONE) {
+        x_pow_n *= x;
+        ++n;
     }
-    return {power, exponent};
+    return {x_pow_n, n};
 }
 
 
@@ -36,10 +36,23 @@ compute_float_dominant_power(const FLOAT_T &base) noexcept {
  */
 template <typename FLOAT_T, typename INTEGER_T>
 constexpr Tuple<FLOAT_T, INTEGER_T> compute_float_radix() noexcept {
+
+    // This algorithm is based on the following observation: in any
+    // floating-point system with radix r, the unit in the last place (ulp) of
+    // any finite number is a power of r. Therefore, we can recover the radix r
+    // by computing ulp(x) for the smallest number x that satisfies ulp(x) > 1.
     const FLOAT_T FLOAT_ONE = one<FLOAT_T>();
     const FLOAT_T FLOAT_TWO = FLOAT_ONE + FLOAT_ONE;
+
+    // We could perform a binary search to find x, but we don't need to!
+    // As long as r >= 2, a power of two is guaranteed to lie in every range
+    // of the form [r^n, r^(n+1)). This means we can simply take x to be the
+    // first dominant power of two.
     const FLOAT_T dominant_number =
         compute_float_dominant_power<FLOAT_T, INTEGER_T>(FLOAT_TWO).first;
+
+    // Now, to compute ulp(x), we find the smallest positive integer y
+    // that satisfies (x + y) - x == y.
     FLOAT_T float_radix = FLOAT_ONE;
     INTEGER_T integer_radix = one<INTEGER_T>();
     while ((dominant_number + float_radix) - dominant_number != float_radix) {
@@ -59,6 +72,10 @@ constexpr Tuple<FLOAT_T, INTEGER_T> compute_float_radix() noexcept {
  */
 template <typename FLOAT_T, typename INTEGER_T>
 constexpr INTEGER_T compute_float_precision() noexcept {
+
+    // In a floating-point system with radix r and precision p, the number r^p
+    // is the smallest number satisfying ulp(r^p) > 1. Hence, we can compute p
+    // by computing the first dominant power of r.
     const FLOAT_T radix = compute_float_radix<FLOAT_T, INTEGER_T>().first;
     return compute_float_dominant_power<FLOAT_T, INTEGER_T>(radix).second;
 }
