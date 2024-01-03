@@ -29,7 +29,7 @@ compute_float_dominant_power(const FLOAT_T &x) noexcept {
 
 
 /**
- * @brief Compute and return the radix of a floating-point type FLOAT_T.
+ * @brief Compute and return the radix of a floating-point type `FLOAT_T`.
  *
  * For example, conventional binary floating-point types have radix 2, and
  * decimal floating-point types have radix 10.
@@ -64,10 +64,10 @@ constexpr Tuple<FLOAT_T, INTEGER_T> compute_float_radix() noexcept {
 
 
 /**
- * @brief Compute and return the precision of a floating-point type FLOAT_T.
+ * @brief Compute and return the precision of a floating-point type `FLOAT_T`.
  *
- * For example, the IEEE 754-2008 binary32 type, usually called "float" in C,
- * has precision 24. The IEEE 754-2008 binary64 type, usually called "double"
+ * For example, the IEEE 754-2008 binary32 type, usually called `float` in C,
+ * has precision 24. The IEEE 754-2008 binary64 type, usually called `double`
  * in C, has precision 53.
  */
 template <typename FLOAT_T, typename INTEGER_T>
