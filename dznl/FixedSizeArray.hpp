@@ -9,9 +9,11 @@ struct FixedSizeArray {
 
     ITEM_T items[SIZE];
 
-    ITEM_T &operator[](INDEX_T index) noexcept { return items[index]; }
+    constexpr ITEM_T &operator[](INDEX_T index) noexcept {
+        return items[index];
+    }
 
-    const ITEM_T &operator[](INDEX_T index) const noexcept {
+    constexpr const ITEM_T &operator[](INDEX_T index) const noexcept {
         return items[index];
     }
 
