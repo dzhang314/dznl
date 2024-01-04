@@ -1,6 +1,8 @@
 #ifndef DZNL_NUMERIC_FUNCTIONS_HPP_INCLUDED
 #define DZNL_NUMERIC_FUNCTIONS_HPP_INCLUDED
 
+#include "Macros.hpp"
+
 namespace dznl {
 
 
@@ -64,10 +66,10 @@ DZNL_DEFINE_NUMERIC_CONSTANT(long double, one, 1.0L)
  * twice(x) can be computed more efficiently than x + x for some types T.
  *
  * I would prefer to name this function "double,"
- * but "double" is a reserved keyword in C++.
+ * but `double` is a reserved keyword in C++.
  */
 template <typename T>
-constexpr T twice(const T &x) noexcept {
+constexpr T twice(DZNL_CONST T &x) noexcept {
     return x + x;
 }
 
@@ -79,7 +81,7 @@ constexpr T twice(const T &x) noexcept {
  * square(x) can be computed more efficiently than x * x for some types T.
  */
 template <typename T>
-constexpr T square(const T &x) noexcept {
+constexpr T square(DZNL_CONST T &x) noexcept {
     return x * x;
 }
 
@@ -88,7 +90,7 @@ constexpr T square(const T &x) noexcept {
  *        of a numeric type T.
  */
 template <typename T>
-constexpr T inv(const T &x) noexcept {
+constexpr T inv(DZNL_CONST T &x) noexcept {
     return one<T>() / x;
 }
 
@@ -97,50 +99,50 @@ constexpr T inv(const T &x) noexcept {
  * @brief Return the square root of a given element of a numeric type T.
  */
 template <typename T>
-constexpr T sqrt(const T &) noexcept;
+constexpr T sqrt(DZNL_CONST T &) noexcept;
 
 // In these implementations, we prefer inline assembly when possible
 // because __builtin_sqrt() and friends can interact with errno.
 
 #ifdef __x86_64__
 template <>
-float sqrt<float>(const float &x) noexcept {
+float sqrt<float>(DZNL_CONST float &x) noexcept {
     float y;
     asm("sqrtss %1, %0" : "=x"(y) : "x"(x));
     return y;
 }
-#elif __has_builtin(__builtin_sqrtf)
+#elif DZNL_HAS_BUILTIN(__builtin_sqrtf)
 template <>
-float sqrt<float>(const float &x) noexcept {
+float sqrt<float>(DZNL_CONST float &x) noexcept {
     return __builtin_sqrtf(x);
 }
 #endif
 
 #ifdef __x86_64__
 template <>
-double sqrt<double>(const double &x) noexcept {
+double sqrt<double>(DZNL_CONST double &x) noexcept {
     double y;
     asm("sqrtsd %1, %0" : "=x"(y) : "x"(x));
     return y;
 }
 
-#elif __has_builtin(__builtin_sqrt)
+#elif DZNL_HAS_BUILTIN(__builtin_sqrt)
 template <>
-double sqrt<double>(const double &x) noexcept {
+double sqrt<double>(DZNL_CONST double &x) noexcept {
     return __builtin_sqrt(x);
 }
 #endif
 
 #ifdef __x86_64__
 template <>
-long double sqrt<long double>(const long double &x) noexcept {
+long double sqrt<long double>(DZNL_CONST long double &x) noexcept {
     long double y;
     asm("fsqrt" : "=t"(y) : "0"(x));
     return y;
 }
-#elif __has_builtin(__builtin_sqrtl)
+#elif DZNL_HAS_BUILTIN(__builtin_sqrtl)
 template <>
-long double sqrt<long double>(const long double &x) noexcept {
+long double sqrt<long double>(DZNL_CONST long double &x) noexcept {
     return __builtin_sqrtl(x);
 }
 #endif
@@ -150,25 +152,25 @@ long double sqrt<long double>(const long double &x) noexcept {
  * @brief Return the absolute value of a given element of a numeric type T.
  */
 template <typename T>
-constexpr T abs(const T &) noexcept;
+constexpr T abs(DZNL_CONST T &) noexcept;
 
-#if __has_builtin(__builtin_fabsf)
+#if DZNL_HAS_BUILTIN(__builtin_fabsf)
 template <>
-constexpr float abs<float>(const float &x) noexcept {
+constexpr float abs<float>(DZNL_CONST float &x) noexcept {
     return __builtin_fabsf(x);
 }
 #endif
 
-#if __has_builtin(__builtin_fabs)
+#if DZNL_HAS_BUILTIN(__builtin_fabs)
 template <>
-constexpr double abs<double>(const double &x) noexcept {
+constexpr double abs<double>(DZNL_CONST double &x) noexcept {
     return __builtin_fabs(x);
 }
 #endif
 
-#if __has_builtin(__builtin_fabsl)
+#if DZNL_HAS_BUILTIN(__builtin_fabsl)
 template <>
-constexpr long double abs<long double>(const long double &x) noexcept {
+constexpr long double abs<long double>(DZNL_CONST long double &x) noexcept {
     return __builtin_fabsl(x);
 }
 #endif

@@ -1,8 +1,8 @@
 #ifndef DZNL_GRADIENT_DESCENT_OPTIMIZER_HPP_INCLUDED
 #define DZNL_GRADIENT_DESCENT_OPTIMIZER_HPP_INCLUDED
 
+#include "Macros.hpp"
 #include "NumericFunctions.hpp"
-#include "Restrict.hpp"
 
 namespace dznl {
 

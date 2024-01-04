@@ -1,8 +1,8 @@
 #ifndef DZNL_RIESZ_ENERGY_HPP_INCLUDED
 #define DZNL_RIESZ_ENERGY_HPP_INCLUDED
 
+#include "Macros.hpp"
 #include "NumericFunctions.hpp"
-#include "Restrict.hpp"
 
 namespace dznl {
 

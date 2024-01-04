@@ -47,3 +47,15 @@ clang++ -std=c++17 $ClangWarningFlags `
     -o bin\TestNelderMeadOptimizerClang
 
 .\bin\TestNelderMeadOptimizerClang
+
+g++ -std=c++17 -Wall -Wextra -Werror -pedantic -pedantic-errors `
+    -I. test\TestNelderMeadOptimizerMut.cpp -lCatch2Main -lCatch2 `
+    -o bin\TestNelderMeadOptimizerMutGCC
+
+.\bin\TestNelderMeadOptimizerMutGCC
+
+clang++ -std=c++17 $ClangWarningFlags `
+    -I. test\TestNelderMeadOptimizerMut.cpp -lCatch2Main -lCatch2 `
+    -o bin\TestNelderMeadOptimizerMutClang
+
+.\bin\TestNelderMeadOptimizerMutClang
