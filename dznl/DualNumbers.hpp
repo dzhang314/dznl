@@ -68,18 +68,6 @@ constexpr DualNumber<T> one<DualNumber<T>>() noexcept {
 }
 
 
-template <typename T>
-constexpr bool is_zero<DualNumber<T>>(const DualNumber<T> &x) noexcept {
-    return is_zero(x.real) && is_zero(x.dual);
-}
-
-
-template <typename T>
-constexpr bool is_one<DualNumber<T>>(const DualNumber<T> &x) noexcept {
-    return is_one(x.real) && is_zero(x.dual);
-}
-
-
 } // namespace dznl
 
 #endif // DZNL_DUAL_NUMBERS_HPP_INCLUDED

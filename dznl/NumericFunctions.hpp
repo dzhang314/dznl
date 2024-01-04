@@ -58,24 +58,6 @@ DZNL_DEFINE_NUMERIC_CONSTANT(long double, one, 1.0L)
 
 
 /**
- * @brief Test whether a given element x of a numeric type T
- *        is an additive identity element.
- */
-template <typename T>
-constexpr bool is_zero(const T &x) noexcept {
-    return x == zero<T>();
-}
-
-/**
- * @brief Test whether a given element x of a numeric type T
- *        is a multiplicative identity element.
- */
-template <typename T>
-constexpr bool is_one(const T &x) noexcept {
-    return x == one<T>();
-}
-
-/**
  * @brief Return the sum of a given element x of a numeric type T with itself.
  *
  * The expressions twice(x) and x + x should always be equivalent, but
