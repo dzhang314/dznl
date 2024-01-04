@@ -3,8 +3,11 @@ New-Item -Path "bin" -ItemType "directory" -Force
 
 $ClangWarningFlags = @(
     "-Weverything"
+    "-Werror"
+    "-Wfatal-errors"
     "-Wno-c++98-compat"
     "-Wno-c++98-compat-pedantic"
+    "-Wno-unsafe-buffer-usage"
     "-Wno-float-equal"
     "-Wno-padded"
 )
@@ -32,3 +35,15 @@ clang++ -std=c++17 $ClangWarningFlags `
     -o bin\TestRandomNumberGeneratorClang
 
 .\bin\TestRandomNumberGeneratorClang
+
+g++ -std=c++17 -Wall -Wextra -Werror -pedantic -pedantic-errors `
+    -I. test\TestNelderMeadOptimizer.cpp -lCatch2Main -lCatch2 `
+    -o bin\TestNelderMeadOptimizerGCC
+
+.\bin\TestNelderMeadOptimizerGCC
+
+clang++ -std=c++17 $ClangWarningFlags `
+    -I. test\TestNelderMeadOptimizer.cpp -lCatch2Main -lCatch2 `
+    -o bin\TestNelderMeadOptimizerClang
+
+.\bin\TestNelderMeadOptimizerClang
