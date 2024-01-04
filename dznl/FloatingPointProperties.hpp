@@ -12,7 +12,7 @@ namespace dznl {
  */
 template <typename FLOAT_T>
 constexpr bool is_nan(const FLOAT_T &x) noexcept {
-    return (x != x);
+    return !(x == x);
 }
 
 
