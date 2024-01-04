@@ -84,7 +84,6 @@ public: // test-only interface
 public: // public interface
     constexpr my_accessor_t(const my_accessor_t &) noexcept                     = default;
     constexpr double &operator[](const my_index_t &index) const noexcept        { return m_data[index.test_only_get_value()]; }
-    constexpr my_accessor_t &operator++() noexcept                              { ++m_data; return *this; }
     constexpr my_accessor_t operator+(const my_index_t &index) const noexcept   { return my_accessor_t(m_data + index.test_only_get_value(), test_only_t()); }
 }; // clang-format on
 
@@ -100,7 +99,6 @@ public: // test-only interface
 public: // public interface
     constexpr mut_accessor_t(const mut_accessor_t &) noexcept                   = default;
     constexpr double &operator[](mut_index_t &index) noexcept                   { return m_data[index.test_only_get_value()]; }
-    constexpr mut_accessor_t &operator++() noexcept                             { ++m_data; return *this; }
     constexpr mut_accessor_t operator+(mut_index_t &index) noexcept             { return mut_accessor_t(m_data + index.test_only_get_value(), test_only_t()); }
 }; // clang-format on
 
