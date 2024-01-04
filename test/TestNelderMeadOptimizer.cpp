@@ -4,6 +4,7 @@
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <iomanip>
 #include <iostream>
 #include <vector>
 
@@ -192,6 +193,15 @@ TEST_CASE("NelderMeadOptimizer my_index_t") {
     REQUIRE(workspace[6] == 2.5);
     REQUIRE(workspace[7] == 4.0);
     REQUIRE(workspace[8] == 508.5);
+
+    std::cout << std::setprecision(17);
+    for (unsigned i = 0; i < 9; ++i) { std::cout << " " << workspace[i]; }
+    std::cout << std::endl;
+    for (int j = 0; j < 200; ++j) {
+        optimizer.step();
+        for (unsigned i = 0; i < 9; ++i) { std::cout << " " << workspace[i]; }
+        std::cout << std::endl;
+    }
 }
 
 

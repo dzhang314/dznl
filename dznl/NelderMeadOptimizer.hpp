@@ -4,6 +4,7 @@
 #include "FloatingPointProperties.hpp"
 #include "NumericFunctions.hpp"
 #include "Restrict.hpp"
+#include "Tuple.hpp"
 
 namespace dznl {
 
@@ -64,16 +65,82 @@ class NelderMeadOptimizer {
         }
     }
 
-public:
-
-    constexpr const REAL_T *current_point() const noexcept {
-        return m_workspace;
+    constexpr Tuple<bool, bool> try_forward_step(
+        ACCESSOR_T dst, ACCESSOR_T src, INDEX_T i, REAL_T step_length
+    ) noexcept {
+        for (INDEX_T j = zero<INDEX_T>(); j < m_dimension; ++j) {
+            dst[j] = src[j];
+        }
+        const REAL_T x = dst[i];
+        const REAL_T x_prime = x + step_length;
+        if (x == x_prime) { return {false, false}; }
+        dst[i] = x_prime;
+        if (m_constraint_function(dst)) {
+            const REAL_T objective_value = m_objective_function(dst);
+            if (!is_nan(objective_value)) {
+                dst[m_dimension] = objective_value;
+                return {true, true};
+            }
+        }
+        return {true, false};
     }
 
+    constexpr Tuple<bool, bool> try_backward_step(
+        ACCESSOR_T dst, ACCESSOR_T src, INDEX_T i, REAL_T step_length
+    ) noexcept {
+        for (INDEX_T j = zero<INDEX_T>(); j < m_dimension; ++j) {
+            dst[j] = src[j];
+        }
+        const REAL_T x = dst[i];
+        const REAL_T x_prime = x - step_length;
+        if (x == x_prime) { return {false, false}; }
+        dst[i] = x_prime;
+        if (m_constraint_function(dst)) {
+            const REAL_T objective_value = m_objective_function(dst);
+            if (!is_nan(objective_value)) {
+                dst[m_dimension] = objective_value;
+                return {true, true};
+            }
+        }
+        return {true, false};
+    }
+
+    constexpr bool generate_initial_vertex(
+        const ACCESSOR_T &dst,
+        const ACCESSOR_T &src,
+        const INDEX_T &i,
+        REAL_T step_length
+    ) noexcept {
+        const REAL_T ONE = one<REAL_T>();
+        const REAL_T TWO = ONE + ONE;
+        while (true) {
+            const auto [forward_change, forward_success] =
+                try_forward_step(dst, src, i, step_length);
+            if (forward_success) { return true; }
+            const auto [backward_change, backward_success] =
+                try_backward_step(dst, src, i, step_length);
+            if (backward_success) { return true; }
+            if (!(forward_change || backward_change)) { return false; }
+            step_length /= TWO;
+        }
+    }
+
+public:
+
     static constexpr INDEX_T workspace_size(INDEX_T dimension) noexcept {
-        INDEX_T dimension_plus_one = ++dimension;
-        ++dimension;
-        return (++dimension) * dimension_plus_one;
+        INDEX_T dimension_plus_one = dimension;
+        ++dimension_plus_one;
+        INDEX_T dimension_plus_one_squared =
+            dimension_plus_one * dimension_plus_one;
+        INDEX_T double_dimension = dimension + dimension;
+        INDEX_T triple_dimension = double_dimension + dimension;
+        return dimension_plus_one_squared + triple_dimension;
+    }
+
+    constexpr ACCESSOR_T current_point() const noexcept { return m_workspace; }
+
+    constexpr REAL_T current_objective_value() const noexcept {
+        return m_workspace[m_dimension];
     }
 
     explicit constexpr NelderMeadOptimizer(
@@ -83,68 +150,222 @@ public:
         const INDEX_T &dimension,
         const REAL_T &initial_step_length,
         const ACCESSOR_T &workspace
-    )
+    ) noexcept
         : m_objective_function(objective_function)
         , m_constraint_function(constraint_function)
         , m_workspace(workspace)
         , m_dimension(dimension)
         , m_has_terminated(false) {
 
-        // Copy `initial_point` into `workspace`.
+        // Copy initial point into beginning of workspace.
         ACCESSOR_T x = initial_point;
         for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
             m_workspace[i] = x[i];
         }
 
-        // Call `constraint_function` to check if `initial_point` is feasible.
+        // Call constraint function to check feasibility of initial point.
         if (!m_constraint_function(m_workspace)) {
-            // If not, immediately terminate iteration
-            // by setting `has_terminated` flag.
+            // If initial point is infeasible, immediately terminate.
             m_has_terminated = true;
             return;
         }
 
-        // Call `objective_function` to compute objective value at constrained
-        // `initial_point` and ensure returned value is not NaN.
+        // Compute objective value at constrained initial point.
         const REAL_T initial_value = m_objective_function(m_workspace);
+        // If objective value is NaN, immediately terminate.
         if (is_nan(initial_value)) {
             m_has_terminated = true;
             return;
         }
+
+        // Store objective value in workspace
+        // immediately after constrained initial point.
         m_workspace[m_dimension] = initial_value;
 
-        // Generate initial simplex by adding `initial_step_length`
-        // to each coordinate of constrained `initial_point`.
-        INDEX_T k = m_dimension;
-        ++k;
+        // Generate active simplex. The first (dimension + 1)^2 workspace
+        // entries will contain vertices of the active simplex, each followed
+        // immediately by its objective value.
         for (INDEX_T i = zero<INDEX_T>(); i < m_dimension;) {
-            ACCESSOR_T current_vertex = m_workspace + k;
-            for (INDEX_T j = zero<INDEX_T>(); j < m_dimension; ++j) {
-                m_workspace[k] = (i == j) ? x[j] + initial_step_length : x[j];
-                ++k;
-            }
-
-            // Call `constraint_function` to check if
-            // each vertex of initial simplex is feasible.
-            if (!m_constraint_function(current_vertex)) {
-                // If not, immediately terminate iteration
-                // by setting `has_terminated` flag.
+            INDEX_T coordinate_index = i;
+            ++i;
+            INDEX_T offset_i = vertex_offset(i);
+            ACCESSOR_T vertex_i = m_workspace + offset_i;
+            const bool success = generate_initial_vertex(
+                vertex_i, m_workspace, coordinate_index, initial_step_length
+            );
+            if (!success) {
                 m_has_terminated = true;
                 return;
-                // TODO: Adaptive strategy to try other vertex locations.
+            }
+            insert_vertex(i);
+        }
+    }
+
+    constexpr void step() noexcept {
+        if (!m_has_terminated) {
+
+            // Vertices of the active simplex are stored in increasing
+            // order by objective value, so the worst vertex is last.
+            INDEX_T worst_offset = vertex_offset(m_dimension);
+            ACCESSOR_T worst_vertex = m_workspace + worst_offset;
+            const REAL_T worst_value = worst_vertex[m_dimension];
+
+            // Compute centroid of all vertices except the worst.
+            INDEX_T centroid_offset = worst_offset + m_dimension;
+            ++centroid_offset;
+            ACCESSOR_T centroid = m_workspace + centroid_offset;
+            for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
+                centroid[i] = zero<REAL_T>();
+            }
+            REAL_T denominator = zero<REAL_T>();
+            const REAL_T ONE = one<REAL_T>();
+            for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
+                INDEX_T current_offset = vertex_offset(i);
+                ACCESSOR_T current_vertex = m_workspace + current_offset;
+                for (INDEX_T j = zero<INDEX_T>(); j < m_dimension; ++j) {
+                    centroid[j] += current_vertex[j];
+                }
+                denominator += ONE;
+            }
+            for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
+                centroid[i] /= denominator;
             }
 
-            // Call `objective_function` to compute objective value
-            // at each constrained vertex of initial simplex.
-            const REAL_T vertex_value = m_objective_function(current_vertex);
-            if (is_nan(vertex_value)) {
-                m_has_terminated = true;
-                return;
-                // TODO: Adaptive strategy to try other vertex locations.
+            // Compute reflection of worst vertex through centroid.
+            INDEX_T reflected_offset = centroid_offset + m_dimension;
+            ACCESSOR_T reflected_point = m_workspace + reflected_offset;
+            for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
+                const REAL_T c = centroid[i];
+                reflected_point[i] = c + c - worst_vertex[i];
             }
-            m_workspace[k] = vertex_value;
-            ++k;
-            insert_vertex(++i);
+
+            // Constrain reflected point and compute its objective value.
+            bool reflected_feasible = false;
+            REAL_T threshold_value = worst_value;
+            if (m_constraint_function(reflected_point)) {
+                const REAL_T reflected_value =
+                    m_objective_function(reflected_point);
+                if (!is_nan(reflected_value)) {
+                    reflected_feasible = true;
+                    threshold_value = reflected_value;
+
+                    // If the reflected point is feasible and better than
+                    // the previous best vertex, try expanding the simplex.
+                    const REAL_T best_value = m_workspace[m_dimension];
+                    if (reflected_value < best_value) {
+                        INDEX_T expanded_offset =
+                            reflected_offset + m_dimension;
+                        ACCESSOR_T expanded_vertex =
+                            m_workspace + expanded_offset;
+                        for (INDEX_T i = zero<INDEX_T>(); i < m_dimension;
+                             ++i) {
+                            const REAL_T r = reflected_point[i];
+                            expanded_vertex[i] = r + r - centroid[i];
+                        }
+
+                        // Replace worst vertex with whichever is better
+                        // between the reflected and expanded points.
+                        if (m_constraint_function(expanded_vertex)) {
+                            const REAL_T expanded_value =
+                                m_objective_function(expanded_vertex);
+                            if (expanded_value < reflected_value) {
+                                for (INDEX_T i = zero<INDEX_T>();
+                                     i < m_dimension;
+                                     ++i) {
+                                    worst_vertex[i] = expanded_vertex[i];
+                                }
+                                worst_vertex[m_dimension] = expanded_value;
+                                insert_vertex(m_dimension);
+                                return;
+                            }
+                        }
+                        for (INDEX_T i = zero<INDEX_T>(); i < m_dimension;
+                             ++i) {
+                            worst_vertex[i] = reflected_point[i];
+                        }
+                        worst_vertex[m_dimension] = reflected_value;
+                        insert_vertex(m_dimension);
+                        return;
+                    }
+
+                    // Otherwise, if the reflected point is feasible and better
+                    // than the second-worst vertex, accept the reflected point
+                    // without trying expansion.
+                    --worst_offset;
+                    const REAL_T second_worst_value = m_workspace[worst_offset];
+                    if (reflected_value < second_worst_value) {
+                        for (INDEX_T i = zero<INDEX_T>(); i < m_dimension;
+                             ++i) {
+                            worst_vertex[i] = reflected_point[i];
+                        }
+                        worst_vertex[m_dimension] = reflected_value;
+                        insert_vertex(m_dimension);
+                        return;
+                    }
+                }
+            }
+
+            // At this point, the reflected point is either infeasible or worse
+            // than the second-worst vertex. If we accepted it, it would simply
+            // be the worst vertex again, so we need to contract or shrink.
+
+            const REAL_T TWO = ONE + ONE;
+            const REAL_T HALF = ONE / TWO;
+
+            if ((!reflected_feasible) || (threshold_value < worst_value)) {
+                for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
+                    reflected_point[i] =
+                        HALF * (reflected_point[i] + centroid[i]);
+                }
+                if (m_constraint_function(reflected_point)) {
+                    const REAL_T contracted_value =
+                        m_objective_function(reflected_point);
+                    if (contracted_value < threshold_value) {
+                        for (INDEX_T i = zero<INDEX_T>(); i < m_dimension;
+                             ++i) {
+                            worst_vertex[i] = reflected_point[i];
+                        }
+                        worst_vertex[m_dimension] = contracted_value;
+                        insert_vertex(m_dimension);
+                        return;
+                    }
+                }
+            }
+
+            for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
+                reflected_point[i] = HALF * (worst_vertex[i] + centroid[i]);
+            }
+            if (m_constraint_function(reflected_point)) {
+                const REAL_T contracted_value =
+                    m_objective_function(reflected_point);
+                if (contracted_value < worst_value) {
+                    for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
+                        worst_vertex[i] = reflected_point[i];
+                    }
+                    worst_vertex[m_dimension] = contracted_value;
+                    insert_vertex(m_dimension);
+                    return;
+                }
+            }
+
+            for (INDEX_T i = zero<INDEX_T>(); i < m_dimension;) {
+                ++i;
+                INDEX_T offset_i = vertex_offset(i);
+                ACCESSOR_T vertex_i = m_workspace + offset_i;
+                for (INDEX_T j = zero<INDEX_T>(); j < m_dimension; ++j) {
+                    vertex_i[j] = HALF * (vertex_i[j] + m_workspace[j]);
+                }
+                if (!m_constraint_function(vertex_i)) {
+                    m_has_terminated = true;
+                    return;
+                }
+                vertex_i[m_dimension] = m_objective_function(vertex_i);
+            }
+
+            for (INDEX_T i = zero<INDEX_T>(); i < m_dimension;) {
+                ++i;
+                insert_vertex(i);
+            }
         }
     }
 
