@@ -2,13 +2,14 @@
 #define DZNL_RIESZ_ENERGY_HPP_INCLUDED
 
 #include "NumericFunctions.hpp"
+#include "Restrict.hpp"
 
 namespace dznl {
 
 
 template <typename REAL_T, typename INDEX_T>
 constexpr REAL_T riesz_energy(
-    const REAL_T *const __restrict__ points,
+    const REAL_T *const DZNL_RESTRICT points,
     const INDEX_T num_points,
     const INDEX_T dimension
 ) noexcept {
