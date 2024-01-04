@@ -8,6 +8,24 @@ namespace dznl {
 
 
 /**
+ * @brief Test whether a given floating-point number is NaN.
+ */
+template <typename FLOAT_T>
+constexpr bool is_nan(const FLOAT_T &x) noexcept {
+    return (x != x);
+}
+
+
+/**
+ * @brief Test whether a given floating-point number is finite.
+ */
+template <typename FLOAT_T>
+constexpr bool is_finite(const FLOAT_T &x) noexcept {
+    return !is_nan(x - x);
+}
+
+
+/**
  * @brief Given a floating-point number x, compute and return the first
  *        nonnegative integer n such that x^n is dominant.
  *
