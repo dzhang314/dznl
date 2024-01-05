@@ -23,6 +23,40 @@ TEST_CASE("compute_float_precision (IEEE binary)") {
 
 #include <decimal/decimal>
 
+namespace dznl {
+
+template <>
+std::decimal::decimal32 zero<std::decimal::decimal32>() noexcept {
+    return 0;
+}
+
+template <>
+std::decimal::decimal32 one<std::decimal::decimal32>() noexcept {
+    return 1;
+}
+
+template <>
+std::decimal::decimal64 zero<std::decimal::decimal64>() noexcept {
+    return 0;
+}
+
+template <>
+std::decimal::decimal64 one<std::decimal::decimal64>() noexcept {
+    return 1;
+}
+
+template <>
+std::decimal::decimal128 zero<std::decimal::decimal128>() noexcept {
+    return 0;
+}
+
+template <>
+std::decimal::decimal128 one<std::decimal::decimal128>() noexcept {
+    return 1;
+}
+
+} // namespace dznl
+
 TEST_CASE("compute_float_radix (IEEE decimal)") {
     using namespace std::decimal;
     REQUIRE(dznl::compute_float_radix<decimal32, int>().second == 10);

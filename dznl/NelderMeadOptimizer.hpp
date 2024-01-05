@@ -95,6 +95,7 @@ class NelderMeadOptimizer {
     ) noexcept {
         DZNL_CONST REAL_T ONE = one<REAL_T>();
         DZNL_CONST REAL_T TWO = ONE + ONE;
+        DZNL_CONST REAL_T HALF = inv(TWO);
         while (true) {
             const auto [forward_change, forward_success] =
                 try_coordinate_step(dst, src, i, step_length, true);
@@ -103,7 +104,7 @@ class NelderMeadOptimizer {
                 try_coordinate_step(dst, src, i, step_length, false);
             if (backward_success) { return true; }
             if (!(forward_change || backward_change)) { return false; }
-            step_length = step_length / TWO;
+            step_length *= HALF;
         }
     }
 
@@ -294,7 +295,7 @@ public:
             // be the worst vertex again, so we need to contract or shrink.
 
             const REAL_T TWO = ONE + ONE;
-            const REAL_T HALF = ONE / TWO;
+            const REAL_T HALF = inv(TWO);
 
             if ((!reflected_feasible) || (threshold_value < worst_value)) {
                 for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {

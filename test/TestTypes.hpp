@@ -18,6 +18,10 @@ public: // public interface
     constexpr my_real operator-(DZNL_CONST my_real &rhs) DZNL_CONST noexcept    { return my_real(m_value - rhs.m_value); }
     constexpr my_real operator*(DZNL_CONST my_real &rhs) DZNL_CONST noexcept    { return my_real(m_value * rhs.m_value); }
     constexpr my_real operator/(DZNL_CONST my_real &rhs) DZNL_CONST noexcept    { return my_real(m_value / rhs.m_value); }
+    constexpr my_real &operator+=(DZNL_CONST my_real &rhs) noexcept             { m_value += rhs.m_value; return *this; }
+    constexpr my_real &operator-=(DZNL_CONST my_real &rhs) noexcept             { m_value -= rhs.m_value; return *this; }
+    constexpr my_real &operator*=(DZNL_CONST my_real &rhs) noexcept             { m_value *= rhs.m_value; return *this; }
+    constexpr my_real &operator/=(DZNL_CONST my_real &rhs) noexcept             { m_value /= rhs.m_value; return *this; }
 
 public: // test-only interface
 
@@ -30,7 +34,17 @@ private: // clang-format on
     explicit constexpr my_real(double value) noexcept
         : m_value(value) {}
 
+    my_real(my_real &&) = delete;
+    my_real &operator=(my_real &&) = delete;
+
 }; // class my_real
+
+// clang-format off
+template <> constexpr my_real zero<my_real>() noexcept                          { return my_real::test_only_construct(0.0); }
+template <> constexpr my_real one<my_real>()  noexcept                          { return my_real::test_only_construct(1.0); }
+constexpr my_real inv(DZNL_CONST my_real &x) noexcept                           { return my_real::test_only_construct(inv(x.test_only_get_value())); }
+constexpr my_real square(DZNL_CONST my_real &x) noexcept                        { return x * x; }
+// clang-format on
 
 
 class my_index { // clang-format off
@@ -56,12 +70,13 @@ private: // clang-format on
     explicit constexpr my_index(unsigned value) noexcept
         : m_value(value) {}
 
+    my_index(my_index &&) = delete;
+    my_index &operator=(const my_index &) = delete;
+    my_index &operator=(my_index &&) = delete;
+
 }; // class my_index
 
-
 // clang-format off
-template <> constexpr my_real zero<my_real>() noexcept                          { return my_real::test_only_construct(0.0); }
-template <> constexpr my_real one<my_real>()  noexcept                          { return my_real::test_only_construct(1.0); }
 template <> constexpr my_index zero<my_index>() noexcept                        { return my_index::test_only_construct(0); }
 // clang-format on
 
