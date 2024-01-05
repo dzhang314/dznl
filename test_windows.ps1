@@ -1,9 +1,13 @@
-Remove-Item -Path "bin" -Recurse -Force
-New-Item -Path "bin" -ItemType "directory" -Force
+$GccWarningFlags = @(
+    "-Wall"
+    "-Wextra"
+    "-Wfatal-errors"
+    "-pedantic"
+    "-pedantic-errors"
+)
 
 $ClangWarningFlags = @(
     "-Weverything"
-    "-Werror"
     "-Wfatal-errors"
     "-Wno-c++98-compat"
     "-Wno-c++98-compat-pedantic"
@@ -12,50 +16,56 @@ $ClangWarningFlags = @(
     "-Wno-padded"
 )
 
-g++ -std=c++17 -Wall -Wextra -Werror -pedantic -pedantic-errors `
-    -I. test\TestFloatingPointProperties.cpp -lCatch2Main -lCatch2 `
-    -o bin\TestFloatingPointPropertiesGCC
+function CompileAndRun($sourceFile) {
 
-.\bin\TestFloatingPointPropertiesGCC
+    $outputFileBase = Join-Path -Path "bin" `
+        -ChildPath (Get-Item $sourceFile).BaseName
 
-clang++ -std=c++17 $ClangWarningFlags `
-    -I. test\TestFloatingPointProperties.cpp -lCatch2Main -lCatch2 `
-    -o bin\TestFloatingPointPropertiesClang
+    g++ -std=c++17 $GccWarningFlags `
+        -I. $sourceFile -lCatch2Main -lCatch2 `
+        -o $outputFileBase"GCC"
 
-.\bin\TestFloatingPointPropertiesClang
+    if ($LastExitCode -ne 0) { exit $LastExitCode }
 
-g++ -std=c++17 -Wall -Wextra -Werror -pedantic -pedantic-errors `
-    -I. test\TestRandomNumberGenerator.cpp -lCatch2Main -lCatch2 `
-    -o bin\TestRandomNumberGeneratorGCC
+    & $outputFileBase"GCC"
 
-.\bin\TestRandomNumberGeneratorGCC
+    if ($LastExitCode -ne 0) { exit $LastExitCode }
 
-clang++ -std=c++17 $ClangWarningFlags `
-    -I. test\TestRandomNumberGenerator.cpp -lCatch2Main -lCatch2 `
-    -o bin\TestRandomNumberGeneratorClang
+    clang++ -std=c++17 $ClangWarningFlags `
+        -I. $sourceFile -lCatch2Main -lCatch2 `
+        -o $outputFileBase"Clang"
 
-.\bin\TestRandomNumberGeneratorClang
+    if ($LastExitCode -ne 0) { exit $LastExitCode }
 
-g++ -std=c++17 -Wall -Wextra -Werror -pedantic -pedantic-errors `
-    -I. test\TestNelderMeadOptimizer.cpp -lCatch2Main -lCatch2 `
-    -o bin\TestNelderMeadOptimizerGCC
+    & $outputFileBase"Clang"
 
-.\bin\TestNelderMeadOptimizerGCC
+    if ($LastExitCode -ne 0) { exit $LastExitCode }
 
-clang++ -std=c++17 $ClangWarningFlags `
-    -I. test\TestNelderMeadOptimizer.cpp -lCatch2Main -lCatch2 `
-    -o bin\TestNelderMeadOptimizerClang
+    g++ -std=c++17 $GccWarningFlags -DDZNL_REMOVE_CONST `
+        -I. $sourceFile -lCatch2Main -lCatch2 `
+        -o $outputFileBase"GCCMut"
 
-.\bin\TestNelderMeadOptimizerClang
+    if ($LastExitCode -ne 0) { exit $LastExitCode }
 
-g++ -std=c++17 -Wall -Wextra -Werror -pedantic -pedantic-errors `
-    -I. test\TestNelderMeadOptimizerMut.cpp -lCatch2Main -lCatch2 `
-    -o bin\TestNelderMeadOptimizerMutGCC
+    & $outputFileBase"GCCMut"
 
-.\bin\TestNelderMeadOptimizerMutGCC
+    if ($LastExitCode -ne 0) { exit $LastExitCode }
 
-clang++ -std=c++17 $ClangWarningFlags `
-    -I. test\TestNelderMeadOptimizerMut.cpp -lCatch2Main -lCatch2 `
-    -o bin\TestNelderMeadOptimizerMutClang
+    clang++ -std=c++17 $ClangWarningFlags -DDZNL_REMOVE_CONST `
+        -I. $sourceFile -lCatch2Main -lCatch2 `
+        -o $outputFileBase"ClangMut"
 
-.\bin\TestNelderMeadOptimizerMutClang
+    if ($LastExitCode -ne 0) { exit $LastExitCode }
+
+    & $outputFileBase"ClangMut"
+
+    if ($LastExitCode -ne 0) { exit $LastExitCode }
+
+}
+
+Remove-Item -Path "bin" -Recurse -Force
+New-Item -Path "bin" -ItemType "directory" -Force
+
+foreach ($file in Get-ChildItem -Path "test" -Filter "*.cpp") {
+    CompileAndRun $file.FullName
+}
