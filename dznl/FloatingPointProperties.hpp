@@ -1,6 +1,7 @@
 #ifndef DZNL_FLOATING_POINT_PROPERTIES_HPP_INCLUDED
 #define DZNL_FLOATING_POINT_PROPERTIES_HPP_INCLUDED
 
+#include "Macros.hpp"
 #include "NumericFunctions.hpp"
 #include "Tuple.hpp"
 
@@ -11,7 +12,7 @@ namespace dznl {
  * @brief Test whether a given floating-point number is NaN.
  */
 template <typename FLOAT_T>
-constexpr bool is_nan(const FLOAT_T &x) noexcept {
+constexpr bool is_nan(DZNL_CONST FLOAT_T &x) noexcept {
     return !(x == x);
 }
 
@@ -20,7 +21,7 @@ constexpr bool is_nan(const FLOAT_T &x) noexcept {
  * @brief Test whether a given floating-point number is finite.
  */
 template <typename FLOAT_T>
-constexpr bool is_finite(const FLOAT_T &x) noexcept {
+constexpr bool is_finite(DZNL_CONST FLOAT_T &x) noexcept {
     return !is_nan(x - x);
 }
 
@@ -34,8 +35,8 @@ constexpr bool is_finite(const FLOAT_T &x) noexcept {
  */
 template <typename FLOAT_T, typename INTEGER_T>
 constexpr Tuple<FLOAT_T, INTEGER_T>
-compute_float_dominant_power(const FLOAT_T &x) noexcept {
-    const FLOAT_T FLOAT_ONE = one<FLOAT_T>();
+compute_float_dominant_power(DZNL_CONST FLOAT_T &x) noexcept {
+    DZNL_CONST FLOAT_T FLOAT_ONE = one<FLOAT_T>();
     INTEGER_T n = zero<INTEGER_T>();
     FLOAT_T x_pow_n = FLOAT_ONE;
     while ((x_pow_n + FLOAT_ONE) - x_pow_n == FLOAT_ONE) {
@@ -59,14 +60,14 @@ constexpr Tuple<FLOAT_T, INTEGER_T> compute_float_radix() noexcept {
     // floating-point system with radix r, the unit in the last place (ulp) of
     // any finite number is a power of r. Therefore, we can recover the radix r
     // by computing ulp(x) for the smallest number x that satisfies ulp(x) > 1.
-    const FLOAT_T FLOAT_ONE = one<FLOAT_T>();
-    const FLOAT_T FLOAT_TWO = FLOAT_ONE + FLOAT_ONE;
+    DZNL_CONST FLOAT_T FLOAT_ONE = one<FLOAT_T>();
+    DZNL_CONST FLOAT_T FLOAT_TWO = FLOAT_ONE + FLOAT_ONE;
 
     // We could perform a binary search to find x, but we don't need to!
     // As long as r >= 2, a power of two is guaranteed to lie in every range
     // of the form [r^n, r^(n+1)). This means we can simply take x to be the
     // first dominant power of two.
-    const FLOAT_T dominant_number =
+    DZNL_CONST FLOAT_T dominant_number =
         compute_float_dominant_power<FLOAT_T, INTEGER_T>(FLOAT_TWO).first;
 
     // Now, to compute ulp(x), we find the smallest positive integer y
@@ -94,7 +95,7 @@ constexpr INTEGER_T compute_float_precision() noexcept {
     // In a floating-point system with radix r and precision p, the number r^p
     // is the smallest number satisfying ulp(r^p) > 1. Hence, we can compute p
     // by computing the first dominant power of r.
-    const FLOAT_T radix = compute_float_radix<FLOAT_T, INTEGER_T>().first;
+    DZNL_CONST FLOAT_T radix = compute_float_radix<FLOAT_T, INTEGER_T>().first;
     return compute_float_dominant_power<FLOAT_T, INTEGER_T>(radix).second;
 }
 
