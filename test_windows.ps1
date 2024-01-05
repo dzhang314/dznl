@@ -1,3 +1,8 @@
+$CompilerFlags = @(
+    "-std=c++17"
+    "-I./"
+)
+
 $GccWarningFlags = @(
     "-Wall"
     "-Wextra"
@@ -16,55 +21,37 @@ $ClangWarningFlags = @(
     "-Wno-padded"
 )
 
-function CompileAndRun($sourceFile) {
+function CompileAndRun($testFile) {
+    $testName = (Get-Item $testFile).BaseName
+    $outputBase = Join-Path -Path "bin" -ChildPath $testName
 
-    $outputFileBase = Join-Path -Path "bin" `
-        -ChildPath (Get-Item $sourceFile).BaseName
-
-    g++ -std=c++17 $GccWarningFlags `
-        -I. $sourceFile -lCatch2Main -lCatch2 `
-        -o $outputFileBase"GCC"
-
+    Write-Host $testName"GCC"
+    g++ $CompilerFlags $GccWarningFlags $testFile -o $outputBase"GCC"
+    if ($LastExitCode -ne 0) { exit $LastExitCode }
+    & $outputBase"GCC" -q
     if ($LastExitCode -ne 0) { exit $LastExitCode }
 
-    & $outputFileBase"GCC"
-
+    Write-Host $testName"Clang"
+    clang++ $CompilerFlags $ClangWarningFlags $testFile -o $outputBase"Clang"
+    if ($LastExitCode -ne 0) { exit $LastExitCode }
+    & $outputBase"Clang" -q
     if ($LastExitCode -ne 0) { exit $LastExitCode }
 
-    clang++ -std=c++17 $ClangWarningFlags `
-        -I. $sourceFile -lCatch2Main -lCatch2 `
-        -o $outputFileBase"Clang"
-
+    Write-Host $testName"GCCMut"
+    g++ $CompilerFlags $GccWarningFlags -DDZNL_REMOVE_CONST $testFile -o $outputBase"GCCMut"
+    if ($LastExitCode -ne 0) { exit $LastExitCode }
+    & $outputBase"GCCMut" -q
     if ($LastExitCode -ne 0) { exit $LastExitCode }
 
-    & $outputFileBase"Clang"
-
+    Write-Host $testName"ClangMut"
+    clang++ $CompilerFlags $ClangWarningFlags -DDZNL_REMOVE_CONST $testFile -o $outputBase"ClangMut"
     if ($LastExitCode -ne 0) { exit $LastExitCode }
-
-    g++ -std=c++17 $GccWarningFlags -DDZNL_REMOVE_CONST `
-        -I. $sourceFile -lCatch2Main -lCatch2 `
-        -o $outputFileBase"GCCMut"
-
+    & $outputBase"ClangMut" -q
     if ($LastExitCode -ne 0) { exit $LastExitCode }
-
-    & $outputFileBase"GCCMut"
-
-    if ($LastExitCode -ne 0) { exit $LastExitCode }
-
-    clang++ -std=c++17 $ClangWarningFlags -DDZNL_REMOVE_CONST `
-        -I. $sourceFile -lCatch2Main -lCatch2 `
-        -o $outputFileBase"ClangMut"
-
-    if ($LastExitCode -ne 0) { exit $LastExitCode }
-
-    & $outputFileBase"ClangMut"
-
-    if ($LastExitCode -ne 0) { exit $LastExitCode }
-
 }
 
 Remove-Item -Path "bin" -Recurse -Force
-New-Item -Path "bin" -ItemType "directory" -Force
+New-Item -Path "bin" -ItemType "directory" -Force | Out-Null
 
 foreach ($file in Get-ChildItem -Path "test" -Filter "*.cpp") {
     CompileAndRun $file.FullName
