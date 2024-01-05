@@ -6,18 +6,37 @@
 namespace dznl {
 
 
+namespace internal {
+
+template <typename T>
+[[deprecated(
+    "WARNING: You are using the default implementation of dznl::zero(). "
+    "If possible, please overload dznl::zero<T>() "
+    "with an optimized constructor for this specific type T."
+)]] constexpr T
+zero_default_impl() noexcept {
+    return static_cast<T>(0);
+}
+
+template <typename T>
+[[deprecated(
+    "WARNING: You are using the default implementation of dznl::one(). "
+    "If possible, please overload dznl::one<T>() "
+    "with an optimized constructor for this specific type T."
+)]] constexpr T
+one_default_impl() noexcept {
+    return static_cast<T>(1);
+}
+
+} // namespace internal
+
 /**
  * @brief Construct and return an additive identity element
  *        of a numeric type `T`.
  */
 template <typename T>
-// [[deprecated(
-//     "WARNING: You are using the default implementation of dznl::zero(). "
-//     "If possible, please overload dznl::zero<T>() "
-//     "with an optimized constructor for this specific type T."
-// )]]
 constexpr T zero() noexcept {
-    return static_cast<T>(0);
+    return internal::zero_default_impl<T>();
 }
 
 /**
@@ -25,13 +44,8 @@ constexpr T zero() noexcept {
  *        of a numeric type `T`.
  */
 template <typename T>
-// [[deprecated(
-//     "WARNING: You are using the default implementation of dznl::one(). "
-//     "If possible, please overload dznl::one<T>() "
-//     "with an optimized implementation for this specific type T."
-// )]]
 constexpr T one() noexcept {
-    return static_cast<T>(1);
+    return internal::one_default_impl<T>();
 }
 
 #define DZNL_DEFINE_NUMERIC_CONSTANT(TYPE, NAME, VALUE)                        \
