@@ -6,14 +6,20 @@
 
 #include "TestTypes.hpp"
 
+constexpr float rosenbrock_function_float(float *x) noexcept {
+    return dznl::square(x[0] - 1.0F) +
+           100.0F * dznl::square(x[1] - dznl::square(x[0]));
+}
 
 constexpr double rosenbrock_function(double *x) noexcept {
-    using dznl::square;
-    DZNL_CONST double err_0 = x[0] - 1.0;
-    DZNL_CONST double err_1 = x[1] - square(x[0]);
-    const double s = square(err_0);
-    const double t = square(err_1);
-    return s + 100.0 * t;
+    return dznl::square(x[0] - 1.0) +
+           100.0 * dznl::square(x[1] - dznl::square(x[0]));
+}
+
+
+constexpr long double rosenbrock_function_ldbl(long double *x) noexcept {
+    return dznl::square(x[0] - 1.0L) +
+           100.0L * dznl::square(x[1] - dznl::square(x[0]));
 }
 
 
@@ -35,7 +41,13 @@ constexpr my_real my_rosenbrock_function(DZNL_CONST my_accessor &x) noexcept {
 }
 
 
+constexpr bool null_constraint_float(float *) noexcept { return true; }
+
+
 constexpr bool null_constraint(double *) noexcept { return true; }
+
+
+constexpr bool null_constraint_ldbl(long double *) noexcept { return true; }
 
 
 constexpr bool my_null_constraint(DZNL_CONST my_accessor &) noexcept {

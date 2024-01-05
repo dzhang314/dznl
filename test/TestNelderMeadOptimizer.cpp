@@ -11,7 +11,69 @@
 
 
 TEMPLATE_TEST_CASE(
-    "NelderMeadOptimizer (intrinsic index types)",
+    "NelderMeadOptimizer (float, intrinsic index types)",
+    "",
+    signed char,
+    unsigned char,
+    short,
+    unsigned short,
+    int,
+    unsigned int,
+    long,
+    unsigned long,
+    long long,
+    unsigned long long,
+    __int128_t,
+    __uint128_t
+) {
+    using OptimizerType = dznl::NelderMeadOptimizer<
+        float,
+        TestType,
+        decltype(rosenbrock_function_float),
+        decltype(null_constraint_float)>;
+
+    TestType dimension = 2;
+    std::vector<float> initial_point = {2.0F, 4.0F};
+    std::vector<float> workspace(
+        static_cast<unsigned>(OptimizerType::workspace_size(dimension))
+    );
+    auto initial_point_accessor = initial_point.data();
+    auto workspace_accessor = workspace.data();
+    float step_size = 0.5F;
+    OptimizerType optimizer(
+        rosenbrock_function_float,
+        null_constraint_float,
+        initial_point_accessor,
+        dimension,
+        step_size,
+        workspace_accessor
+    );
+    REQUIRE(workspace[0] == 2.0F);
+    REQUIRE(workspace[1] == 4.0F);
+    REQUIRE(workspace[2] == 1.0F);
+    REQUIRE(workspace[3] == 2.0F);
+    REQUIRE(workspace[4] == 4.5F);
+    REQUIRE(workspace[5] == 26.0F);
+    REQUIRE(workspace[6] == 2.5F);
+    REQUIRE(workspace[7] == 4.0F);
+    REQUIRE(workspace[8] == 508.5f);
+
+    while (!(optimizer.has_terminated())) { optimizer.step(); }
+
+    REQUIRE(workspace[0] == 1.0F);
+    REQUIRE(workspace[1] == 1.0F);
+    REQUIRE(workspace[2] == 0.0F);
+    REQUIRE(workspace[3] == 1.0F);
+    REQUIRE(workspace[4] == 1.0F);
+    REQUIRE(workspace[5] == 0.0F);
+    REQUIRE(workspace[6] == 1.0F);
+    REQUIRE(workspace[7] == 1.0F);
+    REQUIRE(workspace[8] == 0.0F);
+}
+
+
+TEMPLATE_TEST_CASE(
+    "NelderMeadOptimizer (double, intrinsic index types)",
     "",
     signed char,
     unsigned char,
@@ -69,6 +131,68 @@ TEMPLATE_TEST_CASE(
     REQUIRE(workspace[6] == 1.0);
     REQUIRE(workspace[7] == 1.0);
     REQUIRE(workspace[8] == 0.0);
+}
+
+
+TEMPLATE_TEST_CASE(
+    "NelderMeadOptimizer (long double, intrinsic index types)",
+    "",
+    signed char,
+    unsigned char,
+    short,
+    unsigned short,
+    int,
+    unsigned int,
+    long,
+    unsigned long,
+    long long,
+    unsigned long long,
+    __int128_t,
+    __uint128_t
+) {
+    using OptimizerType = dznl::NelderMeadOptimizer<
+        long double,
+        TestType,
+        decltype(rosenbrock_function_ldbl),
+        decltype(null_constraint_ldbl)>;
+
+    TestType dimension = 2;
+    std::vector<long double> initial_point = {2.0L, 4.0L};
+    std::vector<long double> workspace(
+        static_cast<unsigned>(OptimizerType::workspace_size(dimension))
+    );
+    auto initial_point_accessor = initial_point.data();
+    auto workspace_accessor = workspace.data();
+    long double step_size = 0.5L;
+    OptimizerType optimizer(
+        rosenbrock_function_ldbl,
+        null_constraint_ldbl,
+        initial_point_accessor,
+        dimension,
+        step_size,
+        workspace_accessor
+    );
+    REQUIRE(workspace[0] == 2.0L);
+    REQUIRE(workspace[1] == 4.0L);
+    REQUIRE(workspace[2] == 1.0L);
+    REQUIRE(workspace[3] == 2.0L);
+    REQUIRE(workspace[4] == 4.5L);
+    REQUIRE(workspace[5] == 26.0L);
+    REQUIRE(workspace[6] == 2.5L);
+    REQUIRE(workspace[7] == 4.0L);
+    REQUIRE(workspace[8] == 508.5L);
+
+    while (!(optimizer.has_terminated())) { optimizer.step(); }
+
+    REQUIRE(workspace[0] == 1.0L);
+    REQUIRE(workspace[1] == 1.0L);
+    REQUIRE(workspace[2] == 0.0L);
+    REQUIRE(workspace[3] == 1.0L);
+    REQUIRE(workspace[4] == 1.0L);
+    REQUIRE(workspace[5] == 0.0L);
+    REQUIRE(workspace[6] == 1.0L);
+    REQUIRE(workspace[7] == 1.0L);
+    REQUIRE(workspace[8] == 0.0L);
 }
 
 

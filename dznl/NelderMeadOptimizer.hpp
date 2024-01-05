@@ -180,10 +180,10 @@ public: // =====================================================================
     ) noexcept {
         INDEX_T dimension_plus_one = dimension;
         ++dimension_plus_one;
-        INDEX_T dimension_plus_one_squared =
+        DZNL_CONST INDEX_T dimension_plus_one_squared =
             dimension_plus_one * dimension_plus_one;
-        INDEX_T double_dimension = dimension + dimension;
-        INDEX_T triple_dimension = double_dimension + dimension;
+        DZNL_CONST INDEX_T double_dimension = dimension + dimension;
+        DZNL_CONST INDEX_T triple_dimension = double_dimension + dimension;
         return dimension_plus_one_squared + triple_dimension;
     }
 
