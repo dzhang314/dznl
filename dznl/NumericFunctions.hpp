@@ -11,7 +11,7 @@ namespace internal {
 template <typename T>
 [[deprecated(
     "WARNING: You are using the default implementation of dznl::zero(). "
-    "If possible, please overload dznl::zero<T>() "
+    "If possible, please provide a template specialization of dznl::zero<T>() "
     "with an optimized constructor for this specific type T."
 )]] constexpr T
 zero_default_impl() noexcept {
@@ -21,7 +21,7 @@ zero_default_impl() noexcept {
 template <typename T>
 [[deprecated(
     "WARNING: You are using the default implementation of dznl::one(). "
-    "If possible, please overload dznl::one<T>() "
+    "If possible, please provide a template specialization of dznl::one<T>() "
     "with an optimized constructor for this specific type T."
 )]] constexpr T
 one_default_impl() noexcept {
@@ -204,9 +204,7 @@ inline long double sqrt(long double x) noexcept {
     return y;
 }
 #elif DZNL_HAS_BUILTIN(__builtin_sqrtl)
-inline long double sqrt<long double>(long double x) noexcept {
-    return __builtin_sqrtl(x);
-}
+inline long double sqrt(long double x) noexcept { return __builtin_sqrtl(x); }
 #endif
 
 
@@ -219,24 +217,15 @@ constexpr T abs(const T &) noexcept {
 }
 
 #if DZNL_HAS_BUILTIN(__builtin_fabsf)
-template <>
-constexpr float abs<float>(const float &x) noexcept {
-    return __builtin_fabsf(x);
-}
+constexpr float abs(float x) noexcept { return __builtin_fabsf(x); }
 #endif
 
 #if DZNL_HAS_BUILTIN(__builtin_fabs)
-template <>
-constexpr double abs<double>(const double &x) noexcept {
-    return __builtin_fabs(x);
-}
+constexpr double abs(double x) noexcept { return __builtin_fabs(x); }
 #endif
 
 #if DZNL_HAS_BUILTIN(__builtin_fabsl)
-template <>
-constexpr long double abs<long double>(const long double &x) noexcept {
-    return __builtin_fabsl(x);
-}
+constexpr long double abs(long double x) noexcept { return __builtin_fabsl(x); }
 #endif
 
 
