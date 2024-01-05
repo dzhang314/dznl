@@ -41,9 +41,10 @@ private: // clang-format on
 
 // clang-format off
 template <> constexpr my_real zero<my_real>() noexcept                          { return my_real::test_only_construct(0.0); }
-template <> constexpr my_real one<my_real>()  noexcept                          { return my_real::test_only_construct(1.0); }
-constexpr my_real inv(DZNL_CONST my_real &x) noexcept                           { return my_real::test_only_construct(inv(x.test_only_get_value())); }
+template <> constexpr my_real one<my_real>() noexcept                           { return my_real::test_only_construct(1.0); }
+constexpr my_real twice(DZNL_CONST my_real &x) noexcept                         { return x + x; }
 constexpr my_real square(DZNL_CONST my_real &x) noexcept                        { return x * x; }
+constexpr my_real inv(DZNL_CONST my_real &x) noexcept                           { return my_real::test_only_construct(inv(x.test_only_get_value())); }
 // clang-format on
 
 

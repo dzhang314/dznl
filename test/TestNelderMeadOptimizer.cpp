@@ -1,17 +1,14 @@
+#include <dznl/NelderMeadOptimizer.hpp>
 #include <dznl/NumericFunctions.hpp>
 
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include <iomanip>
-#include <iostream>
 #include <vector>
 
+#include "OptimizationTestFunctions.hpp"
 #include "TestTypes.hpp"
 
-#include "OptimizationTestFunctions.hpp"
-
-#include <dznl/NelderMeadOptimizer.hpp>
 
 TEMPLATE_TEST_CASE(
     "NelderMeadOptimizer (intrinsic types)",
@@ -29,20 +26,21 @@ TEMPLATE_TEST_CASE(
     __int128_t,
     __uint128_t
 ) {
-    using Optimizer = dznl::NelderMeadOptimizer<
+    using OptimizerType = dznl::NelderMeadOptimizer<
         double,
         TestType,
         decltype(dznl::rosenbrock_function),
-        decltype(dznl::null_constraint),
-        double * DZNL_RESTRICT>;
+        decltype(dznl::null_constraint)>;
 
+    TestType dimension = 2;
     std::vector<double> initial_point = {2.0, 4.0};
-    std::vector<double> workspace(Optimizer::workspace_size(2));
+    std::vector<double> workspace(
+        static_cast<unsigned>(OptimizerType::workspace_size(dimension))
+    );
     auto initial_point_accessor = initial_point.data();
     auto workspace_accessor = workspace.data();
-    TestType dimension = 2;
     double step_size = 0.5;
-    Optimizer optimizer(
+    OptimizerType optimizer(
         dznl::rosenbrock_function,
         dznl::null_constraint,
         initial_point_accessor,
@@ -59,6 +57,18 @@ TEMPLATE_TEST_CASE(
     REQUIRE(workspace[6] == 2.5);
     REQUIRE(workspace[7] == 4.0);
     REQUIRE(workspace[8] == 508.5);
+
+    while (!(optimizer.has_terminated())) { optimizer.step(); }
+
+    REQUIRE(workspace[0] == 1.0);
+    REQUIRE(workspace[1] == 1.0);
+    REQUIRE(workspace[2] == 0.0);
+    REQUIRE(workspace[3] == 1.0);
+    REQUIRE(workspace[4] == 1.0);
+    REQUIRE(workspace[5] == 0.0);
+    REQUIRE(workspace[6] == 1.0);
+    REQUIRE(workspace[7] == 1.0);
+    REQUIRE(workspace[8] == 0.0);
 }
 
 
@@ -79,8 +89,8 @@ TEST_CASE("NelderMeadOptimizer (user-provided types)") {
     initial_point[0] = initial_x;
     initial_point[1] = initial_y;
 
-    dznl::my_index workspace_size =
-        Optimizer::workspace_size(dznl::my_index::test_only_construct(2));
+    dznl::my_index dimension = dznl::my_index::test_only_construct(2);
+    dznl::my_index workspace_size = Optimizer::workspace_size(dimension);
     void *workspace_memory = operator new(
         sizeof(dznl::my_real) * workspace_size.test_only_get_value()
     );
@@ -91,7 +101,6 @@ TEST_CASE("NelderMeadOptimizer (user-provided types)") {
         dznl::my_accessor::test_only_construct(initial_point);
     dznl::my_accessor workspace_accessor =
         dznl::my_accessor::test_only_construct(workspace);
-    dznl::my_index dimension = dznl::my_index::test_only_construct(2);
     dznl::my_real initial_step_size = dznl::my_real::test_only_construct(0.5);
 
     Optimizer optimizer(
@@ -112,6 +121,18 @@ TEST_CASE("NelderMeadOptimizer (user-provided types)") {
     REQUIRE(workspace[6].test_only_get_value() == 2.5);
     REQUIRE(workspace[7].test_only_get_value() == 4.0);
     REQUIRE(workspace[8].test_only_get_value() == 508.5);
+
+    while (!(optimizer.has_terminated())) { optimizer.step(); }
+
+    REQUIRE(workspace[0].test_only_get_value() == 1.0);
+    REQUIRE(workspace[1].test_only_get_value() == 1.0);
+    REQUIRE(workspace[2].test_only_get_value() == 0.0);
+    REQUIRE(workspace[3].test_only_get_value() == 1.0);
+    REQUIRE(workspace[4].test_only_get_value() == 1.0);
+    REQUIRE(workspace[5].test_only_get_value() == 0.0);
+    REQUIRE(workspace[6].test_only_get_value() == 1.0);
+    REQUIRE(workspace[7].test_only_get_value() == 1.0);
+    REQUIRE(workspace[8].test_only_get_value() == 0.0);
 
     operator delete(initial_memory);
     operator delete(workspace_memory);
