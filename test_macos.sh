@@ -13,13 +13,16 @@ ClangWarningFlags="-Weverything -Wfatal-errors \
 
 compile_and_test() {
     test_name="$(basename "$1" .cpp)"
-    echo "$test_name"
+    echo "${test_name}GCC"
     "$GccPath" $CompilerFlags $GccWarningFlags "$1" \
         -o "bin/${test_name}GCC"; "bin/${test_name}GCC" -m
+    echo "${test_name}Clang"
     "$ClangPath" $CompilerFlags $ClangWarningFlags "$1" \
         -o "bin/${test_name}Clang"; "bin/${test_name}Clang" -m
+    echo "${test_name}GCCMut"
     "$GccPath" $CompilerFlags $GccWarningFlags -DDZNL_REMOVE_CONST "$1" \
         -o "bin/${test_name}GCCMut"; "bin/${test_name}GCCMut" -m
+    echo "${test_name}ClangMut"
     "$ClangPath" $CompilerFlags $ClangWarningFlags -DDZNL_REMOVE_CONST "$1" \
         -o "bin/${test_name}ClangMut"; "bin/${test_name}ClangMut" -m
 }
