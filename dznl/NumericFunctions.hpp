@@ -7,17 +7,29 @@ namespace dznl {
 
 
 /**
- * @brief Return the additive identity element of a given numeric type T.
+ * @brief Construct and return an additive identity element
+ *        of a numeric type `T`.
  */
 template <typename T>
+// [[deprecated(
+//     "WARNING: You are using the default implementation of dznl::zero(). "
+//     "If possible, please overload dznl::zero<T>() "
+//     "with an optimized constructor for this specific type T."
+// )]]
 constexpr T zero() noexcept {
     return static_cast<T>(0);
 }
 
 /**
- * @brief Return the multiplicative identity element of a given numeric type T.
+ * @brief Construct and return a multiplicative identity element
+ *        of a numeric type `T`.
  */
 template <typename T>
+// [[deprecated(
+//     "WARNING: You are using the default implementation of dznl::one(). "
+//     "If possible, please overload dznl::one<T>() "
+//     "with an optimized implementation for this specific type T."
+// )]]
 constexpr T one() noexcept {
     return static_cast<T>(1);
 }
@@ -30,28 +42,28 @@ constexpr T one() noexcept {
 
 DZNL_DEFINE_NUMERIC_CONSTANT(signed char, zero, '\0')
 DZNL_DEFINE_NUMERIC_CONSTANT(unsigned char, zero, '\0')
-DZNL_DEFINE_NUMERIC_CONSTANT(signed short int, zero, 0)
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned short int, zero, 0U)
+DZNL_DEFINE_NUMERIC_CONSTANT(signed short, zero, 0)
+DZNL_DEFINE_NUMERIC_CONSTANT(unsigned short, zero, 0U)
 DZNL_DEFINE_NUMERIC_CONSTANT(signed int, zero, 0)
 DZNL_DEFINE_NUMERIC_CONSTANT(unsigned int, zero, 0U)
-DZNL_DEFINE_NUMERIC_CONSTANT(signed long int, zero, 0L)
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long int, zero, 0UL)
-DZNL_DEFINE_NUMERIC_CONSTANT(signed long long int, zero, 0LL)
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long long int, zero, 0ULL)
+DZNL_DEFINE_NUMERIC_CONSTANT(signed long, zero, 0L)
+DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long, zero, 0UL)
+DZNL_DEFINE_NUMERIC_CONSTANT(signed long long, zero, 0LL)
+DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long long, zero, 0ULL)
 DZNL_DEFINE_NUMERIC_CONSTANT(float, zero, 0.0F)
 DZNL_DEFINE_NUMERIC_CONSTANT(double, zero, 0.0)
 DZNL_DEFINE_NUMERIC_CONSTANT(long double, zero, 0.0L)
 
 DZNL_DEFINE_NUMERIC_CONSTANT(signed char, one, '\1')
 DZNL_DEFINE_NUMERIC_CONSTANT(unsigned char, one, '\1')
-DZNL_DEFINE_NUMERIC_CONSTANT(signed short int, one, 1)
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned short int, one, 1U)
+DZNL_DEFINE_NUMERIC_CONSTANT(signed short, one, 1)
+DZNL_DEFINE_NUMERIC_CONSTANT(unsigned short, one, 1U)
 DZNL_DEFINE_NUMERIC_CONSTANT(signed int, one, 1)
 DZNL_DEFINE_NUMERIC_CONSTANT(unsigned int, one, 1U)
-DZNL_DEFINE_NUMERIC_CONSTANT(signed long int, one, 1L)
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long int, one, 1UL)
-DZNL_DEFINE_NUMERIC_CONSTANT(signed long long int, one, 1LL)
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long long int, one, 1ULL)
+DZNL_DEFINE_NUMERIC_CONSTANT(signed long, one, 1L)
+DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long, one, 1UL)
+DZNL_DEFINE_NUMERIC_CONSTANT(signed long long, one, 1LL)
+DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long long, one, 1ULL)
 DZNL_DEFINE_NUMERIC_CONSTANT(float, one, 1.0F)
 DZNL_DEFINE_NUMERIC_CONSTANT(double, one, 1.0)
 DZNL_DEFINE_NUMERIC_CONSTANT(long double, one, 1.0L)
@@ -60,117 +72,148 @@ DZNL_DEFINE_NUMERIC_CONSTANT(long double, one, 1.0L)
 
 
 /**
- * @brief Return the sum of a given element x of a numeric type T with itself.
+ * @brief Return the sum of a number `x` with itself.
  *
- * The expressions twice(x) and x + x should always be equivalent, but
- * twice(x) can be computed more efficiently than x + x for some types T.
+ * The expressions `dznl::twice(x)` and `x + x` should always be equivalent,
+ * but in some cases, `dznl::twice(x)` can be computed more efficiently than
+ * `x + x`.
  *
- * I would prefer to name this function "double,"
+ * I would prefer to name this function `double`,
  * but `double` is a reserved keyword in C++.
  */
 template <typename T>
-constexpr T twice(DZNL_CONST T &x) noexcept {
+[[deprecated(
+    "WARNING: You are using the default implementation of dznl::twice(). "
+    "If possible, please overload dznl::twice(T) or dznl::twice(const T &) "
+    "with an optimized implementation for this specific type T."
+)]] constexpr T
+twice(DZNL_CONST T &x) noexcept {
     return x + x;
 }
 
+#define DZNL_LOOP_BODY(T)                                                      \
+    constexpr T twice(T x) noexcept { return x + x; }
+DZNL_LOOP_OVER_FUNDAMENTAL_NUMERIC_TYPES
+#undef DZNL_LOOP_BODY
+
+
 /**
- * @brief Return the product of a given element x
- *        of a numeric type T with itself.
+ * @brief Return the product of a number `x` with itself.
  *
- * The expressions square(x) and x * x should always be equivalent, but
- * square(x) can be computed more efficiently than x * x for some types T.
+ * The expressions `dznl::square(x)` and `x * x` should always be equivalent,
+ * but in some cases, `dznl::square(x)` can be computed more efficiently than
+ * `x * x`.
  */
 template <typename T>
-constexpr T square(DZNL_CONST T &x) noexcept {
+[[deprecated(
+    "WARNING: You are using the default implementation of dznl::square(). "
+    "If possible, please overload dznl::square(T) or dznl::square(const T &) "
+    "with an optimized implementation for this specific type T."
+)]] constexpr T
+square(DZNL_CONST T &x) noexcept {
     return x * x;
 }
 
+#define DZNL_LOOP_BODY(T)                                                      \
+    constexpr T square(T x) noexcept { return x * x; }
+DZNL_LOOP_OVER_FUNDAMENTAL_NUMERIC_TYPES
+#undef DZNL_LOOP_BODY
+
+
 /**
- * @brief Return the multiplicative inverse of a given element x
- *        of a numeric type T.
+ * @brief Return the multiplicative inverse of a number `x`.
+ *
+ * `dznl::inv()` should not be defined for numeric types whose elements do not
+ * have multiplicative inverses in general, such as integral types.
  */
 template <typename T>
-constexpr T inv(DZNL_CONST T &x) noexcept {
+[[deprecated(
+    "WARNING: You are using the default implementation of dznl::inv(). "
+    "If possible, please overload dznl::inv(T) or dznl::inv(const T &) "
+    "with an optimized implementation for this specific type T."
+)]] constexpr T
+inv(DZNL_CONST T &x) noexcept {
     return one<T>() / x;
 }
 
+#define DZNL_LOOP_BODY(T)                                                      \
+    constexpr T inv(T x) noexcept { return one<T>() / x; }
+DZNL_LOOP_OVER_FUNDAMENTAL_FLOATING_POINT_TYPES
+#undef DZNL_LOOP_BODY
+
 
 /**
- * @brief Return the square root of a given element of a numeric type T.
+ * @brief Return the square root of a number.
+ *
+ * `dznl::sqrt()` should not be defined for numeric types whose elements do not
+ * have square roots in general, such as integral types.
  */
 template <typename T>
-constexpr T sqrt(DZNL_CONST T &) noexcept;
+constexpr T sqrt(DZNL_CONST T &) noexcept {
+    static_assert(false, "dznl::sqrt() is not implemented for this type T.");
+}
 
 // In these implementations, we prefer inline assembly when possible
 // because __builtin_sqrt() and friends can interact with errno.
 
 #ifdef __x86_64__
-template <>
-float sqrt<float>(DZNL_CONST float &x) noexcept {
+inline float sqrt(float x) noexcept {
     float y;
     asm("sqrtss %1, %0" : "=x"(y) : "x"(x));
     return y;
 }
 #elif DZNL_HAS_BUILTIN(__builtin_sqrtf)
-template <>
-float sqrt<float>(DZNL_CONST float &x) noexcept {
-    return __builtin_sqrtf(x);
-}
+inline float sqrt(float x) noexcept { return __builtin_sqrtf(x); }
 #endif
 
 #ifdef __x86_64__
-template <>
-double sqrt<double>(DZNL_CONST double &x) noexcept {
+inline double sqrt(double x) noexcept {
     double y;
     asm("sqrtsd %1, %0" : "=x"(y) : "x"(x));
     return y;
 }
-
 #elif DZNL_HAS_BUILTIN(__builtin_sqrt)
-template <>
-double sqrt<double>(DZNL_CONST double &x) noexcept {
-    return __builtin_sqrt(x);
-}
+inline double sqrt(double x) noexcept { return __builtin_sqrt(x); }
 #endif
 
 #ifdef __x86_64__
-template <>
-long double sqrt<long double>(DZNL_CONST long double &x) noexcept {
+inline long double sqrt(long double x) noexcept {
     long double y;
     asm("fsqrt" : "=t"(y) : "0"(x));
     return y;
 }
 #elif DZNL_HAS_BUILTIN(__builtin_sqrtl)
-template <>
-long double sqrt<long double>(DZNL_CONST long double &x) noexcept {
+inline long double sqrt<long double>(long double x) noexcept {
     return __builtin_sqrtl(x);
 }
 #endif
 
 
 /**
- * @brief Return the absolute value of a given element of a numeric type T.
+ * @brief Return the absolute value of a number.
  */
 template <typename T>
-constexpr T abs(DZNL_CONST T &) noexcept;
+constexpr T abs(const T &) noexcept {
+    static_assert(false, "dznl::abs is not implemented for this type T.");
+}
 
 #if DZNL_HAS_BUILTIN(__builtin_fabsf)
 template <>
-constexpr float abs<float>(DZNL_CONST float &x) noexcept {
+constexpr float abs<float>(const float &x) noexcept {
     return __builtin_fabsf(x);
 }
 #endif
 
 #if DZNL_HAS_BUILTIN(__builtin_fabs)
 template <>
-constexpr double abs<double>(DZNL_CONST double &x) noexcept {
+constexpr double abs<double>(const double &x) noexcept {
     return __builtin_fabs(x);
 }
 #endif
 
 #if DZNL_HAS_BUILTIN(__builtin_fabsl)
 template <>
-constexpr long double abs<long double>(DZNL_CONST long double &x) noexcept {
+constexpr long double abs<long double>(const long double &x) noexcept {
     return __builtin_fabsl(x);
 }
 #endif
