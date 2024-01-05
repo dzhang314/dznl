@@ -63,40 +63,18 @@ class NelderMeadOptimizer {
         }
     }
 
-    constexpr Tuple<bool, bool> try_forward_step(
+    constexpr Tuple<bool, bool> try_coordinate_step(
         DZNL_CONST ACCESSOR_T &dst,
         DZNL_CONST ACCESSOR_T &src,
         DZNL_CONST INDEX_T &i,
-        DZNL_CONST REAL_T &step_length
+        DZNL_CONST REAL_T &step_length,
+        bool forward
     ) noexcept {
         for (INDEX_T j = zero<INDEX_T>(); j < m_dimension; ++j) {
             dst[j] = src[j];
         }
         DZNL_CONST REAL_T x = dst[i];
-        DZNL_CONST REAL_T x_prime = x + step_length;
-        if (x == x_prime) { return {false, false}; }
-        dst[i] = x_prime;
-        if (m_constraint_function(dst)) {
-            DZNL_CONST REAL_T objective_value = m_objective_function(dst);
-            if (!is_nan(objective_value)) {
-                dst[m_dimension] = objective_value;
-                return {true, true};
-            }
-        }
-        return {true, false};
-    }
-
-    constexpr Tuple<bool, bool> try_backward_step(
-        DZNL_CONST ACCESSOR_T &dst,
-        DZNL_CONST ACCESSOR_T &src,
-        DZNL_CONST INDEX_T &i,
-        DZNL_CONST REAL_T &step_length
-    ) noexcept {
-        for (INDEX_T j = zero<INDEX_T>(); j < m_dimension; ++j) {
-            dst[j] = src[j];
-        }
-        DZNL_CONST REAL_T x = dst[i];
-        DZNL_CONST REAL_T x_prime = x - step_length;
+        DZNL_CONST REAL_T x_prime = forward ? x + step_length : x - step_length;
         if (x == x_prime) { return {false, false}; }
         dst[i] = x_prime;
         if (m_constraint_function(dst)) {
@@ -119,10 +97,10 @@ class NelderMeadOptimizer {
         DZNL_CONST REAL_T TWO = ONE + ONE;
         while (true) {
             const auto [forward_change, forward_success] =
-                try_forward_step(dst, src, i, step_length);
+                try_coordinate_step(dst, src, i, step_length, true);
             if (forward_success) { return true; }
             const auto [backward_change, backward_success] =
-                try_backward_step(dst, src, i, step_length);
+                try_coordinate_step(dst, src, i, step_length, false);
             if (backward_success) { return true; }
             if (!(forward_change || backward_change)) { return false; }
             step_length = step_length / TWO;
