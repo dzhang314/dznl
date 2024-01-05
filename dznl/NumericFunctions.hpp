@@ -82,6 +82,13 @@ DZNL_DEFINE_NUMERIC_CONSTANT(float, one, 1.0F)
 DZNL_DEFINE_NUMERIC_CONSTANT(double, one, 1.0)
 DZNL_DEFINE_NUMERIC_CONSTANT(long double, one, 1.0L)
 
+#ifdef __SIZEOF_INT128__
+DZNL_DEFINE_NUMERIC_CONSTANT(__int128_t, zero, 0LL)
+DZNL_DEFINE_NUMERIC_CONSTANT(__uint128_t, zero, 0ULL)
+DZNL_DEFINE_NUMERIC_CONSTANT(__int128_t, one, 1LL)
+DZNL_DEFINE_NUMERIC_CONSTANT(__uint128_t, one, 1ULL)
+#endif // __SIZEOF_INT128__
+
 #undef DZNL_DEFINE_NUMERIC_CONSTANT
 
 
@@ -107,7 +114,7 @@ twice(DZNL_CONST T &x) noexcept {
 
 #define DZNL_LOOP_BODY(T)                                                      \
     constexpr T twice(T x) noexcept { return x + x; }
-DZNL_LOOP_OVER_FUNDAMENTAL_NUMERIC_TYPES
+DZNL_LOOP_OVER_INTRINSIC_NUMERIC_TYPES
 #undef DZNL_LOOP_BODY
 
 
@@ -130,7 +137,7 @@ square(DZNL_CONST T &x) noexcept {
 
 #define DZNL_LOOP_BODY(T)                                                      \
     constexpr T square(T x) noexcept { return x * x; }
-DZNL_LOOP_OVER_FUNDAMENTAL_NUMERIC_TYPES
+DZNL_LOOP_OVER_INTRINSIC_NUMERIC_TYPES
 #undef DZNL_LOOP_BODY
 
 
