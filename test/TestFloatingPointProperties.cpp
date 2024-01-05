@@ -1,8 +1,10 @@
-#include <cfloat>
+#include "TestTypes.hpp"
 
 #include <dznl/FloatingPointProperties.hpp>
 
 #include <catch2/catch_test_macros.hpp>
+
+#include <cfloat>
 
 
 TEST_CASE("compute_float_radix (IEEE binary)") {
