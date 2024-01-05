@@ -41,18 +41,4 @@ constexpr my_real my_rosenbrock_function(DZNL_CONST my_accessor &x) noexcept {
 }
 
 
-constexpr bool null_constraint_float(float *) noexcept { return true; }
-
-
-constexpr bool null_constraint(double *) noexcept { return true; }
-
-
-constexpr bool null_constraint_ldbl(long double *) noexcept { return true; }
-
-
-constexpr bool my_null_constraint(DZNL_CONST my_accessor &) noexcept {
-    return true;
-}
-
-
 #endif // DZNL_OPTIMIZATION_TEST_FUNCTIONS_HPP_INCLUDED

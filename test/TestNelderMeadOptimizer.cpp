@@ -29,8 +29,7 @@ TEMPLATE_TEST_CASE(
     using OptimizerType = dznl::NelderMeadOptimizer<
         float,
         TestType,
-        decltype(rosenbrock_function_float),
-        decltype(null_constraint_float)>;
+        decltype(rosenbrock_function_float)>;
 
     TestType dimension = 2;
     std::vector<float> initial_point = {2.0F, 4.0F};
@@ -42,7 +41,6 @@ TEMPLATE_TEST_CASE(
     float step_size = 0.5F;
     OptimizerType optimizer(
         rosenbrock_function_float,
-        null_constraint_float,
         initial_point_accessor,
         dimension,
         step_size,
@@ -88,11 +86,8 @@ TEMPLATE_TEST_CASE(
     __int128_t,
     __uint128_t
 ) {
-    using OptimizerType = dznl::NelderMeadOptimizer<
-        double,
-        TestType,
-        decltype(rosenbrock_function),
-        decltype(null_constraint)>;
+    using OptimizerType = dznl::
+        NelderMeadOptimizer<double, TestType, decltype(rosenbrock_function)>;
 
     TestType dimension = 2;
     std::vector<double> initial_point = {2.0, 4.0};
@@ -104,7 +99,6 @@ TEMPLATE_TEST_CASE(
     double step_size = 0.5;
     OptimizerType optimizer(
         rosenbrock_function,
-        null_constraint,
         initial_point_accessor,
         dimension,
         step_size,
@@ -153,8 +147,7 @@ TEMPLATE_TEST_CASE(
     using OptimizerType = dznl::NelderMeadOptimizer<
         long double,
         TestType,
-        decltype(rosenbrock_function_ldbl),
-        decltype(null_constraint_ldbl)>;
+        decltype(rosenbrock_function_ldbl)>;
 
     TestType dimension = 2;
     std::vector<long double> initial_point = {2.0L, 4.0L};
@@ -166,7 +159,6 @@ TEMPLATE_TEST_CASE(
     long double step_size = 0.5L;
     OptimizerType optimizer(
         rosenbrock_function_ldbl,
-        null_constraint_ldbl,
         initial_point_accessor,
         dimension,
         step_size,
@@ -202,7 +194,7 @@ TEST_CASE("NelderMeadOptimizer (user-provided types)") {
         my_real,
         my_index,
         decltype(my_rosenbrock_function),
-        decltype(my_null_constraint),
+        void,
         my_accessor>;
 
     void *initial_memory = operator new(sizeof(my_real) * 2);
@@ -227,7 +219,6 @@ TEST_CASE("NelderMeadOptimizer (user-provided types)") {
 
     Optimizer optimizer(
         my_rosenbrock_function,
-        my_null_constraint,
         initial_point_accessor,
         dimension,
         initial_step_size,

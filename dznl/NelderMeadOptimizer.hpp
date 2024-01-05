@@ -5,25 +5,69 @@
 #include "Macros.hpp"
 #include "NumericFunctions.hpp"
 #include "Tuple.hpp"
+#include "TypeTraits.hpp"
 
 namespace dznl {
 
 
+/**
+ * @brief Nelder-Mead derivative-free minimization algorithm.
+ *
+ * @tparam REAL_T is the numeric type used to represent the inputs and outputs
+ *         of the objective function. `REAL_T` is normally a floating-point
+ *         type, such as `float` or `double`.
+ *
+ * @tparam INDEX_T is the numeric type used to index the coordinates of the
+ *         feasible region and the internal workspace array. To solve an
+ *         `n`-dimensional optimization problem, `dznl::NelderMeadOptimizer`
+ *         uses an internal workspace array of length `(n + 1)^2 + 3n`. Thus,
+ *         `INDEX_T` must be able to represent the integers `0` through
+ *         `(n + 1)^2 + 3n - 1`, inclusive. `INDEX_T` is normally an integral
+ *         type, such as `int`, `unsigned int`, or `std::size_t`.
+ *
+ * @tparam OBJECTIVE_FUNCTOR_T is the type used to evaluate the objective
+ *         function. It can either be a plain function type
+ *         `REAL_T (OBJECTIVE_FUNCTOR_T)(const REAL_T *);` or a user-defined
+ *         type that overloads `operator()` with a compatible interface.
+ *
+ * @tparam CONSTRAINT_FUNCTOR_T is the type of the object used to evaluate
+ *         constraints. It can either be a plain function type
+ *         `bool (CONSTRAINT_FUNCTOR_T)(REAL_T *);` or a user-defined type
+ *         that overloads `operator()` with a compatible interface.
+ *
+ * @tparam ACCESSOR_T is the type of the object used to access the internal
+ *         workspace array. It can either be a plain pointer type `REAL_T *`
+ *         or a user-defined type that overloads `operator[]` with a
+ */
 template <
     typename REAL_T,
     typename INDEX_T,
     typename OBJECTIVE_FUNCTOR_T,
-    typename CONSTRAINT_FUNCTOR_T,
+    typename CONSTRAINT_FUNCTOR_T = void,
     typename ACCESSOR_T = REAL_T *DZNL_RESTRICT>
 class NelderMeadOptimizer {
 
 private: // =================================================== MEMBER VARIABLES
 
-    OBJECTIVE_FUNCTOR_T &m_objective_function;
-    CONSTRAINT_FUNCTOR_T &m_constraint_function;
+    OBJECTIVE_FUNCTOR_T *m_objective_function;
+    CONSTRAINT_FUNCTOR_T *m_constraint_function;
     ACCESSOR_T m_workspace;
     INDEX_T m_dimension;
     bool m_has_terminated;
+
+private: // ====================================================================
+
+    constexpr REAL_T evaluate_objective(DZNL_CONST ACCESSOR_T &x) noexcept {
+        return (*m_objective_function)(x);
+    }
+
+    constexpr bool evaluate_constraints(DZNL_CONST ACCESSOR_T &x) noexcept {
+        if constexpr (is_void<CONSTRAINT_FUNCTOR_T>) {
+            return true;
+        } else {
+            return (*m_constraint_function)(x);
+        }
+    }
 
 private: // ================================================== VERTEX REORDERING
 
@@ -115,8 +159,8 @@ private: // ================================================= SIMPLEX GENERATION
         DZNL_CONST REAL_T x_prime = forward ? x + step_length : x - step_length;
         if (x == x_prime) { return {false, false}; }
         dst[i] = x_prime;
-        if (m_constraint_function(dst)) {
-            DZNL_CONST REAL_T objective_value = m_objective_function(dst);
+        if (evaluate_constraints(dst)) {
+            DZNL_CONST REAL_T objective_value = evaluate_objective(dst);
             if (!is_nan(objective_value)) {
                 dst[m_dimension] = objective_value;
                 return {true, true};
@@ -190,8 +234,8 @@ public: // =====================================================================
 public: // ========================================================= CONSTRUCTOR
 
     explicit constexpr NelderMeadOptimizer(
-        OBJECTIVE_FUNCTOR_T &objective_function,
-        CONSTRAINT_FUNCTOR_T &constraint_function,
+        OBJECTIVE_FUNCTOR_T *objective_function,
+        CONSTRAINT_FUNCTOR_T *constraint_function,
         DZNL_CONST ACCESSOR_T &initial_point,
         DZNL_CONST INDEX_T &dimension,
         DZNL_CONST REAL_T &initial_step_length,
@@ -214,14 +258,65 @@ public: // ========================================================= CONSTRUCTOR
         copy_coordinates(m_workspace, initial_point);
 
         // Call constraint function to check feasibility of initial point.
-        if (!m_constraint_function(m_workspace)) {
+        if (!evaluate_constraints(m_workspace)) {
             // If initial point is infeasible, immediately terminate.
             m_has_terminated = true;
             return;
         }
 
         // Compute objective value at constrained initial point.
-        DZNL_CONST REAL_T initial_value = m_objective_function(m_workspace);
+        DZNL_CONST REAL_T initial_value = evaluate_objective(m_workspace);
+        // If objective value is NaN, immediately terminate.
+        if (is_nan(initial_value)) {
+            m_has_terminated = true;
+            return;
+        }
+
+        // Store objective value in workspace
+        // immediately after constrained initial point.
+        m_workspace[m_dimension] = initial_value;
+
+        // Generate active simplex. The first (dimension + 1)^2 workspace
+        // entries will contain vertices of the active simplex, each followed
+        // immediately by its objective value.
+        if (!generate_initial_simplex(initial_step_length)) {
+            m_has_terminated = true;
+            return;
+        }
+    }
+
+    explicit constexpr NelderMeadOptimizer(
+        OBJECTIVE_FUNCTOR_T *objective_function,
+        DZNL_CONST ACCESSOR_T &initial_point,
+        DZNL_CONST INDEX_T &dimension,
+        DZNL_CONST REAL_T &initial_step_length,
+        DZNL_CONST ACCESSOR_T &workspace
+    ) noexcept
+        : m_objective_function(objective_function)
+        , m_constraint_function(nullptr)
+        , m_workspace(workspace)
+        , m_dimension(dimension)
+        , m_has_terminated(false) {
+
+        // Ensure that `dimension` is positive.
+        DZNL_CONST INDEX_T ZERO = zero<INDEX_T>();
+        if (!(ZERO < m_dimension)) {
+            m_has_terminated = true;
+            return;
+        }
+
+        // Copy initial point into beginning of workspace.
+        copy_coordinates(m_workspace, initial_point);
+
+        // Call constraint function to check feasibility of initial point.
+        if (!evaluate_constraints(m_workspace)) {
+            // If initial point is infeasible, immediately terminate.
+            m_has_terminated = true;
+            return;
+        }
+
+        // Compute objective value at constrained initial point.
+        DZNL_CONST REAL_T initial_value = evaluate_objective(m_workspace);
         // If objective value is NaN, immediately terminate.
         if (is_nan(initial_value)) {
             m_has_terminated = true;
@@ -300,9 +395,9 @@ public: // =====================================================================
             // Constrain reflected point and compute its objective value.
             bool reflected_feasible = false;
             REAL_T threshold_value = worst_value;
-            if (m_constraint_function(reflected_point)) {
+            if (evaluate_constraints(reflected_point)) {
                 DZNL_CONST REAL_T reflected_value =
-                    m_objective_function(reflected_point);
+                    evaluate_objective(reflected_point);
                 if (!is_nan(reflected_value)) {
                     reflected_feasible = true;
                     threshold_value = reflected_value;
@@ -319,9 +414,9 @@ public: // =====================================================================
 
                         // Replace worst vertex with whichever is better
                         // between the reflected and expanded points.
-                        if (m_constraint_function(expanded_point)) {
+                        if (evaluate_constraints(expanded_point)) {
                             DZNL_CONST REAL_T expanded_value =
-                                m_objective_function(expanded_point);
+                                evaluate_objective(expanded_point);
                             if (expanded_value < reflected_value) {
                                 copy_coordinates(worst_vertex, expanded_point);
                                 worst_vertex[m_dimension] = expanded_value;
@@ -363,9 +458,9 @@ public: // =====================================================================
                     reflected_point[i] += centroid[i];
                     reflected_point[i] *= HALF;
                 }
-                if (m_constraint_function(reflected_point)) {
+                if (evaluate_constraints(reflected_point)) {
                     DZNL_CONST REAL_T contracted_value =
-                        m_objective_function(reflected_point);
+                        evaluate_objective(reflected_point);
                     if (contracted_value < threshold_value) {
                         copy_coordinates(worst_vertex, reflected_point);
                         worst_vertex[m_dimension] = contracted_value;
@@ -379,9 +474,9 @@ public: // =====================================================================
                 centroid[i] += worst_vertex[i];
                 centroid[i] *= HALF;
             }
-            if (m_constraint_function(centroid)) {
+            if (evaluate_constraints(centroid)) {
                 DZNL_CONST REAL_T contracted_value =
-                    m_objective_function(centroid);
+                    evaluate_objective(centroid);
                 if (contracted_value < worst_value) {
                     copy_coordinates(worst_vertex, centroid);
                     worst_vertex[m_dimension] = contracted_value;
@@ -401,11 +496,11 @@ public: // =====================================================================
                     vertex_i[j] *= HALF;
                     if (!(vertex_i[j] == old)) { made_change = true; }
                 }
-                if (!m_constraint_function(vertex_i)) {
+                if (!evaluate_constraints(vertex_i)) {
                     m_has_terminated = true;
                     return;
                 }
-                DZNL_CONST REAL_T objective_i = m_objective_function(vertex_i);
+                DZNL_CONST REAL_T objective_i = evaluate_objective(vertex_i);
                 vertex_i[m_dimension] = objective_i;
             }
             if (!made_change) {
