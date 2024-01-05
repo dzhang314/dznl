@@ -2,8 +2,7 @@
 #define DZNL_TEST_TYPES_HPP_INCLUDED
 
 #include <dznl/Macros.hpp>
-
-namespace dznl {
+#include <dznl/NumericFunctions.hpp>
 
 
 class my_real { // clang-format off
@@ -22,6 +21,9 @@ public: // public interface
     constexpr my_real &operator-=(DZNL_CONST my_real &rhs) noexcept             { m_value -= rhs.m_value; return *this; }
     constexpr my_real &operator*=(DZNL_CONST my_real &rhs) noexcept             { m_value *= rhs.m_value; return *this; }
     constexpr my_real &operator/=(DZNL_CONST my_real &rhs) noexcept             { m_value /= rhs.m_value; return *this; }
+    friend constexpr my_real twice(DZNL_CONST my_real &x) noexcept              { return x + x; }
+    friend constexpr my_real square(DZNL_CONST my_real &x) noexcept             { return x * x; }
+    friend constexpr my_real inv(DZNL_CONST my_real &x) noexcept                { return my_real::test_only_construct(dznl::inv(x.test_only_get_value())); }
 
 public: // test-only interface
 
@@ -39,13 +41,10 @@ private: // clang-format on
 
 }; // class my_real
 
-// clang-format off
+namespace dznl { // clang-format off
 template <> constexpr my_real zero<my_real>() noexcept                          { return my_real::test_only_construct(0.0); }
 template <> constexpr my_real one<my_real>() noexcept                           { return my_real::test_only_construct(1.0); }
-constexpr my_real twice(DZNL_CONST my_real &x) noexcept                         { return x + x; }
-constexpr my_real square(DZNL_CONST my_real &x) noexcept                        { return x * x; }
-constexpr my_real inv(DZNL_CONST my_real &x) noexcept                           { return my_real::test_only_construct(inv(x.test_only_get_value())); }
-// clang-format on
+} // clang-format on
 
 
 class my_index { // clang-format off
@@ -77,9 +76,9 @@ private: // clang-format on
 
 }; // class my_index
 
-// clang-format off
+namespace dznl { // clang-format off
 template <> constexpr my_index zero<my_index>() noexcept                        { return my_index::test_only_construct(0); }
-// clang-format on
+} // clang-format on
 
 
 class my_accessor { // clang-format off
@@ -107,7 +106,5 @@ private: // clang-format on
 
 }; // class my_accessor
 
-
-} // namespace dznl
 
 #endif // DZNL_TEST_TYPES_HPP_INCLUDED

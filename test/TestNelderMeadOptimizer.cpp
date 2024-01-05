@@ -1,3 +1,6 @@
+#include "OptimizationTestFunctions.hpp"
+#include "TestTypes.hpp"
+
 #include <dznl/NelderMeadOptimizer.hpp>
 #include <dznl/NumericFunctions.hpp>
 
@@ -6,12 +9,9 @@
 
 #include <vector>
 
-#include "OptimizationTestFunctions.hpp"
-#include "TestTypes.hpp"
-
 
 TEMPLATE_TEST_CASE(
-    "NelderMeadOptimizer (intrinsic types)",
+    "NelderMeadOptimizer (intrinsic index types)",
     "",
     signed char,
     unsigned char,
@@ -29,8 +29,8 @@ TEMPLATE_TEST_CASE(
     using OptimizerType = dznl::NelderMeadOptimizer<
         double,
         TestType,
-        decltype(dznl::rosenbrock_function),
-        decltype(dznl::null_constraint)>;
+        decltype(rosenbrock_function),
+        decltype(null_constraint)>;
 
     TestType dimension = 2;
     std::vector<double> initial_point = {2.0, 4.0};
@@ -41,8 +41,8 @@ TEMPLATE_TEST_CASE(
     auto workspace_accessor = workspace.data();
     double step_size = 0.5;
     OptimizerType optimizer(
-        dznl::rosenbrock_function,
-        dznl::null_constraint,
+        rosenbrock_function,
+        null_constraint,
         initial_point_accessor,
         dimension,
         step_size,
@@ -75,37 +75,35 @@ TEMPLATE_TEST_CASE(
 TEST_CASE("NelderMeadOptimizer (user-provided types)") {
 
     using Optimizer = dznl::NelderMeadOptimizer<
-        dznl::my_real,
-        dznl::my_index,
-        decltype(dznl::my_rosenbrock_function),
-        decltype(dznl::my_null_constraint),
-        dznl::my_accessor>;
+        my_real,
+        my_index,
+        decltype(my_rosenbrock_function),
+        decltype(my_null_constraint),
+        my_accessor>;
 
-    void *initial_memory = operator new(sizeof(dznl::my_real) * 2);
-    dznl::my_real *initial_point =
-        reinterpret_cast<dznl::my_real *>(initial_memory);
-    dznl::my_real initial_x = dznl::my_real::test_only_construct(2.0);
-    dznl::my_real initial_y = dznl::my_real::test_only_construct(4.0);
+    void *initial_memory = operator new(sizeof(my_real) * 2);
+    my_real *initial_point = reinterpret_cast<my_real *>(initial_memory);
+    my_real initial_x = my_real::test_only_construct(2.0);
+    my_real initial_y = my_real::test_only_construct(4.0);
     initial_point[0] = initial_x;
     initial_point[1] = initial_y;
 
-    dznl::my_index dimension = dznl::my_index::test_only_construct(2);
-    dznl::my_index workspace_size = Optimizer::workspace_size(dimension);
+    my_index dimension = my_index::test_only_construct(2);
+    my_index workspace_size = Optimizer::workspace_size(dimension);
     void *workspace_memory = operator new(
-        sizeof(dznl::my_real) * workspace_size.test_only_get_value()
+        sizeof(my_real) * workspace_size.test_only_get_value()
     );
-    dznl::my_real *workspace =
-        reinterpret_cast<dznl::my_real *>(workspace_memory);
+    my_real *workspace = reinterpret_cast<my_real *>(workspace_memory);
 
-    dznl::my_accessor initial_point_accessor =
-        dznl::my_accessor::test_only_construct(initial_point);
-    dznl::my_accessor workspace_accessor =
-        dznl::my_accessor::test_only_construct(workspace);
-    dznl::my_real initial_step_size = dznl::my_real::test_only_construct(0.5);
+    my_accessor initial_point_accessor =
+        my_accessor::test_only_construct(initial_point);
+    my_accessor workspace_accessor =
+        my_accessor::test_only_construct(workspace);
+    my_real initial_step_size = my_real::test_only_construct(0.5);
 
     Optimizer optimizer(
-        dznl::my_rosenbrock_function,
-        dznl::my_null_constraint,
+        my_rosenbrock_function,
+        my_null_constraint,
         initial_point_accessor,
         dimension,
         initial_step_size,
