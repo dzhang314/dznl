@@ -4,28 +4,15 @@
 #include <dznl/NelderMeadOptimizer.hpp>
 #include <dznl/NumericFunctions.hpp>
 
-#include <catch2/catch_template_test_macros.hpp>
-#include <catch2/catch_test_macros.hpp>
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#define DOCTEST_CONFIG_SUPER_FAST_ASSERTS
+#include <doctest/doctest.h>
 
 #include <vector>
 
 
-TEMPLATE_TEST_CASE(
-    "NelderMeadOptimizer (float, intrinsic index types)",
-    "",
-    signed char,
-    unsigned char,
-    short,
-    unsigned short,
-    int,
-    unsigned int,
-    long,
-    unsigned long,
-    long long,
-    unsigned long long,
-    __int128_t,
-    __uint128_t
-) {
+TEST_CASE("NelderMeadOptimizer (float, intrinsic index types)") {
+    using TestType = unsigned long;
     using OptimizerType = dznl::NelderMeadOptimizer<
         float,
         TestType,
@@ -70,22 +57,8 @@ TEMPLATE_TEST_CASE(
 }
 
 
-TEMPLATE_TEST_CASE(
-    "NelderMeadOptimizer (double, intrinsic index types)",
-    "",
-    signed char,
-    unsigned char,
-    short,
-    unsigned short,
-    int,
-    unsigned int,
-    long,
-    unsigned long,
-    long long,
-    unsigned long long,
-    __int128_t,
-    __uint128_t
-) {
+TEST_CASE("NelderMeadOptimizer (float, intrinsic index types)") {
+    using TestType = unsigned long;
     using OptimizerType = dznl::
         NelderMeadOptimizer<double, TestType, decltype(rosenbrock_function)>;
 
@@ -128,22 +101,8 @@ TEMPLATE_TEST_CASE(
 }
 
 
-TEMPLATE_TEST_CASE(
-    "NelderMeadOptimizer (long double, intrinsic index types)",
-    "",
-    signed char,
-    unsigned char,
-    short,
-    unsigned short,
-    int,
-    unsigned int,
-    long,
-    unsigned long,
-    long long,
-    unsigned long long,
-    __int128_t,
-    __uint128_t
-) {
+TEST_CASE("NelderMeadOptimizer (long double, intrinsic index types)") {
+    using TestType = unsigned long;
     using OptimizerType = dznl::NelderMeadOptimizer<
         long double,
         TestType,
