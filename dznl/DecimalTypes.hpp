@@ -4,7 +4,7 @@
 #include "NumericFunctions.hpp"
 
 #if defined(__GNUC__) && !defined(__clang__)
-#define DZNL_HAS_DECIMAL
+#define DZNL_HAS_DECIMAL 1
 #include <decimal/decimal>
 
 namespace dznl {
@@ -42,6 +42,8 @@ d128 inv(d128 x) noexcept { return one<d128>() / x; }
 
 }; // namespace dznl
 
+#else
+#undef DZNL_HAS_DECIMAL
 #endif // defined(__GNUC__) && !defined(__clang__)
 
 #endif // DZNL_DECIMAL_TYPES_HPP_INCLUDED
