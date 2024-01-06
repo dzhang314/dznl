@@ -50,11 +50,11 @@ static constexpr INDEX_T nelder_mead_workspace_size(INDEX_T n) noexcept {
  *         or a user-defined type that overloads `operator[]` with a
  */
 template <
+    typename OBJECTIVE_FUNCTOR_T,
+    typename CONSTRAINT_FUNCTOR_T,
     typename REAL_T,
     typename INDEX_T,
-    typename OBJECTIVE_FUNCTOR_T,
-    typename CONSTRAINT_FUNCTOR_T = void,
-    typename ACCESSOR_T = REAL_T *DZNL_RESTRICT>
+    typename ACCESSOR_T>
 class NelderMeadOptimizer {
 
 private: // =================================================== MEMBER VARIABLES
@@ -458,10 +458,10 @@ template <
     typename INDEX_T,
     typename REAL_T>
 constexpr NelderMeadOptimizer<
-    REAL_T,
-    INDEX_T,
     OBJECTIVE_FUNCTOR_T,
     void,
+    REAL_T,
+    INDEX_T,
     ACCESSOR_T>
 make_nelder_mead_optimizer(
     OBJECTIVE_FUNCTOR_T *objective_function,
@@ -470,12 +470,46 @@ make_nelder_mead_optimizer(
     REAL_T initial_step_length
 ) {
     return NelderMeadOptimizer<
-        REAL_T,
-        INDEX_T,
         OBJECTIVE_FUNCTOR_T,
         void,
+        REAL_T,
+        INDEX_T,
         ACCESSOR_T>(
         objective_function, nullptr, workspace, dimension, initial_step_length
+    );
+}
+
+
+template <
+    typename OBJECTIVE_FUNCTOR_T,
+    typename CONSTRAINT_FUNCTOR_T,
+    typename ACCESSOR_T,
+    typename INDEX_T,
+    typename REAL_T>
+constexpr NelderMeadOptimizer<
+    OBJECTIVE_FUNCTOR_T,
+    CONSTRAINT_FUNCTOR_T,
+    REAL_T,
+    INDEX_T,
+    ACCESSOR_T>
+make_nelder_mead_optimizer(
+    OBJECTIVE_FUNCTOR_T *objective_function,
+    CONSTRAINT_FUNCTOR_T *constraint_function,
+    ACCESSOR_T workspace,
+    INDEX_T dimension,
+    REAL_T initial_step_length
+) {
+    return NelderMeadOptimizer<
+        OBJECTIVE_FUNCTOR_T,
+        CONSTRAINT_FUNCTOR_T,
+        REAL_T,
+        INDEX_T,
+        ACCESSOR_T>(
+        objective_function,
+        constraint_function,
+        workspace,
+        dimension,
+        initial_step_length
     );
 }
 

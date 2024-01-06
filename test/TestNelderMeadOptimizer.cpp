@@ -85,6 +85,7 @@ TEST_CASE("NelderMeadOptimizer (long double)") {
     test_nelder_mead_optimizer<long double, unsigned long long>();
 }
 
+
 #ifdef DZNL_HAS_DECIMAL
 
 TEST_CASE("NelderMeadOptimizer (decimal32)") {
