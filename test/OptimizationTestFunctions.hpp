@@ -1,6 +1,7 @@
 #ifndef DZNL_OPTIMIZATION_TEST_FUNCTIONS_HPP_INCLUDED
 #define DZNL_OPTIMIZATION_TEST_FUNCTIONS_HPP_INCLUDED
 
+#include <dznl/DecimalTypes.hpp>
 #include <dznl/Macros.hpp>
 #include <dznl/NumericFunctions.hpp>
 

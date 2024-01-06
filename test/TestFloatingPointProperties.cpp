@@ -1,5 +1,6 @@
 #include "TestTypes.hpp"
 
+#include <dznl/DecimalTypes.hpp>
 #include <dznl/FloatingPointProperties.hpp>
 #include <dznl/NumericFunctions.hpp>
 
@@ -33,41 +34,26 @@ TEST_CASE("compute_float_precision (IEEE binary)") {
 }
 
 
-#if defined(__GNUC__) && !defined(__clang__)
-
-#include <decimal/decimal>
-
-using std::decimal::decimal128;
-using std::decimal::decimal32;
-using std::decimal::decimal64;
-
-namespace dznl { // clang-format off
-template <> decimal32 zero<decimal32>() noexcept { return 0; }
-template <> decimal32 one<decimal32>() noexcept { return 1; }
-template <> decimal64 zero<decimal64>() noexcept { return 0; }
-template <> decimal64 one<decimal64>() noexcept { return 1; }
-template <> decimal128 zero<decimal128>() noexcept { return 0; }
-template <> decimal128 one<decimal128>() noexcept { return 1; }
-} // clang-format on
+#ifdef DZNL_HAS_DECIMAL
 
 TEST_CASE("compute_float_radix (IEEE decimal)") {
-    const auto decimal32_radix = dznl::compute_float_radix<decimal32, int>();
+    const auto decimal32_radix = dznl::compute_float_radix<dznl::d32, int>();
     CHECK_EQ(decimal32_radix.second, 10);
-    const auto decimal64_radix = dznl::compute_float_radix<decimal64, int>();
+    const auto decimal64_radix = dznl::compute_float_radix<dznl::d64, int>();
     CHECK_EQ(decimal64_radix.second, 10);
-    const auto decimal128_radix = dznl::compute_float_radix<decimal128, int>();
+    const auto decimal128_radix = dznl::compute_float_radix<dznl::d128, int>();
     CHECK_EQ(decimal128_radix.second, 10);
 }
 
 TEST_CASE("compute_float_precision (IEEE decimal)") {
     const auto decimal32_precision =
-        dznl::compute_float_precision<decimal32, int>();
+        dznl::compute_float_precision<dznl::d32, int>();
     CHECK_EQ(decimal32_precision, 7);
     const auto decimal64_precision =
-        dznl::compute_float_precision<decimal64, int>();
+        dznl::compute_float_precision<dznl::d64, int>();
     CHECK_EQ(decimal64_precision, 16);
     const auto decimal128_precision =
-        dznl::compute_float_precision<decimal128, int>();
+        dznl::compute_float_precision<dznl::d128, int>();
     CHECK_EQ(decimal128_precision, 34);
 }
 

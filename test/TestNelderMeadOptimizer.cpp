@@ -1,13 +1,17 @@
 #include "OptimizationTestFunctions.hpp"
 #include "TestTypes.hpp"
 
-#include <dznl/NelderMeadOptimizer.hpp>
+#include <dznl/DecimalTypes.hpp>
 #include <dznl/NumericFunctions.hpp>
+
+#include <dznl/NelderMeadOptimizer.hpp>
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #define DOCTEST_CONFIG_SUPER_FAST_ASSERTS
 #include <doctest/doctest.h>
 
+#include <iomanip>
+#include <iostream>
 #include <vector>
 
 
@@ -83,6 +87,38 @@ TEST_CASE("NelderMeadOptimizer (long double)") {
     test_nelder_mead_optimizer<long double, unsigned long long>();
 }
 
+#ifdef DZNL_HAS_DECIMAL
+
+TEST_CASE("NelderMeadOptimizer (decimal32)") {
+    test_nelder_mead_optimizer<dznl::d32, signed char>();
+    test_nelder_mead_optimizer<dznl::d32, unsigned char>();
+    test_nelder_mead_optimizer<dznl::d32, int>();
+    test_nelder_mead_optimizer<dznl::d32, unsigned>();
+    test_nelder_mead_optimizer<dznl::d32, long long>();
+    test_nelder_mead_optimizer<dznl::d32, unsigned long long>();
+}
+
+// TEST_CASE("NelderMeadOptimizer (decimal64)") {
+//     test_nelder_mead_optimizer<dznl::d64, signed char>();
+//     test_nelder_mead_optimizer<dznl::d64, unsigned char>();
+//     test_nelder_mead_optimizer<dznl::d64, int>();
+//     test_nelder_mead_optimizer<dznl::d64, unsigned>();
+//     test_nelder_mead_optimizer<dznl::d64, long long>();
+//     test_nelder_mead_optimizer<dznl::d64, unsigned long long>();
+// }
+
+TEST_CASE("NelderMeadOptimizer (decimal128)") {
+    test_nelder_mead_optimizer<dznl::d128, signed char>();
+    test_nelder_mead_optimizer<dznl::d128, unsigned char>();
+    test_nelder_mead_optimizer<dznl::d128, int>();
+    test_nelder_mead_optimizer<dznl::d128, unsigned>();
+    test_nelder_mead_optimizer<dznl::d128, long long>();
+    test_nelder_mead_optimizer<dznl::d128, unsigned long long>();
+}
+
+#endif // DZNL_HAS_DECIMAL
+
+
 TEST_CASE("NelderMeadOptimizer (user-defined types)") {
 
     constexpr my_index workspace_size =
@@ -128,76 +164,3 @@ TEST_CASE("NelderMeadOptimizer (user-defined types)") {
 
     operator delete(workspace_memory);
 }
-
-
-//  {
-
-//     using Optimizer = dznl::NelderMeadOptimizer<
-//         my_real,
-//         my_index,
-//         decltype(my_rosenbrock_function),
-//         void,
-//         my_accessor>;
-
-//     void *initial_memory = operator new(sizeof(my_real) * 2);
-//     my_real *initial_point = reinterpret_cast<my_real *>(initial_memory);
-
-//     my_index dimension = my_index::test_only_construct(2);
-//     my_index workspace_size = Optimizer::workspace_size(dimension);
-
-
-//     my_accessor initial_point_accessor =
-//         my_accessor::test_only_construct(initial_point);
-//     my_accessor workspace_accessor =
-//         ;
-//     my_real initial_step_size = my_real::test_only_construct(0.5);
-
-//     Optimizer optimizer(
-//         my_rosenbrock_function,
-//         initial_point_accessor,
-//         dimension,
-//         initial_step_size,
-//         workspace_accessor
-//     );
-
-//     constexpr INDEX_T workspace_size =
-//         dznl::nelder_mead_workspace_size(static_cast<INDEX_T>(2));
-
-//     std::vector<REAL_T> workspace(
-//         static_cast<typename std::vector<REAL_T>::size_type>(workspace_size)
-//     );
-//     workspace[0] = static_cast<REAL_T>(2.0);
-//     workspace[1] = static_cast<REAL_T>(4.0);
-
-//     auto optimizer = dznl::make_nelder_mead_optimizer(
-//         rosenbrock_function<REAL_T>,
-//         workspace.data(),
-//         static_cast<INDEX_T>(2),
-//         static_cast<REAL_T>(0.5)
-//     );
-
-//     CHECK_EQ(workspace[0], static_cast<REAL_T>(2.0));
-//     CHECK_EQ(workspace[1], static_cast<REAL_T>(4.0));
-//     CHECK_EQ(workspace[2], static_cast<REAL_T>(1.0));
-//     CHECK_EQ(workspace[3], static_cast<REAL_T>(2.0));
-//     CHECK_EQ(workspace[4], static_cast<REAL_T>(4.5));
-//     CHECK_EQ(workspace[5], static_cast<REAL_T>(26.0));
-//     CHECK_EQ(workspace[6], static_cast<REAL_T>(2.5));
-//     CHECK_EQ(workspace[7], static_cast<REAL_T>(4.0));
-//     CHECK_EQ(workspace[8], static_cast<REAL_T>(508.5));
-
-//     while (!optimizer.has_terminated()) { optimizer.step(); }
-
-//     CHECK_EQ(workspace[0], static_cast<REAL_T>(1.0));
-//     CHECK_EQ(workspace[1], static_cast<REAL_T>(1.0));
-//     CHECK_EQ(workspace[2], static_cast<REAL_T>(0.0));
-//     CHECK_EQ(workspace[3], static_cast<REAL_T>(1.0));
-//     CHECK_EQ(workspace[4], static_cast<REAL_T>(1.0));
-//     CHECK_EQ(workspace[5], static_cast<REAL_T>(0.0));
-//     CHECK_EQ(workspace[6], static_cast<REAL_T>(1.0));
-//     CHECK_EQ(workspace[7], static_cast<REAL_T>(1.0));
-//     CHECK_EQ(workspace[8], static_cast<REAL_T>(0.0));
-
-//     operator delete(initial_memory);
-//
-// }
