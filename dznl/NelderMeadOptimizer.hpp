@@ -230,7 +230,7 @@ public: // ========================================================= CONSTRUCTOR
         , m_dimension(dimension)
         , m_has_terminated(false) {
 
-        // Ensure that `dimension` is positive.
+        // Ensure `dimension` is positive.
         DZNL_CONST INDEX_T ZERO = zero<INDEX_T>();
         if (!(ZERO < m_dimension)) {
             m_has_terminated = true;
@@ -239,14 +239,12 @@ public: // ========================================================= CONSTRUCTOR
 
         // Call constraint function to check feasibility of initial point.
         if (!evaluate_constraints(m_workspace)) {
-            // If initial point is infeasible, immediately terminate.
             m_has_terminated = true;
             return;
         }
 
         // Compute objective value at constrained initial point.
         DZNL_CONST REAL_T initial_value = evaluate_objective(m_workspace);
-        // If objective value is NaN, immediately terminate.
         if (is_nan(initial_value)) {
             m_has_terminated = true;
             return;
@@ -301,11 +299,11 @@ private: // ====================================== OPTIMIZATION HELPER FUNCTIONS
 
 public: // ================================================= OPTIMIZER INTERFACE
 
-    constexpr DZNL_CONST ACCESSOR_T &current_point() const noexcept {
+    constexpr DZNL_CONST ACCESSOR_T &get_current_point() const noexcept {
         return m_workspace;
     }
 
-    constexpr DZNL_CONST REAL_T &current_objective_value() const noexcept {
+    constexpr DZNL_CONST REAL_T &get_current_objective_value() const noexcept {
         return m_workspace[m_dimension];
     }
 
