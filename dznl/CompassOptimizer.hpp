@@ -75,6 +75,14 @@ public: // ========================================================= CONSTRUCTOR
 
 public: // ================================================= OPTIMIZER INTERFACE
 
+    constexpr DZNL_CONST ACCESSOR_T &get_current_point() const noexcept {
+        return m_workspace;
+    }
+
+    constexpr DZNL_CONST REAL_T &get_current_objective_value() const noexcept {
+        return m_current_objective_value;
+    }
+
     constexpr bool step() noexcept {
 
         if (m_has_terminated) { return false; }
