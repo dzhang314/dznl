@@ -1,12 +1,9 @@
 #ifndef DZNL_NELDER_MEAD_OPTIMIZER_HPP_INCLUDED
 #define DZNL_NELDER_MEAD_OPTIMIZER_HPP_INCLUDED
 
-#include "FloatingPointProperties.hpp"
 #include "Macros.hpp"
 #include "NumericFunctions.hpp"
 #include "OptimizerUtilities.hpp"
-#include "Tuple.hpp"
-#include "TypeTraits.hpp"
 
 namespace dznl {
 
