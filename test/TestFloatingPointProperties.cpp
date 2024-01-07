@@ -2,7 +2,7 @@
 
 #include <dznl/DecimalTypes.hpp>
 #include <dznl/FloatingPointProperties.hpp>
-#include <dznl/NumericFunctions.hpp>
+#include <dznl/Tuple.hpp>
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #define DOCTEST_CONFIG_SUPER_FAST_ASSERTS
@@ -19,6 +19,8 @@ TEST_CASE("compute_float_radix (IEEE binary)") {
     constexpr auto long_double_radix =
         dznl::compute_float_radix<long double, int>();
     CHECK_EQ(long_double_radix.second, FLT_RADIX);
+    constexpr auto my_real_radix = dznl::compute_float_radix<my_real, int>();
+    CHECK_EQ(my_real_radix.second, FLT_RADIX);
 }
 
 
@@ -31,6 +33,9 @@ TEST_CASE("compute_float_precision (IEEE binary)") {
     constexpr int long_double_precision =
         dznl::compute_float_precision<long double, int>();
     CHECK_EQ(long_double_precision, LDBL_MANT_DIG);
+    constexpr int my_real_precision =
+        dznl::compute_float_precision<my_real, int>();
+    CHECK_EQ(my_real_precision, DBL_MANT_DIG);
 }
 
 

@@ -26,25 +26,41 @@ constexpr bool is_finite(DZNL_CONST FLOAT_T &x) noexcept {
 }
 
 
+namespace internal {
+
+
 /**
- * @brief Given a floating-point number x, compute and return the first
- *        nonnegative integer n such that x^n is dominant.
+ * @brief Return `true` if `ulp(big) > small`.
+ */
+template <typename FLOAT_T>
+constexpr bool
+is_negligible(DZNL_CONST FLOAT_T &big, DZNL_CONST FLOAT_T small) noexcept {
+    return !((big + small) - big == small);
+}
+
+
+/**
+ * @brief Given a floating-point number `x`, compute and return the first
+ *        nonnegative integer `n` such that `pow(x, n)` is dominant.
  *
- * We say that a floating-point number is "dominant" if its least
- * significant digit has magnitude greater than one, i.e., ulp(x^n) > 1.
+ * We say that a floating-point number is "dominant" if its least significant
+ * digit has magnitude greater than one, i.e., `ulp(pow(x, n)) > 1.0`.
  */
 template <typename FLOAT_T, typename INTEGER_T>
-constexpr Tuple<FLOAT_T, INTEGER_T>
-compute_float_dominant_power(DZNL_CONST FLOAT_T &x) noexcept {
+constexpr Tuple<FLOAT_T, INTEGER_T> compute_dominant_power(DZNL_CONST FLOAT_T &x
+) noexcept {
     DZNL_CONST FLOAT_T FLOAT_ONE = one<FLOAT_T>();
     INTEGER_T n = zero<INTEGER_T>();
     FLOAT_T x_pow_n = FLOAT_ONE;
-    while ((x_pow_n + FLOAT_ONE) - x_pow_n == FLOAT_ONE) {
+    while (!internal::is_negligible(x_pow_n, FLOAT_ONE)) {
         x_pow_n *= x;
         ++n;
     }
     return {x_pow_n, n};
 }
+
+
+} // namespace internal
 
 
 /**
@@ -68,13 +84,13 @@ constexpr Tuple<FLOAT_T, INTEGER_T> compute_float_radix() noexcept {
     // of the form [r^n, r^(n+1)). This means we can simply take x to be the
     // first dominant power of two.
     DZNL_CONST FLOAT_T dominant_number =
-        compute_float_dominant_power<FLOAT_T, INTEGER_T>(FLOAT_TWO).first;
+        internal::compute_dominant_power<FLOAT_T, INTEGER_T>(FLOAT_TWO).first;
 
     // Now, to compute ulp(x), we find the smallest positive integer y
     // that satisfies (x + y) - x == y.
     FLOAT_T float_radix = FLOAT_ONE;
     INTEGER_T integer_radix = one<INTEGER_T>();
-    while ((dominant_number + float_radix) - dominant_number != float_radix) {
+    while (internal::is_negligible(dominant_number, float_radix)) {
         float_radix += FLOAT_ONE;
         ++integer_radix;
     }
@@ -96,7 +112,7 @@ constexpr INTEGER_T compute_float_precision() noexcept {
     // is the smallest number satisfying ulp(r^p) > 1. Hence, we can compute p
     // by computing the first dominant power of r.
     DZNL_CONST FLOAT_T radix = compute_float_radix<FLOAT_T, INTEGER_T>().first;
-    return compute_float_dominant_power<FLOAT_T, INTEGER_T>(radix).second;
+    return internal::compute_dominant_power<FLOAT_T, INTEGER_T>(radix).second;
 }
 
 
