@@ -123,6 +123,10 @@ private: // ================================================== VERTEX REORDERING
         }
     }
 
+    /**
+     * @brief Sort the vertices of the active vertex in increasing order of
+     *        objective value using the insertion sort algorithm.
+     */
     constexpr void sort_active_simplex() noexcept {
         for (INDEX_T i = zero<INDEX_T>(); i < m_dimension;) {
             ++i;
@@ -130,22 +134,7 @@ private: // ================================================== VERTEX REORDERING
         }
     }
 
-private: // ================================================= SIMPLEX GENERATION
-
-    constexpr Tuple<bool, bool> try_coordinate_step(
-        DZNL_CONST ACCESSOR_T &dst,
-        DZNL_CONST ACCESSOR_T &src,
-        DZNL_CONST INDEX_T &i,
-        DZNL_CONST REAL_T &step_length,
-        bool forward
-    ) noexcept {
-        internal::copy_array(dst, src, m_dimension);
-        DZNL_CONST REAL_T x = dst[i];
-        DZNL_CONST REAL_T x_prime = forward ? x + step_length : x - step_length;
-        if (x == x_prime) { return {false, false}; }
-        dst[i] = x_prime;
-        return {true, m_base.constrain_and_evaluate(dst[m_dimension], dst)};
-    }
+private: // =============================================== SIMPLEX MANIPULATION
 
     constexpr bool generate_initial_vertex(
         DZNL_CONST ACCESSOR_T &dst,
@@ -157,13 +146,21 @@ private: // ================================================= SIMPLEX GENERATION
         DZNL_CONST REAL_T TWO = ONE + ONE;
         DZNL_CONST REAL_T HALF = inv(TWO);
         while (true) {
-            const auto [forward_change, forward_success] =
-                try_coordinate_step(dst, src, i, step_length, true);
-            if (forward_success) { return true; }
-            const auto [backward_change, backward_success] =
-                try_coordinate_step(dst, src, i, step_length, false);
-            if (backward_success) { return true; }
-            if (!(forward_change || backward_change)) { return false; }
+            using internal::StepResult;
+            internal::copy_array(dst, src, m_dimension);
+            const auto forward_result = m_base.try_coordinate_step(
+                dst[m_dimension], dst, i, step_length, true
+            );
+            if (forward_result == StepResult::FEASIBLE) { return true; }
+            internal::copy_array(dst, src, m_dimension);
+            const auto backward_result = m_base.try_coordinate_step(
+                dst[m_dimension], dst, i, step_length, false
+            );
+            if (backward_result == StepResult::FEASIBLE) { return true; }
+            if ((forward_result == StepResult::NO_CHANGE) &&
+                (backward_result == StepResult::NO_CHANGE)) {
+                return false;
+            }
             step_length *= HALF;
         }
     }
@@ -173,15 +170,58 @@ private: // ================================================= SIMPLEX GENERATION
         for (INDEX_T i = zero<INDEX_T>(); i < m_dimension;) {
             DZNL_CONST INDEX_T coordinate_index = i;
             ++i;
-            DZNL_CONST INDEX_T offset_i = vertex_offset(i);
-            DZNL_CONST ACCESSOR_T vertex_i = m_workspace + offset_i;
+            DZNL_CONST INDEX_T offset = vertex_offset(i);
+            DZNL_CONST ACCESSOR_T vertex = m_workspace + offset;
             const bool success = generate_initial_vertex(
-                vertex_i, m_workspace, coordinate_index, initial_step_length
+                vertex, m_workspace, coordinate_index, initial_step_length
             );
             if (!success) { return false; }
         }
         sort_active_simplex();
         return true;
+    }
+
+    constexpr void compute_simplex_centroid(DZNL_CONST ACCESSOR_T &dst
+    ) noexcept {
+        DZNL_CONST REAL_T ZERO = zero<REAL_T>();
+        DZNL_CONST REAL_T ONE = one<REAL_T>();
+        for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
+            dst[i] = ZERO;
+        }
+        REAL_T denominator = zero<REAL_T>();
+        for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
+            DZNL_CONST INDEX_T offset = vertex_offset(i);
+            DZNL_CONST ACCESSOR_T vertex = m_workspace + offset;
+            for (INDEX_T j = zero<INDEX_T>(); j < m_dimension; ++j) {
+                dst[j] += vertex[j];
+            }
+            denominator += ONE;
+        }
+        for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
+            dst[i] /= denominator;
+        }
+    }
+
+    constexpr bool shrink_simplex() noexcept {
+        DZNL_CONST REAL_T ONE = one<REAL_T>();
+        DZNL_CONST REAL_T TWO = ONE + ONE;
+        DZNL_CONST REAL_T HALF = inv(TWO);
+        bool made_change = false;
+        for (INDEX_T i = zero<INDEX_T>(); i < m_dimension;) {
+            ++i;
+            DZNL_CONST INDEX_T offset = vertex_offset(i);
+            DZNL_CONST ACCESSOR_T vertex = m_workspace + offset;
+            for (INDEX_T j = zero<INDEX_T>(); j < m_dimension; ++j) {
+                DZNL_CONST REAL_T old_coordinate = vertex[j];
+                vertex[j] += m_workspace[j];
+                vertex[j] *= HALF;
+                if (!(vertex[j] == old_coordinate)) { made_change = true; }
+            }
+            const bool is_feasible =
+                m_base.constrain_and_evaluate(vertex[m_dimension], vertex);
+            if (!is_feasible) { return false; }
+        }
+        return made_change;
     }
 
 public: // ========================================================= CONSTRUCTOR
@@ -226,26 +266,6 @@ public: // ========================================================= CONSTRUCTOR
 
 private: // ====================================== OPTIMIZATION HELPER FUNCTIONS
 
-    constexpr void compute_centroid(DZNL_CONST ACCESSOR_T &centroid) noexcept {
-        DZNL_CONST REAL_T ZERO = zero<REAL_T>();
-        DZNL_CONST REAL_T ONE = one<REAL_T>();
-        for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
-            centroid[i] = ZERO;
-        }
-        REAL_T denominator = zero<REAL_T>();
-        for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
-            INDEX_T current_offset = vertex_offset(i);
-            ACCESSOR_T current_vertex = m_workspace + current_offset;
-            for (INDEX_T j = zero<INDEX_T>(); j < m_dimension; ++j) {
-                centroid[j] += current_vertex[j];
-            }
-            denominator += ONE;
-        }
-        for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
-            centroid[i] /= denominator;
-        }
-    }
-
     constexpr void reflect(
         DZNL_CONST ACCESSOR_T &dst,
         DZNL_CONST ACCESSOR_T &x,
@@ -282,7 +302,7 @@ public: // ================================================= OPTIMIZER INTERFACE
         INDEX_T centroid_offset = worst_offset + m_dimension;
         ++centroid_offset;
         ACCESSOR_T centroid = m_workspace + centroid_offset;
-        compute_centroid(centroid);
+        compute_simplex_centroid(centroid);
 
         // Compute reflection of worst vertex through centroid.
         INDEX_T reflected_offset = centroid_offset + m_dimension;
@@ -371,25 +391,7 @@ public: // ================================================= OPTIMIZER INTERFACE
             return true;
         }
 
-        bool made_change = false;
-        for (INDEX_T i = zero<INDEX_T>(); i < m_dimension;) {
-            ++i;
-            INDEX_T offset_i = vertex_offset(i);
-            ACCESSOR_T vertex_i = m_workspace + offset_i;
-            for (INDEX_T j = zero<INDEX_T>(); j < m_dimension; ++j) {
-                DZNL_CONST REAL_T old = vertex_i[j];
-                vertex_i[j] += m_workspace[j];
-                vertex_i[j] *= HALF;
-                if (!(vertex_i[j] == old)) { made_change = true; }
-            }
-            const bool is_feasible =
-                m_base.constrain_and_evaluate(vertex_i[m_dimension], vertex_i);
-            if (!is_feasible) {
-                m_has_terminated = true;
-                return false;
-            }
-        }
-        if (!made_change) {
+        if (!shrink_simplex()) {
             m_has_terminated = true;
             return false;
         }
@@ -416,7 +418,7 @@ make_nelder_mead_optimizer(
     ACCESSOR_T workspace,
     INDEX_T dimension,
     REAL_T initial_step_length
-) {
+) noexcept {
     return NelderMeadOptimizer<
         OBJECTIVE_FUNCTOR_T,
         void,
@@ -446,7 +448,7 @@ make_nelder_mead_optimizer(
     ACCESSOR_T workspace,
     INDEX_T dimension,
     REAL_T initial_step_length
-) {
+) noexcept {
     return NelderMeadOptimizer<
         OBJECTIVE_FUNCTOR_T,
         CONSTRAINT_FUNCTOR_T,

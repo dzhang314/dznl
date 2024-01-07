@@ -9,6 +9,9 @@
 namespace dznl::internal {
 
 
+enum class StepResult : char { NO_CHANGE, INFEASIBLE, FEASIBLE };
+
+
 template <
     typename OBJECTIVE_FUNCTOR_T,
     typename CONSTRAINT_FUNCTOR_T,
@@ -17,12 +20,12 @@ template <
     typename ACCESSOR_T>
 class IterativeOptimizerBase {
 
-private: // ====================================================================
+private: // =================================================== MEMBER VARIABLES
 
-    OBJECTIVE_FUNCTOR_T *m_objective_function;
-    CONSTRAINT_FUNCTOR_T *m_constraint_function;
+    OBJECTIVE_FUNCTOR_T *const m_objective_function;
+    CONSTRAINT_FUNCTOR_T *const m_constraint_function;
 
-public: // =====================================================================
+public: // ========================================================= CONSTRUCTOR
 
     explicit constexpr IterativeOptimizerBase(
         OBJECTIVE_FUNCTOR_T *objective_function,
@@ -31,10 +34,11 @@ public: // =====================================================================
         : m_objective_function(objective_function)
         , m_constraint_function(constraint_function) {}
 
-public: // =====================================================================
+public: // ========================================================== EVALUATION
 
-    constexpr bool
-    constrain_and_evaluate(REAL_T &dst, DZNL_CONST ACCESSOR_T &point) noexcept {
+    constexpr bool constrain_and_evaluate(
+        REAL_T &dst, DZNL_CONST ACCESSOR_T &point
+    ) const noexcept {
         if constexpr (!is_void<CONSTRAINT_FUNCTOR_T>) {
             if (!(*m_constraint_function)(point)) { return false; }
         }
@@ -49,7 +53,7 @@ public: // =====================================================================
 
     constexpr bool replace_if_better(
         REAL_T &previous_objective_value, DZNL_CONST ACCESSOR_T &point
-    ) noexcept {
+    ) const noexcept {
         if constexpr (!is_void<CONSTRAINT_FUNCTOR_T>) {
             if (!(*m_constraint_function)(point)) { return false; }
         }
@@ -68,7 +72,7 @@ public: // =====================================================================
         REAL_T &dst,
         DZNL_CONST REAL_T &previous_objective_value,
         DZNL_CONST ACCESSOR_T &point
-    ) noexcept {
+    ) const noexcept {
         if constexpr (!is_void<CONSTRAINT_FUNCTOR_T>) {
             if (!(*m_constraint_function)(point)) { return false; }
         }
@@ -81,6 +85,23 @@ public: // =====================================================================
         } else {
             return false;
         }
+    }
+
+public: // ============================================================ STEPPING
+
+    constexpr StepResult try_coordinate_step(
+        REAL_T &dst,
+        DZNL_CONST ACCESSOR_T &point,
+        DZNL_CONST INDEX_T &i,
+        DZNL_CONST REAL_T &step_length,
+        bool forward
+    ) noexcept {
+        DZNL_CONST REAL_T x = point[i];
+        DZNL_CONST REAL_T x_prime = forward ? x + step_length : x - step_length;
+        if (x == x_prime) { return StepResult::NO_CHANGE; }
+        point[i] = x_prime;
+        const bool is_feasible = constrain_and_evaluate(dst, point);
+        return is_feasible ? StepResult::FEASIBLE : StepResult::INFEASIBLE;
     }
 
 }; // class IterativeOptimizerBase
