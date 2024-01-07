@@ -10,11 +10,9 @@ namespace dznl {
 
 template <typename INDEX_T>
 static constexpr INDEX_T nelder_mead_workspace_size(INDEX_T n) noexcept {
-    DZNL_CONST INDEX_T two_n = n + n;
-    DZNL_CONST INDEX_T three_n = two_n + n;
+    DZNL_CONST INDEX_T three_n = n + n + n;
     ++n;
-    DZNL_CONST INDEX_T n_plus_one_squared = n * n;
-    return n_plus_one_squared + three_n;
+    return n * n + three_n;
 }
 
 
