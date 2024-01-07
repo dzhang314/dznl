@@ -25,6 +25,11 @@ private: // =================================================== MEMBER VARIABLES
     OBJECTIVE_FUNCTOR_T *const m_objective_function;
     CONSTRAINT_FUNCTOR_T *const m_constraint_function;
 
+    IterativeOptimizerBase(const IterativeOptimizerBase &) = delete;
+    IterativeOptimizerBase(IterativeOptimizerBase &&) = delete;
+    IterativeOptimizerBase &operator=(const IterativeOptimizerBase &) = delete;
+    IterativeOptimizerBase &operator=(IterativeOptimizerBase &&) = delete;
+
 public: // ========================================================= CONSTRUCTOR
 
     explicit constexpr IterativeOptimizerBase(
