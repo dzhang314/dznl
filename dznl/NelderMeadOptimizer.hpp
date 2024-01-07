@@ -4,6 +4,7 @@
 #include "FloatingPointProperties.hpp"
 #include "Macros.hpp"
 #include "NumericFunctions.hpp"
+#include "OptimizerUtilities.hpp"
 #include "Tuple.hpp"
 #include "TypeTraits.hpp"
 
@@ -59,25 +60,16 @@ class NelderMeadOptimizer {
 
 private: // =================================================== MEMBER VARIABLES
 
-    OBJECTIVE_FUNCTOR_T *m_objective_function;
-    CONSTRAINT_FUNCTOR_T *m_constraint_function;
+    internal::IterativeOptimizerBase<
+        OBJECTIVE_FUNCTOR_T,
+        CONSTRAINT_FUNCTOR_T,
+        REAL_T,
+        INDEX_T,
+        ACCESSOR_T>
+        m_base;
     ACCESSOR_T m_workspace;
     INDEX_T m_dimension;
     bool m_has_terminated;
-
-private: // ================================================== FUNCTOR INTERFACE
-
-    constexpr REAL_T evaluate_objective(DZNL_CONST ACCESSOR_T &x) noexcept {
-        return (*m_objective_function)(x);
-    }
-
-    constexpr bool evaluate_constraints(DZNL_CONST ACCESSOR_T &x) noexcept {
-        if constexpr (is_void<CONSTRAINT_FUNCTOR_T>) {
-            return true;
-        } else {
-            return (*m_constraint_function)(x);
-        }
-    }
 
 private: // ================================================== VERTEX REORDERING
 
@@ -95,24 +87,6 @@ private: // ================================================== VERTEX REORDERING
     }
 
     /**
-     * @brief Swap two vertices in the active simplex.
-     *
-     * Coordinates and objective values of both vertices are swapped in-place.
-     */
-    constexpr void
-    swap_vertices(DZNL_CONST ACCESSOR_T &v, DZNL_CONST ACCESSOR_T &w) noexcept {
-        INDEX_T i = zero<INDEX_T>();
-        for (; i < m_dimension; ++i) {
-            DZNL_CONST REAL_T temp = v[i];
-            v[i] = w[i];
-            w[i] = temp;
-        }
-        DZNL_CONST REAL_T temp = v[i];
-        v[i] = w[i];
-        w[i] = temp;
-    }
-
-    /**
      * @brief Compare the objective values of two vertices in the active
      *        simplex and, if necessary, swap them so that the objective
      *        value of vertex `i` does not exceed that of vertex `j`.
@@ -126,9 +100,12 @@ private: // ================================================== VERTEX REORDERING
         DZNL_CONST INDEX_T offset_j = vertex_offset(j);
         DZNL_CONST ACCESSOR_T vertex_i = m_workspace + offset_i;
         DZNL_CONST ACCESSOR_T vertex_j = m_workspace + offset_j;
-        const bool swapped = (vertex_j[m_dimension] < vertex_i[m_dimension]);
-        if (swapped) { swap_vertices(vertex_i, vertex_j); }
-        return swapped;
+        if (vertex_j[m_dimension] < vertex_i[m_dimension]) {
+            internal::swap_arrays(vertex_i, vertex_j, m_dimension, true);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -146,15 +123,14 @@ private: // ================================================== VERTEX REORDERING
         }
     }
 
-private: // ================================================= SIMPLEX GENERATION
-
-    constexpr void copy_coordinates(
-        DZNL_CONST ACCESSOR_T &dst, DZNL_CONST ACCESSOR_T &src
-    ) noexcept {
-        for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
-            dst[i] = src[i];
+    constexpr void sort_active_simplex() noexcept {
+        for (INDEX_T i = zero<INDEX_T>(); i < m_dimension;) {
+            ++i;
+            insert_vertex(i);
         }
     }
+
+private: // ================================================= SIMPLEX GENERATION
 
     constexpr Tuple<bool, bool> try_coordinate_step(
         DZNL_CONST ACCESSOR_T &dst,
@@ -163,19 +139,12 @@ private: // ================================================= SIMPLEX GENERATION
         DZNL_CONST REAL_T &step_length,
         bool forward
     ) noexcept {
-        copy_coordinates(dst, src);
+        internal::copy_array(dst, src, m_dimension);
         DZNL_CONST REAL_T x = dst[i];
         DZNL_CONST REAL_T x_prime = forward ? x + step_length : x - step_length;
         if (x == x_prime) { return {false, false}; }
         dst[i] = x_prime;
-        if (evaluate_constraints(dst)) {
-            DZNL_CONST REAL_T objective_value = evaluate_objective(dst);
-            if (!is_nan(objective_value)) {
-                dst[m_dimension] = objective_value;
-                return {true, true};
-            }
-        }
-        return {true, false};
+        return {true, m_base.constrain_and_evaluate(dst[m_dimension], dst)};
     }
 
     constexpr bool generate_initial_vertex(
@@ -210,8 +179,8 @@ private: // ================================================= SIMPLEX GENERATION
                 vertex_i, m_workspace, coordinate_index, initial_step_length
             );
             if (!success) { return false; }
-            insert_vertex(i);
         }
+        sort_active_simplex();
         return true;
     }
 
@@ -224,8 +193,7 @@ public: // ========================================================= CONSTRUCTOR
         DZNL_CONST INDEX_T &dimension,
         DZNL_CONST REAL_T &initial_step_length
     ) noexcept
-        : m_objective_function(objective_function)
-        , m_constraint_function(constraint_function)
+        : m_base(objective_function, constraint_function)
         , m_workspace(workspace)
         , m_dimension(dimension)
         , m_has_terminated(false) {
@@ -238,21 +206,14 @@ public: // ========================================================= CONSTRUCTOR
         }
 
         // Call constraint function to check feasibility of initial point.
-        if (!evaluate_constraints(m_workspace)) {
+        // If so, compute objective value at constrained initial point.
+        const bool is_feasible = m_base.constrain_and_evaluate(
+            m_workspace[m_dimension], m_workspace
+        );
+        if (!is_feasible) {
             m_has_terminated = true;
             return;
         }
-
-        // Compute objective value at constrained initial point.
-        DZNL_CONST REAL_T initial_value = evaluate_objective(m_workspace);
-        if (is_nan(initial_value)) {
-            m_has_terminated = true;
-            return;
-        }
-
-        // Store objective value in workspace
-        // immediately after constrained initial point.
-        m_workspace[m_dimension] = initial_value;
 
         // Generate active simplex. The first (dimension + 1)^2 workspace
         // entries will contain vertices of the active simplex, each followed
@@ -329,53 +290,47 @@ public: // ================================================= OPTIMIZER INTERFACE
         reflect(reflected_point, worst_vertex, centroid);
 
         // Constrain reflected point and compute its objective value.
-        bool reflected_feasible = false;
-        REAL_T threshold_value = worst_value;
-        if (evaluate_constraints(reflected_point)) {
-            DZNL_CONST REAL_T reflected_value =
-                evaluate_objective(reflected_point);
-            if (!is_nan(reflected_value)) {
-                reflected_feasible = true;
-                threshold_value = reflected_value;
+        REAL_T reflected_value = worst_value;
+        const bool reflected_is_feasible =
+            m_base.constrain_and_evaluate(reflected_value, reflected_point);
 
-                // If the reflected point is feasible and better than
-                // the previous best vertex, try expanding the simplex.
-                DZNL_CONST REAL_T best_value = m_workspace[m_dimension];
-                if (reflected_value < best_value) {
-                    INDEX_T expanded_offset = reflected_offset + m_dimension;
-                    ACCESSOR_T expanded_point = m_workspace + expanded_offset;
-                    reflect(expanded_point, centroid, reflected_point);
+        if (reflected_is_feasible) {
+            // If the reflected point is feasible and better than
+            // the previous best vertex, try expanding the simplex.
+            if (reflected_value < m_workspace[m_dimension]) {
+                INDEX_T expanded_offset = reflected_offset + m_dimension;
+                ACCESSOR_T expanded_point = m_workspace + expanded_offset;
+                reflect(expanded_point, centroid, reflected_point);
 
-                    // Replace worst vertex with whichever is better
-                    // between the reflected and expanded points.
-                    if (evaluate_constraints(expanded_point)) {
-                        DZNL_CONST REAL_T expanded_value =
-                            evaluate_objective(expanded_point);
-                        if (expanded_value < reflected_value) {
-                            copy_coordinates(worst_vertex, expanded_point);
-                            worst_vertex[m_dimension] = expanded_value;
-                            insert_vertex(m_dimension);
-                            return true;
-                        }
-                    }
-                    copy_coordinates(worst_vertex, reflected_point);
+                // Replace worst vertex with whichever is better
+                // between the reflected and expanded points.
+                const bool expanded_is_better = m_base.replace_if_better(
+                    worst_vertex[m_dimension], reflected_value, expanded_point
+                );
+                internal::copy_array(
+                    worst_vertex,
+                    expanded_is_better ? expanded_point : reflected_point,
+                    m_dimension
+                );
+                if (!expanded_is_better) {
                     worst_vertex[m_dimension] = reflected_value;
-                    insert_vertex(m_dimension);
-                    return true;
                 }
+                insert_vertex(m_dimension);
+                return true;
+            }
 
-                // Otherwise, if the reflected point is feasible and better
-                // than the second-worst vertex, accept the reflected point
-                // without trying expansion.
-                --worst_offset;
-                DZNL_CONST REAL_T second_worst_value =
-                    m_workspace[worst_offset];
-                if (reflected_value < second_worst_value) {
-                    copy_coordinates(worst_vertex, reflected_point);
-                    worst_vertex[m_dimension] = reflected_value;
-                    insert_vertex(m_dimension);
-                    return true;
-                }
+            // Otherwise, if the reflected point is feasible and better
+            // than the second-worst vertex, accept the reflected point
+            // without trying expansion.
+            --worst_offset;
+            DZNL_CONST REAL_T second_worst_value = m_workspace[worst_offset];
+            if (reflected_value < second_worst_value) {
+                internal::copy_array(
+                    worst_vertex, reflected_point, m_dimension
+                );
+                worst_vertex[m_dimension] = reflected_value;
+                insert_vertex(m_dimension);
+                return true;
             }
         }
 
@@ -387,20 +342,20 @@ public: // ================================================= OPTIMIZER INTERFACE
         DZNL_CONST REAL_T TWO = ONE + ONE;
         DZNL_CONST REAL_T HALF = inv(TWO);
 
-        if ((!reflected_feasible) || (threshold_value < worst_value)) {
+        if ((!reflected_is_feasible) || (reflected_value < worst_value)) {
             for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
                 reflected_point[i] += centroid[i];
                 reflected_point[i] *= HALF;
             }
-            if (evaluate_constraints(reflected_point)) {
-                DZNL_CONST REAL_T contracted_value =
-                    evaluate_objective(reflected_point);
-                if (contracted_value < threshold_value) {
-                    copy_coordinates(worst_vertex, reflected_point);
-                    worst_vertex[m_dimension] = contracted_value;
-                    insert_vertex(m_dimension);
-                    return true;
-                }
+            const bool contracted_is_better = m_base.replace_if_better(
+                worst_vertex[m_dimension], reflected_value, reflected_point
+            );
+            if (contracted_is_better) {
+                internal::copy_array(
+                    worst_vertex, reflected_point, m_dimension
+                );
+                insert_vertex(m_dimension);
+                return true;
             }
         }
 
@@ -408,14 +363,12 @@ public: // ================================================= OPTIMIZER INTERFACE
             centroid[i] += worst_vertex[i];
             centroid[i] *= HALF;
         }
-        if (evaluate_constraints(centroid)) {
-            DZNL_CONST REAL_T contracted_value = evaluate_objective(centroid);
-            if (contracted_value < worst_value) {
-                copy_coordinates(worst_vertex, centroid);
-                worst_vertex[m_dimension] = contracted_value;
-                insert_vertex(m_dimension);
-                return true;
-            }
+        const bool contracted_is_better =
+            m_base.replace_if_better(worst_vertex[m_dimension], centroid);
+        if (contracted_is_better) {
+            internal::copy_array(worst_vertex, centroid, m_dimension);
+            insert_vertex(m_dimension);
+            return true;
         }
 
         bool made_change = false;
@@ -429,21 +382,18 @@ public: // ================================================= OPTIMIZER INTERFACE
                 vertex_i[j] *= HALF;
                 if (!(vertex_i[j] == old)) { made_change = true; }
             }
-            if (!evaluate_constraints(vertex_i)) {
+            const bool is_feasible =
+                m_base.constrain_and_evaluate(vertex_i[m_dimension], vertex_i);
+            if (!is_feasible) {
                 m_has_terminated = true;
                 return false;
             }
-            DZNL_CONST REAL_T objective_i = evaluate_objective(vertex_i);
-            vertex_i[m_dimension] = objective_i;
         }
         if (!made_change) {
             m_has_terminated = true;
             return false;
         }
-        for (INDEX_T i = zero<INDEX_T>(); i < m_dimension;) {
-            ++i;
-            insert_vertex(i);
-        }
+        sort_active_simplex();
         return true;
     }
 
