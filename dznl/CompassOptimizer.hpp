@@ -147,10 +147,7 @@ public: // ================================================= OPTIMIZER INTERFACE
             m_last_coordinate = best_coordinate;
             m_last_direction = best_direction;
         } else {
-            DZNL_CONST REAL_T ONE = one<REAL_T>();
-            DZNL_CONST REAL_T TWO = ONE + ONE;
-            DZNL_CONST REAL_T HALF = inv(TWO);
-            m_current_step_length *= HALF;
+            m_current_step_length = halve(m_current_step_length);
         }
         return true;
     }

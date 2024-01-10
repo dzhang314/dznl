@@ -40,6 +40,11 @@ d64 inv(d64 x) noexcept { return one<d64>() / x; }
 d128 inv(d128 x) noexcept { return one<d128>() / x; }
 
 
+d32 halve(d32 x) noexcept { return static_cast<d32>(0.5) * x; }
+d64 halve(d64 x) noexcept { return static_cast<d64>(0.5) * x; }
+d128 halve(d128 x) noexcept { return static_cast<d128>(0.5) * x; }
+
+
 }; // namespace dznl
 
 #else

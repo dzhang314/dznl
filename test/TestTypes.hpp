@@ -26,6 +26,7 @@ public:
     friend constexpr my_real twice(DZNL_CONST my_real &x) noexcept              { return x + x; }
     friend constexpr my_real square(DZNL_CONST my_real &x) noexcept             { return x * x; }
     friend constexpr my_real inv(DZNL_CONST my_real &x) noexcept                { return my_real::test_only_construct(dznl::inv(x.test_only_get_value())); }
+    friend constexpr my_real halve(DZNL_CONST my_real &x) noexcept              { return my_real::test_only_construct(dznl::halve(x.test_only_get_value())); }
 
 public: // test-only interface
 

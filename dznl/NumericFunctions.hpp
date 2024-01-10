@@ -164,6 +164,31 @@ DZNL_LOOP_OVER_FUNDAMENTAL_FLOATING_POINT_TYPES
 
 
 /**
+ * @brief Given a number `x`, return a number `y` such that `y + y == x`.
+ *
+ * `dznl::halve()` should not be defined for numeric types whose elements
+ * cannot be halved in general, such as integral types.
+ */
+template <typename T>
+[[deprecated(
+    "WARNING: You are using the default implementation of dznl::halve(). "
+    "If possible, please overload dznl::halve(T) or dznl::halve(const T &) "
+    "with an optimized implementation for this specific type T."
+)]] constexpr T
+halve(DZNL_CONST T &x) noexcept {
+    DZNL_CONST T ONE = one<T>();
+    DZNL_CONST T TWO = twice(ONE);
+    DZNL_CONST T HALF = inv(TWO);
+    return HALF * x;
+}
+
+#define DZNL_LOOP_BODY(T)                                                      \
+    constexpr T halve(T x) noexcept { return static_cast<T>(0.5) * x; }
+DZNL_LOOP_OVER_FUNDAMENTAL_FLOATING_POINT_TYPES
+#undef DZNL_LOOP_BODY
+
+
+/**
  * @brief Return the square root of a number.
  *
  * `dznl::sqrt()` should not be defined for numeric types whose elements do not

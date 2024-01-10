@@ -137,9 +137,6 @@ private: // =============================================== SIMPLEX MANIPULATION
         DZNL_CONST INDEX_T &i,
         REAL_T step_length
     ) noexcept {
-        DZNL_CONST REAL_T ONE = one<REAL_T>();
-        DZNL_CONST REAL_T TWO = ONE + ONE;
-        DZNL_CONST REAL_T HALF = inv(TWO);
         while (true) {
             using internal::StepResult;
             internal::copy_array(dst, src, m_dimension);
@@ -156,7 +153,7 @@ private: // =============================================== SIMPLEX MANIPULATION
                 (backward_result == StepResult::NO_CHANGE)) {
                 return false;
             }
-            step_length *= HALF;
+            step_length = halve(step_length);
         }
     }
 
@@ -198,9 +195,6 @@ private: // =============================================== SIMPLEX MANIPULATION
     }
 
     constexpr bool shrink_simplex() noexcept {
-        DZNL_CONST REAL_T ONE = one<REAL_T>();
-        DZNL_CONST REAL_T TWO = ONE + ONE;
-        DZNL_CONST REAL_T HALF = inv(TWO);
         bool made_change = false;
         for (INDEX_T i = zero<INDEX_T>(); i < m_dimension;) {
             ++i;
@@ -209,7 +203,7 @@ private: // =============================================== SIMPLEX MANIPULATION
             for (INDEX_T j = zero<INDEX_T>(); j < m_dimension; ++j) {
                 DZNL_CONST REAL_T old_coordinate = vertex[j];
                 vertex[j] += m_workspace[j];
-                vertex[j] *= HALF;
+                vertex[j] = halve(vertex[j]);
                 if (!(vertex[j] == old_coordinate)) { made_change = true; }
             }
             const bool is_feasible =
@@ -353,14 +347,10 @@ public: // ================================================= OPTIMIZER INTERFACE
         // than the second-worst vertex. If we accepted it, it would simply
         // be the worst vertex again, so we need to contract or shrink.
 
-        DZNL_CONST REAL_T ONE = one<REAL_T>();
-        DZNL_CONST REAL_T TWO = ONE + ONE;
-        DZNL_CONST REAL_T HALF = inv(TWO);
-
         if ((!reflected_is_feasible) || (reflected_value < worst_value)) {
             for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
                 reflected_point[i] += centroid[i];
-                reflected_point[i] *= HALF;
+                reflected_point[i] = halve(reflected_point[i]);
             }
             const bool contracted_is_better = m_base.replace_if_better(
                 worst_vertex[m_dimension], reflected_value, reflected_point
@@ -376,7 +366,7 @@ public: // ================================================= OPTIMIZER INTERFACE
 
         for (INDEX_T i = zero<INDEX_T>(); i < m_dimension; ++i) {
             centroid[i] += worst_vertex[i];
-            centroid[i] *= HALF;
+            centroid[i] = halve(centroid[i]);
         }
         const bool contracted_is_better =
             m_base.replace_if_better(worst_vertex[m_dimension], centroid);
