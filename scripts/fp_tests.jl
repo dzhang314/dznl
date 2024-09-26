@@ -62,6 +62,7 @@ end
     (iszero(x) & iszero(y)) |
     (ispositive(x) & ispositive(y)) |
     (isnegative(x) & isnegative(y))
+@inline ispow2(x::T) where {T} = iszero(Base.mantissa(x)) & !iszero(x)
 
 
 function test_fp_sum(x::T, y::T) where {T}
@@ -110,6 +111,29 @@ function test_fp_sum(x::T, y::T) where {T}
     @assert iszero(s) || (expnt(s) >= expnt(x) - precision(T))
     @assert iszero(s) || (expnt(s) >= expnt(y) - precision(T))
 
+    # If both addends are powers of two...
+    if ispow2(x) && ispow2(y)
+        if expnt(x) == expnt(y)
+            # ... and they have the same exponent, their
+            # sum is either zero or the next power of two.
+            has_same_sign(x, y) && @assert (expnt(s) == expnt(x) + 1) && ispow2(s)
+            has_same_sign(x, y) && @assert (expnt(s) == expnt(y) + 1) && ispow2(s)
+            !has_same_sign(x, y) && @assert iszero(s)
+        elseif expnt(x) > expnt(y)
+            # ... and they have different exponents, their sum has
+            # the exponent of the larger addend, possibly minus one.
+            has_same_sign(x, y) && @assert expnt(s) == expnt(x)
+            !has_same_sign(x, y) && @assert (expnt(s) == expnt(x)) ||
+                                            (expnt(s) == expnt(x) - 1)
+        elseif expnt(x) < expnt(y)
+            # ... and they have different exponents, their sum has
+            # the exponent of the larger addend, possibly minus one.
+            has_same_sign(x, y) && @assert expnt(s) == expnt(y)
+            !has_same_sign(x, y) && @assert (expnt(s) == expnt(y)) ||
+                                            (expnt(s) == expnt(y) - 1)
+        end
+    end
+
     return nothing
 end
 
@@ -139,7 +163,7 @@ function test_fp_two_sum(x::T, y::T) where {T}
 
         # If the error term is nonzero, it is smaller
         # than the least significant bit of the sum.
-        @assert iszero(e) || (expnt(e) <= expnt(s) - precision(T))
+        @assert iszero(e) || ispow2(e) || (expnt(e) < expnt(s) - precision(T))
 
         # If the error term is nonzero, it is larger than
         # the least significant bit of the smaller addend.

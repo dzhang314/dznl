@@ -37,6 +37,7 @@ class FPVariable(object):
         self.name: str = name
         self.sign_bit: z3.BoolRef = z3.Bool(name + "_sign_bit")
         self.exponent: z3.ArithRef = z3.Int(name + "_exponent")
+        self.is_pow2: z3.BoolRef = z3.Bool(name + "_is_pow2")
 
         # We consider only computations without overflow or underflow.
         solver.add(self.exponent >= ZERO_EXPONENT)
@@ -138,7 +139,77 @@ def fp_sum(
     solver.add(z3.Or(s.is_zero, s.exponent >= x.exponent - PRECISION))
     solver.add(z3.Or(s.is_zero, s.exponent >= y.exponent - PRECISION))
 
+    # If both addends are powers of two...
+    solver.add(
+        z3.Implies(
+            z3.And(x.is_pow2, y.is_pow2),
+            z3.And(
+                z3.Implies(
+                    # ... and they have the same exponent, their
+                    # sum is either zero or the next power of two.
+                    x.exponent == y.exponent,
+                    z3.And(
+                        z3.Implies(
+                            x.has_same_sign(y),
+                            z3.And(s.exponent == x.exponent + 1, s.is_pow2),
+                        ),
+                        z3.Implies(
+                            x.has_same_sign(y),
+                            z3.And(s.exponent == y.exponent + 1, s.is_pow2),
+                        ),
+                        z3.Implies(z3.Not(x.has_same_sign(y)), s.is_zero),
+                    ),
+                ),
+                z3.Implies(
+                    # ... and they have different exponents, their sum has
+                    # the exponent of the larger addend, possibly minus one.
+                    x.exponent > y.exponent,
+                    z3.And(
+                        z3.Implies(
+                            x.has_same_sign(y),
+                            s.exponent == x.exponent,
+                        ),
+                        z3.Implies(
+                            z3.Not(x.has_same_sign(y)),
+                            z3.Or(
+                                s.exponent == x.exponent,
+                                s.exponent == x.exponent - 1,
+                            ),
+                        ),
+                    ),
+                ),
+                z3.Implies(
+                    # ... and they have different exponents, their sum has
+                    # the exponent of the larger addend, possibly minus one.
+                    x.exponent < y.exponent,
+                    z3.And(
+                        z3.Implies(x.has_same_sign(y), s.exponent == y.exponent),
+                        z3.Implies(
+                            z3.Not(x.has_same_sign(y)),
+                            z3.Or(
+                                s.exponent == y.exponent,
+                                s.exponent == y.exponent - 1,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+    )
+
     return s
+
+
+def is_ulp_nonoverlapping(x: FPVariable, y: FPVariable) -> z3.BoolRef:
+    """
+    Construct a Z3 formula that determines whether two FPVariables are
+    ulp-nonoverlapping and sorted in descending order by magnitude.
+    """
+    return z3.Or(
+        y.is_zero,
+        y.exponent < x.exponent - PRECISION,
+        z3.And(y.exponent == x.exponent - PRECISION, y.is_pow2),
+    )
 
 
 def fp_two_sum(
@@ -155,13 +226,12 @@ def fp_two_sum(
     s = fp_sum(solver, x, y, sum_name)
     e = FPVariable(solver, err_name)
 
+    # The error term is ulp-nonoverlapping with the sum.
+    solver.add(is_ulp_nonoverlapping(s, e))
+
     # If either addend is zero, the error term is zero.
     solver.add(z3.Implies(x.is_zero, e.is_zero))
     solver.add(z3.Implies(y.is_zero, e.is_zero))
-
-    # If the error term is nonzero, it is smaller
-    # than the least significant bit of the sum.
-    solver.add(z3.Or(e.is_zero, e.exponent <= s.exponent - PRECISION))
 
     # If the error term is nonzero, it is larger than
     # the least significant bit of the smaller addend.
@@ -210,28 +280,11 @@ def fp_fast_two_sum(
     return fp_two_sum(solver, x, y, sum_name, err_name)
 
 
-def is_p_normalized(xs: list[FPVariable]) -> z3.BoolRef:
-    """
-    Construct a Z3 formula that determines whether a list of FPVariables
-    is P-nonoverlapping and sorted in descending order by magnitude.
-    """
-    if len(xs) <= 1:
-        return z3.BoolVal(True)
-    else:
-        return z3.Or(
-            z3.And(*(x.is_zero for x in xs[1:])),
-            z3.And(
-                xs[0].exponent >= xs[1].exponent + PRECISION,
-                is_p_normalized(xs[1:]),
-            ),
-        )
-
-
 def verify_f64x2_plus_f64():
     solver = z3.Solver()
     x0 = FPVariable(solver, "x0")
     x1 = FPVariable(solver, "x1")
-    solver.add(is_p_normalized([x0, x1]))
+    solver.add(is_ulp_nonoverlapping(x0, x1))
     y = FPVariable(solver, "y")
 
     s0, s1 = fp_two_sum(solver, x0, y, "s0", "s1")
@@ -240,8 +293,8 @@ def verify_f64x2_plus_f64():
 
     prove(
         solver,
-        is_p_normalized([z0, z1]),
-        "normalization",
+        is_ulp_nonoverlapping(z0, z1),
+        "nonoverlapping",
     )
     prove(
         solver,
@@ -254,22 +307,22 @@ def verify_f64x2_plus_f64x2():
     solver = z3.Solver()
     x0 = FPVariable(solver, "x0")
     x1 = FPVariable(solver, "x1")
-    solver.add(is_p_normalized([x0, x1]))
+    solver.add(is_ulp_nonoverlapping(x0, x1))
     y0 = FPVariable(solver, "y0")
     y1 = FPVariable(solver, "y1")
-    solver.add(is_p_normalized([y0, y1]))
+    solver.add(is_ulp_nonoverlapping(y0, y1))
 
     s0, s1 = fp_two_sum(solver, x0, y0, "s0", "s1")
     t0, t1 = fp_two_sum(solver, x1, y1, "t0", "t1")
     c, err_c = fp_two_sum(solver, s1, t0, "c", "err_c")
-    v0, v1 = fp_two_sum(solver, s0, c, "v0", "v1")  # should be Fast2Sum
+    v0, v1 = fp_fast_two_sum(solver, s0, c, "v0", "v1")
     w, err_w = fp_two_sum(solver, t1, v1, "w", "err_w")
     z0, z1 = fp_fast_two_sum(solver, v0, w, "z0", "z1")
 
     prove(
         solver,
-        is_p_normalized([z0, z1]),
-        "normalization",
+        is_ulp_nonoverlapping(z0, z1),
+        "nonoverlapping",
     )
     prove(
         solver,
