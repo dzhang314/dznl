@@ -266,7 +266,7 @@ def fp_fast_two_sum(
     return fp_two_sum(solver, x, y, sum_name, err_name)
 
 
-def verify_f64x2_plus_f64():
+def verify_joldes_2017_algorithm_4():
     solver = z3.Solver()
     x0 = FPVariable(solver, "x0")
     x1 = FPVariable(solver, "x1")
@@ -289,7 +289,39 @@ def verify_f64x2_plus_f64():
     )
 
 
-def verify_f64x2_plus_f64x2():
+def refute_joldes_2017_algorithm_5():
+    solver = z3.Solver()
+    x0 = FPVariable(solver, "x0")
+    x1 = FPVariable(solver, "x1")
+    solver.add(is_ulp_nonoverlapping(x0, x1))
+    y0 = FPVariable(solver, "y0")
+    y1 = FPVariable(solver, "y1")
+    solver.add(is_ulp_nonoverlapping(y0, y1))
+
+    s0, s1 = fp_two_sum(solver, x0, y0, "s0", "s1")
+    v, err_v = fp_two_sum(solver, x1, y1, "v", "err_v")
+    w, err_w = fp_two_sum(solver, s1, v, "w", "err_w")
+    z0, z1 = fp_fast_two_sum(solver, s0, w, "z0", "z1")
+
+    prove(
+        solver,
+        is_ulp_nonoverlapping(z0, z1),
+        "nonoverlapping",
+    )
+    assert not prove(
+        solver,
+        z3.Or(err_v.is_zero, err_v.exponent <= z0.exponent + 1940),
+        "error bound on v",
+        verbose=False,
+    )
+    prove(
+        solver,
+        z3.Or(err_w.is_zero, err_w.exponent <= z0.exponent - 103),
+        "error bound on w",
+    )
+
+
+def verify_joldes_2017_algorithm_6():
     solver = z3.Solver()
     x0 = FPVariable(solver, "x0")
     x1 = FPVariable(solver, "x1")
@@ -324,5 +356,6 @@ def verify_f64x2_plus_f64x2():
 
 
 if __name__ == "__main__":
-    verify_f64x2_plus_f64()
-    verify_f64x2_plus_f64x2()
+    verify_joldes_2017_algorithm_4()
+    refute_joldes_2017_algorithm_5()
+    verify_joldes_2017_algorithm_6()
