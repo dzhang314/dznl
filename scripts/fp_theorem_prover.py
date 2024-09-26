@@ -284,7 +284,7 @@ def verify_f64x2_plus_f64():
     )
     prove(
         solver,
-        z3.Or(err_v.is_zero, err_v.exponent <= z0.exponent - 103),
+        z3.Or(err_v.is_zero, err_v.exponent <= z0.exponent - 104),
         "error bound",
     )
 
@@ -312,12 +312,12 @@ def verify_f64x2_plus_f64x2():
     )
     prove(
         solver,
-        z3.Or(err_c.is_zero, err_c.exponent <= z0.exponent - 101),
+        z3.Or(err_c.is_zero, err_c.exponent <= z0.exponent - 102),
         "error bound on c",
     )
     prove(
         solver,
-        z3.Or(err_w.is_zero, err_w.exponent <= z0.exponent - 104),
+        z3.Or(err_w.is_zero, err_w.exponent <= z0.exponent - 105),
         "error bound on w",
     )
     pass
