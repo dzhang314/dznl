@@ -125,6 +125,10 @@ function test_fp_two_sum(x::T, y::T) where {T}
 
     @assert s == x + y
 
+    # If either addend is zero, the error term is zero.
+    iszero(x) && @assert iszero(e)
+    iszero(y) && @assert iszero(e)
+
     if isfinite(e) && !issubnormal(e)
 
         # If the error term is nonzero, it is smaller
