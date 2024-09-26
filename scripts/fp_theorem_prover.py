@@ -26,6 +26,8 @@ def prove(
         assert result == z3.sat
         if verbose:
             print(f"Refuted {name} in {(stop - start) / 1e9:.6f} seconds.")
+            print("Counterexample:")
+            print(solver.model())
         return False
 
 
@@ -115,6 +117,16 @@ def fp_sum(
     # the sum is at least the exponent of the larger addend.
     solver.add(z3.Implies(x.has_same_sign(y), s.exponent >= x.exponent))
     solver.add(z3.Implies(x.has_same_sign(y), s.exponent >= y.exponent))
+
+    # If the addends have different signs, the exponent of
+    # the sum is at most the exponent of the larger addend.
+    solver.add(
+        z3.Or(
+            x.has_same_sign(y),
+            s.exponent <= x.exponent,
+            s.exponent <= y.exponent,
+        )
+    )
 
     # If the exponents of the addends are non-adjacent, the
     # exponent of the sum is adjacent to the larger addend.
@@ -215,15 +227,12 @@ def is_p_normalized(xs: list[FPVariable]) -> z3.BoolRef:
         )
 
 
-def main():
-
+def verify_f64x2_plus_f64():
     solver = z3.Solver()
-
     x0 = FPVariable(solver, "x0")
     x1 = FPVariable(solver, "x1")
-    y = FPVariable(solver, "y")
-
     solver.add(is_p_normalized([x0, x1]))
+    y = FPVariable(solver, "y")
 
     s0, s1 = fp_two_sum(solver, x0, y, "s0", "s1")
     v, err_v = fp_two_sum(solver, x1, s1, "v", "err_v")
@@ -241,5 +250,40 @@ def main():
     )
 
 
+def verify_f64x2_plus_f64x2():
+    solver = z3.Solver()
+    x0 = FPVariable(solver, "x0")
+    x1 = FPVariable(solver, "x1")
+    solver.add(is_p_normalized([x0, x1]))
+    y0 = FPVariable(solver, "y0")
+    y1 = FPVariable(solver, "y1")
+    solver.add(is_p_normalized([y0, y1]))
+
+    s0, s1 = fp_two_sum(solver, x0, y0, "s0", "s1")
+    t0, t1 = fp_two_sum(solver, x1, y1, "t0", "t1")
+    c, err_c = fp_two_sum(solver, s1, t0, "c", "err_c")
+    v0, v1 = fp_two_sum(solver, s0, c, "v0", "v1")  # should be Fast2Sum
+    w, err_w = fp_two_sum(solver, t1, v1, "w", "err_w")
+    z0, z1 = fp_fast_two_sum(solver, v0, w, "z0", "z1")
+
+    prove(
+        solver,
+        is_p_normalized([z0, z1]),
+        "normalization",
+    )
+    prove(
+        solver,
+        z3.Or(err_c.is_zero, err_c.exponent <= z0.exponent - 101),
+        "error bound on c",
+    )
+    prove(
+        solver,
+        z3.Or(err_w.is_zero, err_w.exponent <= z0.exponent - 104),
+        "error bound on w",
+    )
+    pass
+
+
 if __name__ == "__main__":
-    main()
+    verify_f64x2_plus_f64()
+    verify_f64x2_plus_f64x2()

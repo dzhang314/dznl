@@ -94,6 +94,12 @@ function test_fp_sum(x::T, y::T) where {T}
     has_same_sign(x, y) && @assert expnt(s) >= expnt(x)
     has_same_sign(x, y) && @assert expnt(s) >= expnt(y)
 
+    # If the addends have different signs, the exponent of
+    # the sum is at most the exponent of the larger addend.
+    @assert has_same_sign(x, y) ||
+            (expnt(s) <= expnt(x)) ||
+            (expnt(s) <= expnt(y))
+
     # If the exponents of the addends are non-adjacent, the
     # exponent of the sum is adjacent to the larger addend.
     (expnt(x) > expnt(y) + 1) && @assert expnt(s) >= expnt(x) - 1
