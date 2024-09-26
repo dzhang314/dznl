@@ -93,16 +93,20 @@ def fp_sum(
     """
     s = FPVariable(solver, name)
 
+    ######################################################## IDENTITY PROPERTIES
+
     # If both addends are zero, the sum is zero.
     solver.add(z3.Implies(z3.And(x.is_zero, y.is_zero), s.is_zero))
+
+    # If either addend is zero, the sum equals the other one.
+    solver.add(z3.Implies(x.is_zero, s.is_equal(y)))
+    solver.add(z3.Implies(y.is_zero, s.is_equal(x)))
+
+    ############################################################## SIGN ANALYSIS
 
     # If both addends have the same sign, the sum has the same sign.
     solver.add(z3.Implies(z3.And(x.is_positive, y.is_positive), s.is_positive))
     solver.add(z3.Implies(z3.And(x.is_negative, y.is_negative), s.is_negative))
-
-    # If either addend is zero, the sum equals the other addend.
-    solver.add(z3.Implies(x.is_zero, s.is_equal(y)))
-    solver.add(z3.Implies(y.is_zero, s.is_equal(x)))
 
     # If the addends have different exponents, the sum is
     # nonzero and has the same sign as the larger addend.
@@ -110,32 +114,59 @@ def fp_sum(
     solver.add(z3.Implies(x.exponent > y.exponent, s.has_same_sign(x)))
     solver.add(z3.Implies(x.exponent < y.exponent, s.has_same_sign(y)))
 
-    # The exponent of the sum is at most one
-    # plus the exponent of the larger addend.
+    ###################################################### EXPONENT UPPER BOUNDS
+
+    max_exponent = z3.If(x.exponent > y.exponent, x.exponent, y.exponent)
+
+    # Addition can only increase the exponent of the larger addend by one.
+    solver.add(s.exponent <= max_exponent + 1)
+
+    # If the addends have different signs, the exponent cannot increase.
+    solver.add(z3.Or(x.has_same_sign(y), s.exponent <= max_exponent))
+
+    # If the larger addend is a power of two and its exponent exceeds the
+    # smaller addend by at least two, the exponent of the sum cannot increase.
     solver.add(
-        z3.Or(
-            s.exponent <= x.exponent + 1,
-            s.exponent <= y.exponent + 1,
+        z3.Implies(
+            z3.Or(
+                z3.And(x.exponent > y.exponent + 1, x.is_pow2),
+                z3.And(x.exponent + 1 < y.exponent, y.is_pow2),
+            ),
+            s.exponent <= max_exponent,
         )
     )
 
-    # If the addends have the same sign, then the exponent of
-    # the sum is at least the exponent of the larger addend.
-    solver.add(z3.Implies(x.has_same_sign(y), s.exponent >= x.exponent))
-    solver.add(z3.Implies(x.has_same_sign(y), s.exponent >= y.exponent))
-
-    # If the addends have different signs, the exponent of
-    # the sum is at most the exponent of the larger addend.
+    # If both addends are powers of two with the same sign and
+    # different exponents, the exponent of the sum cannot increase.
     solver.add(
-        z3.Or(
-            x.has_same_sign(y),
-            s.exponent <= x.exponent,
-            s.exponent <= y.exponent,
+        z3.Implies(
+            z3.And(
+                x.is_pow2,
+                y.is_pow2,
+                x.has_same_sign(y),
+                x.exponent != y.exponent,
+            ),
+            s.exponent <= max_exponent,
         )
     )
 
-    # If the exponents of the addends are non-adjacent, the
-    # exponent of the sum is adjacent to the larger addend.
+    ###################################################### EXPONENT LOWER BOUNDS
+
+    # If the sum is nonzero, it is at least as large
+    # as the bit one past the end of the larger addend.
+    solver.add(z3.Or(s.is_zero, s.exponent >= max_exponent - PRECISION))
+
+    # Moreover, if both addends have the same exponent, the
+    # sum is at least as large as the least significant bit.
+    solver.add(
+        z3.Implies(
+            x.exponent == y.exponent,
+            z3.Or(s.is_zero, s.exponent > max_exponent - PRECISION),
+        )
+    )
+
+    # If the exponent of the larger addend exceeds the smaller addend
+    # by at least two, the exponent of the sum can only decrease by one.
     solver.add(
         z3.Implies(
             x.exponent > y.exponent + 1,
@@ -149,83 +180,8 @@ def fp_sum(
         )
     )
 
-    # If, in addition, the larger addend is a power of two, the
-    # exponent of the sum is at most the exponent of the larger addend.
-    solver.add(
-        z3.Implies(
-            z3.And(x.exponent > y.exponent + 1, x.is_pow2),
-            s.exponent <= x.exponent,
-        )
-    )
-    solver.add(
-        z3.Implies(
-            z3.And(x.exponent + 1 < y.exponent, y.is_pow2),
-            s.exponent <= y.exponent,
-        )
-    )
-
-    # If the sum is nonzero, then it is at least as large
-    # as the least significant bit of the larger addend.
-    solver.add(z3.Or(s.is_zero, s.exponent >= x.exponent - PRECISION))
-    solver.add(z3.Or(s.is_zero, s.exponent >= y.exponent - PRECISION))
-
-    # If both addends are powers of two...
-    solver.add(
-        z3.Implies(
-            z3.And(x.is_pow2, y.is_pow2),
-            z3.And(
-                z3.Implies(
-                    # ... and they have the same exponent, their
-                    # sum is either zero or the next power of two.
-                    x.exponent == y.exponent,
-                    z3.And(
-                        z3.Implies(
-                            x.has_same_sign(y),
-                            z3.And(s.exponent == x.exponent + 1, s.is_pow2),
-                        ),
-                        z3.Implies(
-                            x.has_same_sign(y),
-                            z3.And(s.exponent == y.exponent + 1, s.is_pow2),
-                        ),
-                        z3.Implies(z3.Not(x.has_same_sign(y)), s.is_zero),
-                    ),
-                ),
-                z3.Implies(
-                    # ... and they have different exponents, their sum has
-                    # the exponent of the larger addend, possibly minus one.
-                    x.exponent > y.exponent,
-                    z3.And(
-                        z3.Implies(
-                            x.has_same_sign(y),
-                            s.exponent == x.exponent,
-                        ),
-                        z3.Implies(
-                            z3.Not(x.has_same_sign(y)),
-                            z3.Or(
-                                s.exponent == x.exponent,
-                                s.exponent == x.exponent - 1,
-                            ),
-                        ),
-                    ),
-                ),
-                z3.Implies(
-                    # ... and they have different exponents, their sum has
-                    # the exponent of the larger addend, possibly minus one.
-                    x.exponent < y.exponent,
-                    z3.And(
-                        z3.Implies(x.has_same_sign(y), s.exponent == y.exponent),
-                        z3.Implies(
-                            z3.Not(x.has_same_sign(y)),
-                            z3.Or(
-                                s.exponent == y.exponent,
-                                s.exponent == y.exponent - 1,
-                            ),
-                        ),
-                    ),
-                ),
-            ),
-        )
-    )
+    # If both addends have the same sign, the exponent cannot decrease.
+    solver.add(z3.Implies(x.has_same_sign(y), s.exponent >= max_exponent))
 
     return s
 

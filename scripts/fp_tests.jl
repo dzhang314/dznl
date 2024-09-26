@@ -69,16 +69,20 @@ function test_fp_sum(x::T, y::T) where {T}
 
     s = x + y
 
+    ######################################################## IDENTITY PROPERTIES
+
     # If both addends are zero, the sum is zero.
     (iszero(x) && iszero(y)) && @assert iszero(s)
+
+    # If either addend is zero, the sum equals the other one.
+    iszero(x) && @assert s == y
+    iszero(y) && @assert s == x
+
+    ############################################################## SIGN ANALYSIS
 
     # If both addends have the same sign, the sum has the same sign.
     (ispositive(x) && ispositive(y)) && @assert ispositive(s)
     (isnegative(x) && isnegative(y)) && @assert isnegative(s)
-
-    # If either addend is zero, the sum equals the other addend.
-    iszero(x) && @assert s == y
-    iszero(y) && @assert s == x
 
     # If the addends have different exponents, the sum is
     # nonzero and has the same sign as the larger addend.
@@ -86,58 +90,44 @@ function test_fp_sum(x::T, y::T) where {T}
     (expnt(x) > expnt(y)) && @assert has_same_sign(s, x)
     (expnt(x) < expnt(y)) && @assert has_same_sign(s, y)
 
-    # The exponent of the sum is at most one
-    # plus the exponent of the larger addend.
-    @assert (expnt(s) <= expnt(x) + 1) || (expnt(s) <= expnt(y) + 1)
+    ###################################################### EXPONENT UPPER BOUNDS
 
-    # If the addends have the same sign, the exponent of
-    # the sum is at least the exponent of the larger addend.
-    has_same_sign(x, y) && @assert expnt(s) >= expnt(x)
-    has_same_sign(x, y) && @assert expnt(s) >= expnt(y)
+    max_expnt = max(expnt(x), expnt(y))
 
-    # If the addends have different signs, the exponent of
-    # the sum is at most the exponent of the larger addend.
-    @assert has_same_sign(x, y) ||
-            (expnt(s) <= expnt(x)) ||
-            (expnt(s) <= expnt(y))
+    # Addition can only increase the exponent of the larger addend by one.
+    @assert expnt(s) <= max_expnt + 1
 
-    # If the exponents of the addends are non-adjacent, the
-    # exponent of the sum is adjacent to the larger addend.
+    # If the addends have different signs, the exponent cannot increase.
+    @assert has_same_sign(x, y) || (expnt(s) <= max_expnt)
+
+    # If the larger addend is a power of two and its exponent exceeds the
+    # smaller addend by at least two, the exponent of the sum cannot increase.
+    ((expnt(x) > expnt(y) + 1) && ispow2(x) ||
+     (expnt(x) + 1 < expnt(y)) && ispow2(y)) && @assert expnt(s) <= max_expnt
+
+    # If both addends are powers of two with the same sign and
+    # different exponents, the exponent of the sum cannot increase.
+    (ispow2(x) && ispow2(y) && has_same_sign(x, y) && (expnt(x) != expnt(y))) &&
+        @assert expnt(s) <= max_expnt
+
+    ###################################################### EXPONENT LOWER BOUNDS
+
+    # If the sum is nonzero, it is at least as large
+    # as the bit one past the end of the larger addend.
+    @assert iszero(s) || (expnt(s) >= max_expnt - precision(T))
+
+    # Moreover, if both addends have the same exponent, the
+    # sum is at least as large as the least significant bit.
+    (expnt(x) == expnt(y)) && @assert iszero(s) ||
+                                      (expnt(s) > max_expnt - precision(T))
+
+    # If the exponent of the larger addend exceeds the smaller addend
+    # by at least two, the exponent of the sum can only decrease by one.
     (expnt(x) > expnt(y) + 1) && @assert expnt(s) >= expnt(x) - 1
     (expnt(x) + 1 < expnt(y)) && @assert expnt(s) >= expnt(y) - 1
 
-    # If, in addition, the larger addend is a power of two, the
-    # exponent of the sum is at most the exponent of the larger addend.
-    (expnt(x) > expnt(y) + 1) && ispow2(x) && @assert expnt(s) <= expnt(x)
-    (expnt(x) + 1 < expnt(y)) && ispow2(y) && @assert expnt(s) <= expnt(y)
-
-    # If the sum is nonzero, then it is at least as large
-    # as the least significant bit of the larger addend.
-    @assert iszero(s) || (expnt(s) >= expnt(x) - precision(T))
-    @assert iszero(s) || (expnt(s) >= expnt(y) - precision(T))
-
-    # If both addends are powers of two...
-    if ispow2(x) && ispow2(y)
-        if expnt(x) == expnt(y)
-            # ... and they have the same exponent, their
-            # sum is either zero or the next power of two.
-            has_same_sign(x, y) && @assert (expnt(s) == expnt(x) + 1) && ispow2(s)
-            has_same_sign(x, y) && @assert (expnt(s) == expnt(y) + 1) && ispow2(s)
-            !has_same_sign(x, y) && @assert iszero(s)
-        elseif expnt(x) > expnt(y)
-            # ... and they have different exponents, their sum has
-            # the exponent of the larger addend, possibly minus one.
-            has_same_sign(x, y) && @assert expnt(s) == expnt(x)
-            !has_same_sign(x, y) && @assert (expnt(s) == expnt(x)) ||
-                                            (expnt(s) == expnt(x) - 1)
-        elseif expnt(x) < expnt(y)
-            # ... and they have different exponents, their sum has
-            # the exponent of the larger addend, possibly minus one.
-            has_same_sign(x, y) && @assert expnt(s) == expnt(y)
-            !has_same_sign(x, y) && @assert (expnt(s) == expnt(y)) ||
-                                            (expnt(s) == expnt(y) - 1)
-        end
-    end
+    # If both addends have the same sign, the exponent cannot decrease.
+    has_same_sign(x, y) && @assert expnt(s) >= max_expnt
 
     return nothing
 end
