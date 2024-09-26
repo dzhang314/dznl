@@ -106,6 +106,11 @@ function test_fp_sum(x::T, y::T) where {T}
     (expnt(x) > expnt(y) + 1) && @assert expnt(s) >= expnt(x) - 1
     (expnt(x) + 1 < expnt(y)) && @assert expnt(s) >= expnt(y) - 1
 
+    # If, in addition, the larger addend is a power of two, the
+    # exponent of the sum is at most the exponent of the larger addend.
+    (expnt(x) > expnt(y) + 1) && ispow2(x) && @assert expnt(s) <= expnt(x)
+    (expnt(x) + 1 < expnt(y)) && ispow2(y) && @assert expnt(s) <= expnt(y)
+
     # If the sum is nonzero, then it is at least as large
     # as the least significant bit of the larger addend.
     @assert iszero(s) || (expnt(s) >= expnt(x) - precision(T))

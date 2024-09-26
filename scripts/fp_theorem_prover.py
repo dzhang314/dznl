@@ -112,7 +112,12 @@ def fp_sum(
 
     # The exponent of the sum is at most one
     # plus the exponent of the larger addend.
-    solver.add(z3.Or(s.exponent <= x.exponent + 1, s.exponent <= y.exponent + 1))
+    solver.add(
+        z3.Or(
+            s.exponent <= x.exponent + 1,
+            s.exponent <= y.exponent + 1,
+        )
+    )
 
     # If the addends have the same sign, then the exponent of
     # the sum is at least the exponent of the larger addend.
@@ -131,8 +136,33 @@ def fp_sum(
 
     # If the exponents of the addends are non-adjacent, the
     # exponent of the sum is adjacent to the larger addend.
-    solver.add(z3.Implies(x.exponent > y.exponent + 1, s.exponent >= x.exponent - 1))
-    solver.add(z3.Implies(x.exponent + 1 < y.exponent, s.exponent >= y.exponent - 1))
+    solver.add(
+        z3.Implies(
+            x.exponent > y.exponent + 1,
+            s.exponent >= x.exponent - 1,
+        )
+    )
+    solver.add(
+        z3.Implies(
+            x.exponent + 1 < y.exponent,
+            s.exponent >= y.exponent - 1,
+        )
+    )
+
+    # If, in addition, the larger addend is a power of two, the
+    # exponent of the sum is at most the exponent of the larger addend.
+    solver.add(
+        z3.Implies(
+            z3.And(x.exponent > y.exponent + 1, x.is_pow2),
+            s.exponent <= x.exponent,
+        )
+    )
+    solver.add(
+        z3.Implies(
+            z3.And(x.exponent + 1 < y.exponent, y.is_pow2),
+            s.exponent <= y.exponent,
+        )
+    )
 
     # If the sum is nonzero, then it is at least as large
     # as the least significant bit of the larger addend.
