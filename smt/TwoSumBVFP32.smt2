@@ -20,7 +20,8 @@
 (define-fun s () Float32 (fp s_sign s_exponent s_mantissa))
 (assert (= s (fp.add RNE x y)))
 
-; Let e := (x + y) - s, as computed by the TwoSum algorithm.
+; Let e := x + y - s (exact), as computed by the
+; TwoSum algorithm, and let e_e denote its exponent.
 
 (declare-const e_sign (_ BitVec 1))
 (declare-const e_exponent (_ BitVec 8))
@@ -33,7 +34,8 @@
 (define-fun y_err () Float32 (fp.sub RNE y y_prime))
 (assert (= e (fp.add RNE x_err y_err)))
 
-; We extend e_x, e_y, and e_s in order to perform arithmetic without overflow.
+; We extend e_x, e_y, e_s. and e_e in order
+; to perform arithmetic without overflow.
 
 (define-fun e_x () (_ BitVec 16)
     (bvadd #b0111111110000000 (concat #b00000000 x_exponent)))
@@ -48,6 +50,8 @@
 
 (define-fun e_min () (_ BitVec 16) (ite (bvult e_x e_y) e_x e_y))
 (define-fun e_max () (_ BitVec 16) (ite (bvugt e_x e_y) e_x e_y))
+
+; Theorem: If e is finite, nonzero, and not subnormal, then e_e <= e_s - 24.
 
 (assert (not (fp.isInfinite e)))
 (assert (not (fp.isNaN e)))

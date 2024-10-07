@@ -20,7 +20,8 @@
 (define-fun s () Float64 (fp s_sign s_exponent s_mantissa))
 (assert (= s (fp.add RNE x y)))
 
-; Let e := (x + y) - s, as computed by the TwoSum algorithm.
+; Let e := x + y - s (exact), as computed by the
+; TwoSum algorithm, and let e_e denote its exponent.
 
 (declare-const e_sign (_ BitVec 1))
 (declare-const e_exponent (_ BitVec 11))
@@ -33,7 +34,8 @@
 (define-fun y_err () Float64 (fp.sub RNE y y_prime))
 (assert (= e (fp.add RNE x_err y_err)))
 
-; We extend e_x, e_y, and e_s in order to perform arithmetic without overflow.
+; We extend e_x, e_y, e_s. and e_e in order
+; to perform arithmetic without overflow.
 
 (define-fun e_x () (_ BitVec 16)
     (bvadd #b0111110000000000 (concat #b00000 x_exponent)))
@@ -49,6 +51,8 @@
 (define-fun e_min () (_ BitVec 16) (ite (bvult e_x e_y) e_x e_y))
 (define-fun e_max () (_ BitVec 16) (ite (bvugt e_x e_y) e_x e_y))
 
+; Theorem: If e is finite, nonzero, and not subnormal, then e_e <= e_s - 53.
+
 (assert (not (fp.isInfinite e)))
 (assert (not (fp.isNaN e)))
 (assert (not (fp.isZero e)))
@@ -56,4 +60,4 @@
 (assert (not (bvule e_e (bvsub e_s #x0035))))
 (check-sat)
 
-; Suspected to be unsatisfiable. Too hard to verify with current SMT solvers.
+; Known to be unsatisfiable. Takes roughly 1 hour to verify with CVC5.
