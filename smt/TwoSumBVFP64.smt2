@@ -51,22 +51,18 @@
 (define-fun e_min () (_ BitVec 16) (ite (bvult e_x e_y) e_x e_y))
 (define-fun e_max () (_ BitVec 16) (ite (bvugt e_x e_y) e_x e_y))
 
-; Theorem: If e is finite, nonzero, and not subnormal, then e_e <= e_s - 53.
-
-(assert (not (fp.isInfinite e)))
-(assert (not (fp.isNaN e)))
-(assert (not (fp.isZero e)))
-(assert (not (fp.isSubnormal e)))
+; Theorem: If e is finite, nonzero, and not subnormal, then e_e < e_s - 53 or
+; e_e = e_s - 53 and e is a power of 2 (i.e., its mantissa bits are all zero).
 
 (push 1)
-    (assert (not (bvule e_e (bvsub e_s #x0035))))
-    (check-sat) ; Takes roughly 1 hour to verify UNSAT with CVC5.
-(pop 1)
-
-; Moreover, equality occurs only when e is a power of 2.
-
-(push 1)
+    ; Hypotheses:
+    (assert (not (fp.isInfinite e)))
+    (assert (not (fp.isNaN e)))
+    (assert (not (fp.isZero e)))
+    (assert (not (fp.isSubnormal e)))
+    ; Conclusion:
     (assert (not (or (bvult e_e (bvsub e_s #x0035))
-                     (= e_mantissa #x0000000000000))))
+                     (and (= e_e (bvsub e_s #x0035))
+                          (= e_mantissa #x0000000000000)))))
     (check-sat)
 (pop 1)
