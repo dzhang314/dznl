@@ -47,23 +47,45 @@
     (check-sat)
 (pop 1)
 
-; Theorem: If x == 0, then s == y.
+; Theorem: If x == 0, then s == y or s === y.
 
 (push 1)
     ; Hypotheses:
     (assert (fp.isZero x))
     ; Conclusion:
-    (assert (not (or (= s y) (fp.eq s y))))
+    (assert (not (or (fp.eq s y) (= s y))))
     (check-sat)
 (pop 1)
 
-; Theorem: If y == 0, then s == x.
+; Theorem: If y == 0, then s == x or s === x.
 
 (push 1)
     ; Hypotheses:
     (assert (fp.isZero y))
     ; Conclusion:
-    (assert (not (or (= s x) (fp.eq s x))))
+    (assert (not (or (fp.eq s x) (= s x))))
+    (check-sat)
+(pop 1)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Theorem: If e_x > e_y + 54, then s === x.
+
+(push 1)
+    ; Hypotheses:
+    (assert (bvugt e_x (bvadd e_y #x0036)))
+    ; Conclusion:
+    (assert (not (= s x)))
+    (check-sat)
+(pop 1)
+
+; Theorem: If e_x + 54 < e_y, then s === y.
+
+(push 1)
+    ; Hypotheses:
+    (assert (bvult (bvadd e_x #x0036) e_y))
+    ; Conclusion:
+    (assert (not (= s y)))
     (check-sat)
 (pop 1)
 
