@@ -57,7 +57,16 @@
 (assert (not (fp.isNaN e)))
 (assert (not (fp.isZero e)))
 (assert (not (fp.isSubnormal e)))
-(assert (not (bvule e_e (bvsub e_s #x0018))))
-(check-sat)
 
-; Known to be unsatisfiable. Takes 5-10 minutes to verify with CVC5.
+(push 1)
+    (assert (not (bvule e_e (bvsub e_s #x0018))))
+    (check-sat) ; Takes 5-10 minutes to verify UNSAT with CVC5.
+(pop 1)
+
+; Moreover, equality occurs only when e is a power of 2.
+
+(push 1)
+    (assert (not (or (bvult e_e (bvsub e_s #x0018))
+                     (= e_mantissa #b00000000000000000000000))))
+    (check-sat)
+(pop 1)
