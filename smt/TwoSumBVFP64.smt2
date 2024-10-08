@@ -64,5 +64,5 @@
     (assert (not (or (bvult e_e (bvsub e_s #x0035))
                      (and (= e_e (bvsub e_s #x0035))
                           (= e_mantissa #x0000000000000)))))
-    (check-sat)
+    (check-sat) ; Takes roughly an hour to verify UNSAT with CVC5.
 (pop 1)
