@@ -6,29 +6,6 @@ PRECISION: int = 53
 ZERO_EXPONENT: int = -1
 
 
-def prove(
-    solver: z3.Solver,
-    claim: z3.BoolRef,
-    name: str,
-    *,
-    verbose: bool = True,
-) -> bool:
-    start = time.perf_counter_ns()
-    result = solver.check(z3.Not(claim))
-    stop = time.perf_counter_ns()
-    if result == z3.unsat:
-        if verbose:
-            print(f"Verified {name} in {(stop - start) / 1e9:.6f} seconds.")
-        return True
-    else:
-        assert result == z3.sat
-        if verbose:
-            print(f"Refuted {name} in {(stop - start) / 1e9:.6f} seconds.")
-            print("Counterexample:")
-            print(solver.model())
-        return False
-
-
 class FPVariable(object):
 
     def __init__(self, solver: z3.Solver, name: str):
@@ -85,15 +62,6 @@ class FPVariable(object):
             z3.And(self.is_negative, other.is_negative),
         )
 
-    # def interpretation(self, model: z3.ModelRef) -> str:
-    #     exponent = model[self.exponent]
-    #     assert exponent is not None
-    #     if exponent == ZERO_EXPONENT:
-    #         return f"{self.name}: 0"
-    #     sign_bit = model[self.sign_bit]
-    #     sign = "?" if sign_bit is None else "-" if sign_bit else "+"
-    #     return f"{self.name}: {sign}2^{exponent}"
-
 
 def fp_sum(
     solver: z3.Solver,
@@ -139,6 +107,36 @@ def fp_sum(
     # Theorem: If s_x != s_y, then e_s <= e_max.
     solver.add(z3.Implies(x.sign_bit != y.sign_bit, e_s <= e_max))
 
+    # Theorem: If e_x - nnzb_x > e_y + 1, then e_s <= e_x.
+    solver.add(z3.Implies(e_x - x.nnzb > e_y + 1, e_s <= e_x))
+
+    # Theorem: If e_x + 1 < e_y - nnzb_y, then e_s <= e_y.
+    solver.add(z3.Implies(e_x + 1 < e_y - y.nnzb, e_s <= e_y))
+
+    # Theorem: If e_x - nnzb_x > e_y and e_x - p < e_y - nnzb_y,
+    # then e_s <= e_x.
+    solver.add(
+        z3.Implies(
+            z3.And(
+                e_x - x.nnzb > e_y,
+                e_x - PRECISION < e_y - y.nnzb,
+            ),
+            e_s <= e_x,
+        )
+    )
+
+    # Theorem: If e_x < e_y - nnzb_y and e_x - nnzb_x > e_y - p,
+    # then e_s <= e_y.
+    solver.add(
+        z3.Implies(
+            z3.And(
+                e_x < e_y - y.nnzb,
+                e_x - x.nnzb > e_y - PRECISION,
+            ),
+            e_s <= e_y,
+        )
+    )
+
     ###################################################### EXPONENT LOWER BOUNDS
 
     # Theorem: s == 0 or e_s >= e_min - (p - 1).
@@ -155,10 +153,82 @@ def fp_sum(
 
     ########################################################## NNZB UPPER BOUNDS
 
-    # Theorem: If s is not zero or subnormal, then nnzb_s + e_max <= e_s + p.
-    solver.add(z3.Implies(z3.Not(s.is_zero), s.nnzb + e_max <= e_s + PRECISION))
+    # Theorem: If s is not zero or subnormal, then e_s - nnzb_s >= e_max - p.
+    solver.add(z3.Implies(z3.Not(s.is_zero), e_s - s.nnzb >= e_max - PRECISION))
 
     return s
+
+
+def prove(
+    solver: z3.Solver,
+    claim: z3.BoolRef,
+    name: str,
+    *,
+    verbose: bool = True,
+) -> bool:
+    start = time.perf_counter_ns()
+    result = solver.check(z3.Not(claim))
+    stop = time.perf_counter_ns()
+    if result == z3.unsat:
+        if verbose:
+            print(f"Verified {name} in {(stop - start) / 1e9:.6f} seconds.")
+        return True
+    else:
+        assert result == z3.sat
+        if verbose:
+            print(f"Refuted {name} in {(stop - start) / 1e9:.6f} seconds.")
+            print("Counterexample:")
+            model = solver.model()
+            float_vars: dict[tuple[str, str], z3.FuncDeclRef] = {}
+            non_float_vars: dict[str, z3.FuncDeclRef] = {}
+            for var in model:
+                var_name = str(var)
+                if var_name.endswith("_sign_bit"):
+                    float_vars[(var_name[:-9], "sign_bit")] = var
+                elif var_name.endswith("_exponent"):
+                    float_vars[(var_name[:-9], "exponent")] = var
+                elif var_name.endswith("_nnzb"):
+                    float_vars[(var_name[:-5], "nnzb")] = var
+                else:
+                    non_float_vars[var_name] = var
+            float_names = {name for name, _ in float_vars}
+            max_name_length = max(len(name) for name in float_names)
+            max_exponent_length = 0
+            for name in float_names:
+                if (name, "exponent") in float_vars:
+                    exponent_var = model[float_vars[(name, "exponent")]]
+                    assert isinstance(exponent_var, z3.IntNumRef)
+                    exponent_value = exponent_var.as_long()
+                    max_exponent_length = max(
+                        max_exponent_length, len(str(exponent_value))
+                    )
+            for name in float_names:
+                if (name, "sign_bit") in float_vars:
+                    sign_value = model[float_vars[(name, "sign_bit")]]
+                    assert isinstance(sign_value, z3.BoolRef)
+                    sign_str = "-" if sign_value else "+"
+                else:
+                    sign_str = "±"
+                if (name, "exponent") in float_vars:
+                    exponent_var = model[float_vars[(name, "exponent")]]
+                    assert isinstance(exponent_var, z3.IntNumRef)
+                    exponent_value = exponent_var.as_long()
+                    exponent_str = str(exponent_value)
+                else:
+                    exponent_str = "?"
+                if (name, "nnzb") in float_vars:
+                    nnzb_var = model[float_vars[(name, "nnzb")]]
+                    assert isinstance(nnzb_var, z3.IntNumRef)
+                    nnzb_value = nnzb_var.as_long()
+                    mantissa_str = nnzb_value * "?" + (PRECISION - nnzb_value - 1) * "0"
+                else:
+                    mantissa_str = "?" * (PRECISION - 1)
+                name = name.rjust(max_name_length)
+                exponent_str = exponent_str.ljust(max_exponent_length)
+                print(f"{name} = {sign_str}2^{exponent_str} * 1.{mantissa_str}")
+            for name, var in non_float_vars.items():
+                print(name, model[var])
+        return False
 
 
 def is_ulp_nonoverlapping(x: FPVariable, y: FPVariable) -> z3.BoolRef:
