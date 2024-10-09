@@ -159,6 +159,58 @@ def fp_sum(
     return s
 
 
+def print_model(model: z3.ModelRef) -> None:
+    float_vars: dict[tuple[str, str], z3.FuncDeclRef] = {}
+    non_float_vars: dict[str, z3.FuncDeclRef] = {}
+    for var in model:
+        var_name = str(var)
+        if var_name.endswith("_sign_bit"):
+            float_vars[(var_name[:-9], "sign_bit")] = var
+        elif var_name.endswith("_exponent"):
+            float_vars[(var_name[:-9], "exponent")] = var
+        elif var_name.endswith("_nnzb"):
+            float_vars[(var_name[:-5], "nnzb")] = var
+        else:
+            non_float_vars[var_name] = var
+    float_names = {name for name, _ in float_vars}
+    max_name_length = max(len(name) for name in float_names)
+    max_exponent_length = 0
+    for name in float_names:
+        if (name, "exponent") in float_vars:
+            exponent_var = model[float_vars[(name, "exponent")]]
+            assert isinstance(exponent_var, z3.IntNumRef)
+            max_exponent_length = max(
+                max_exponent_length, len(str(exponent_var.as_long()))
+            )
+    for name in float_names:
+        if (name, "sign_bit") in float_vars:
+            sign_value = model[float_vars[(name, "sign_bit")]]
+            assert isinstance(sign_value, z3.BoolRef)
+            sign_str = "-" if sign_value else "+"
+        else:
+            sign_str = "±"
+        if (name, "exponent") in float_vars:
+            exponent_var = model[float_vars[(name, "exponent")]]
+            assert isinstance(exponent_var, z3.IntNumRef)
+            exponent_value = exponent_var.as_long()
+            exponent_str = str(exponent_value)
+        else:
+            exponent_str = "?"
+        if (name, "nnzb") in float_vars:
+            nnzb_var = model[float_vars[(name, "nnzb")]]
+            assert isinstance(nnzb_var, z3.IntNumRef)
+            nnzb_value = nnzb_var.as_long()
+            mantissa_str = nnzb_value * "?" + (PRECISION - nnzb_value - 1) * "0"
+        else:
+            mantissa_str = "?" * (PRECISION - 1)
+        name = name.rjust(max_name_length)
+        exponent_str = exponent_str.ljust(max_exponent_length)
+        print(f"{name} = {sign_str}2^{exponent_str} * 1.{mantissa_str}")
+    for name, var in non_float_vars.items():
+        print(name, model[var])
+    return None
+
+
 def prove(
     solver: z3.Solver,
     claim: z3.BoolRef,
@@ -179,55 +231,7 @@ def prove(
             print(f"Refuted {name} in {(stop - start) / 1e9:.6f} seconds.")
             print("Counterexample:")
             model = solver.model()
-            float_vars: dict[tuple[str, str], z3.FuncDeclRef] = {}
-            non_float_vars: dict[str, z3.FuncDeclRef] = {}
-            for var in model:
-                var_name = str(var)
-                if var_name.endswith("_sign_bit"):
-                    float_vars[(var_name[:-9], "sign_bit")] = var
-                elif var_name.endswith("_exponent"):
-                    float_vars[(var_name[:-9], "exponent")] = var
-                elif var_name.endswith("_nnzb"):
-                    float_vars[(var_name[:-5], "nnzb")] = var
-                else:
-                    non_float_vars[var_name] = var
-            float_names = {name for name, _ in float_vars}
-            max_name_length = max(len(name) for name in float_names)
-            max_exponent_length = 0
-            for name in float_names:
-                if (name, "exponent") in float_vars:
-                    exponent_var = model[float_vars[(name, "exponent")]]
-                    assert isinstance(exponent_var, z3.IntNumRef)
-                    exponent_value = exponent_var.as_long()
-                    max_exponent_length = max(
-                        max_exponent_length, len(str(exponent_value))
-                    )
-            for name in float_names:
-                if (name, "sign_bit") in float_vars:
-                    sign_value = model[float_vars[(name, "sign_bit")]]
-                    assert isinstance(sign_value, z3.BoolRef)
-                    sign_str = "-" if sign_value else "+"
-                else:
-                    sign_str = "±"
-                if (name, "exponent") in float_vars:
-                    exponent_var = model[float_vars[(name, "exponent")]]
-                    assert isinstance(exponent_var, z3.IntNumRef)
-                    exponent_value = exponent_var.as_long()
-                    exponent_str = str(exponent_value)
-                else:
-                    exponent_str = "?"
-                if (name, "nnzb") in float_vars:
-                    nnzb_var = model[float_vars[(name, "nnzb")]]
-                    assert isinstance(nnzb_var, z3.IntNumRef)
-                    nnzb_value = nnzb_var.as_long()
-                    mantissa_str = nnzb_value * "?" + (PRECISION - nnzb_value - 1) * "0"
-                else:
-                    mantissa_str = "?" * (PRECISION - 1)
-                name = name.rjust(max_name_length)
-                exponent_str = exponent_str.ljust(max_exponent_length)
-                print(f"{name} = {sign_str}2^{exponent_str} * 1.{mantissa_str}")
-            for name, var in non_float_vars.items():
-                print(name, model[var])
+            print_model(model)
         return False
 
 
