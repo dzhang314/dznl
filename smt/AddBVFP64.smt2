@@ -34,7 +34,69 @@
 (define-fun e_min () (_ BitVec 16) (ite (bvult e_x e_y) e_x e_y))
 (define-fun e_max () (_ BitVec 16) (ite (bvugt e_x e_y) e_x e_y))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Let nnzb_x denote the number of nonzero leading bits in the mantissa of x.
+; We define nnzb_y and nnzb_s similarly.
+
+(define-fun nnzb ((m (_ BitVec 52))) (_ BitVec 16)
+    (ite (= ((_ extract 51 0) m) #b0000000000000000000000000000000000000000000000000000) #x0000
+    (ite (= ((_ extract 50 0) m) #b000000000000000000000000000000000000000000000000000) #x0001
+    (ite (= ((_ extract 49 0) m) #b00000000000000000000000000000000000000000000000000) #x0002
+    (ite (= ((_ extract 48 0) m) #b0000000000000000000000000000000000000000000000000) #x0003
+    (ite (= ((_ extract 47 0) m) #b000000000000000000000000000000000000000000000000) #x0004
+    (ite (= ((_ extract 46 0) m) #b00000000000000000000000000000000000000000000000) #x0005
+    (ite (= ((_ extract 45 0) m) #b0000000000000000000000000000000000000000000000) #x0006
+    (ite (= ((_ extract 44 0) m) #b000000000000000000000000000000000000000000000) #x0007
+    (ite (= ((_ extract 43 0) m) #b00000000000000000000000000000000000000000000) #x0008
+    (ite (= ((_ extract 42 0) m) #b0000000000000000000000000000000000000000000) #x0009
+    (ite (= ((_ extract 41 0) m) #b000000000000000000000000000000000000000000) #x000A
+    (ite (= ((_ extract 40 0) m) #b00000000000000000000000000000000000000000) #x000B
+    (ite (= ((_ extract 39 0) m) #b0000000000000000000000000000000000000000) #x000C
+    (ite (= ((_ extract 38 0) m) #b000000000000000000000000000000000000000) #x000D
+    (ite (= ((_ extract 37 0) m) #b00000000000000000000000000000000000000) #x000E
+    (ite (= ((_ extract 36 0) m) #b0000000000000000000000000000000000000) #x000F
+    (ite (= ((_ extract 35 0) m) #b000000000000000000000000000000000000) #x0010
+    (ite (= ((_ extract 34 0) m) #b00000000000000000000000000000000000) #x0011
+    (ite (= ((_ extract 33 0) m) #b0000000000000000000000000000000000) #x0012
+    (ite (= ((_ extract 32 0) m) #b000000000000000000000000000000000) #x0013
+    (ite (= ((_ extract 31 0) m) #b00000000000000000000000000000000) #x0014
+    (ite (= ((_ extract 30 0) m) #b0000000000000000000000000000000) #x0015
+    (ite (= ((_ extract 29 0) m) #b000000000000000000000000000000) #x0016
+    (ite (= ((_ extract 28 0) m) #b00000000000000000000000000000) #x0017
+    (ite (= ((_ extract 27 0) m) #b0000000000000000000000000000) #x0018
+    (ite (= ((_ extract 26 0) m) #b000000000000000000000000000) #x0019
+    (ite (= ((_ extract 25 0) m) #b00000000000000000000000000) #x001A
+    (ite (= ((_ extract 24 0) m) #b0000000000000000000000000) #x001B
+    (ite (= ((_ extract 23 0) m) #b000000000000000000000000) #x001C
+    (ite (= ((_ extract 22 0) m) #b00000000000000000000000) #x001D
+    (ite (= ((_ extract 21 0) m) #b0000000000000000000000) #x001E
+    (ite (= ((_ extract 20 0) m) #b000000000000000000000) #x001F
+    (ite (= ((_ extract 19 0) m) #b00000000000000000000) #x0020
+    (ite (= ((_ extract 18 0) m) #b0000000000000000000) #x0021
+    (ite (= ((_ extract 17 0) m) #b000000000000000000) #x0022
+    (ite (= ((_ extract 16 0) m) #b00000000000000000) #x0023
+    (ite (= ((_ extract 15 0) m) #b0000000000000000) #x0024
+    (ite (= ((_ extract 14 0) m) #b000000000000000) #x0025
+    (ite (= ((_ extract 13 0) m) #b00000000000000) #x0026
+    (ite (= ((_ extract 12 0) m) #b0000000000000) #x0027
+    (ite (= ((_ extract 11 0) m) #b000000000000) #x0028
+    (ite (= ((_ extract 10 0) m) #b00000000000) #x0029
+    (ite (= ((_ extract 9 0) m) #b0000000000) #x002A
+    (ite (= ((_ extract 8 0) m) #b000000000) #x002B
+    (ite (= ((_ extract 7 0) m) #b00000000) #x002C
+    (ite (= ((_ extract 6 0) m) #b0000000) #x002D
+    (ite (= ((_ extract 5 0) m) #b000000) #x002E
+    (ite (= ((_ extract 4 0) m) #b00000) #x002F
+    (ite (= ((_ extract 3 0) m) #b0000) #x0030
+    (ite (= ((_ extract 2 0) m) #b000) #x0031
+    (ite (= ((_ extract 1 0) m) #b00) #x0032
+    (ite (= ((_ extract 0 0) m) #b0) #x0033
+    #x0034)))))))))))))))))))))))))))))))))))))))))))))))))))))
+
+(define-fun nnzb_x () (_ BitVec 16) (nnzb x_mantissa))
+(define-fun nnzb_y () (_ BitVec 16) (nnzb y_mantissa))
+(define-fun nnzb_s () (_ BitVec 16) (nnzb s_mantissa))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; ZERO PROPERTIES
 
 ; Theorem: If x == 0 and y == 0, then s == 0.
 
@@ -67,9 +129,9 @@
     (check-sat)
 (pop 1)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; EXPONENT PROPERTIES
 
-; Theorem: If e_x > e_y + 54, then s === x.
+; Theorem: If e_x > e_y + p + 1, then s === x.
 
 (push 1)
     ; Hypotheses:
@@ -79,7 +141,7 @@
     (check-sat)
 (pop 1)
 
-; Theorem: If e_x + 54 < e_y, then s === y.
+; Theorem: If e_x + p + 1 < e_y, then s === y.
 
 (push 1)
     ; Hypotheses:
@@ -89,7 +151,7 @@
     (check-sat)
 (pop 1)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; EXPONENT UPPER BOUNDS
 
 ; Theorem: e_s <= e_max + 1.
 
@@ -99,9 +161,19 @@
     (check-sat)
 (pop 1)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Theorem: If s_x != s_y, then e_s <= e_max.
 
-; Theorem: s == 0 or e_s >= e_min - 52.
+(push 1)
+    ; Hypotheses:
+    (assert (not (= x_sign y_sign)))
+    ; Conclusion:
+    (assert (not (bvule e_s e_max)))
+    (check-sat)
+(pop 1)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; EXPONENT LOWER BOUNDS
+
+; Theorem: s == 0 or e_s >= e_min - (p - 1).
 
 (push 1)
     ; Conclusion:
@@ -109,7 +181,7 @@
     (check-sat)
 (pop 1)
 
-; Theorem: s == 0 or e_s >= e_max - 53.
+; Theorem: s == 0 or e_s >= e_max - p.
 
 (push 1)
     ; Conclusion:
@@ -117,519 +189,34 @@
     (check-sat)
 (pop 1)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; Theorem: If s is not subnormal and e_s < e_max, then
-; the final e_max - e_s - 1 bits of s_mantissa are zero.
+; Theorem: If e_x > e_y + nnzb_y, then e_s >= e_y + nnzb_y.
 
 (push 1)
     ; Hypotheses:
+    (assert (bvugt e_x (bvadd e_y nnzb_y)))
+    ; Conclusion:
+    (assert (not (bvuge e_s (bvadd e_y nnzb_y))))
+    (check-sat)
+(pop 1)
+
+; Theorem: If e_x + nnzb_x < e_y, then e_s >= e_x + nnzb_x.
+(push 1)
+    ; Hypotheses:
+    (assert (bvult (bvadd e_x nnzb_x) e_y))
+    ; Conclusion:
+    (assert (not (bvuge e_s (bvadd e_x nnzb_x))))
+    (check-sat)
+(pop 1)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; NNZB UPPER BOUNDS
+
+; Theorem: If s is not zero or subnormal, then nnzb_s + e_max <= e_s + p.
+
+(push 1)
+    ; Hypotheses:
+    (assert (not (fp.isZero s)))
     (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0002)))
     ; Conclusion:
-    (assert (not (= ((_ extract 0 0) s_mantissa) #b0)))
+    (assert (not (bvule (bvadd nnzb_s e_max) (bvadd e_s #x0035))))
     (check-sat)
 (pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0003)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 1 0) s_mantissa) #b00)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0004)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 2 0) s_mantissa) #b000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0005)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 3 0) s_mantissa) #b0000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0006)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 4 0) s_mantissa) #b00000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0007)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 5 0) s_mantissa) #b000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0008)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 6 0) s_mantissa) #b0000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0009)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 7 0) s_mantissa) #b00000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x000A)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 8 0) s_mantissa) #b000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x000B)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 9 0) s_mantissa) #b0000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x000C)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 10 0) s_mantissa) #b00000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x000D)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 11 0) s_mantissa) #b000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x000E)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 12 0) s_mantissa) #b0000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x000F)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 13 0) s_mantissa) #b00000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0010)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 14 0) s_mantissa) #b000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0011)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 15 0) s_mantissa) #b0000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0012)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 16 0) s_mantissa) #b00000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0013)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 17 0) s_mantissa) #b000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0014)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 18 0) s_mantissa) #b0000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0015)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 19 0) s_mantissa) #b00000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0016)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 20 0) s_mantissa) #b000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0017)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 21 0) s_mantissa) #b0000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0018)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 22 0) s_mantissa) #b00000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0019)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 23 0) s_mantissa) #b000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x001A)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 24 0) s_mantissa)
-                    #b0000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x001B)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 25 0) s_mantissa)
-                    #b00000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x001C)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 26 0) s_mantissa)
-                    #b000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x001D)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 27 0) s_mantissa)
-                    #b0000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x001E)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 28 0) s_mantissa)
-                    #b00000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x001F)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 29 0) s_mantissa)
-                    #b000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0020)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 30 0) s_mantissa)
-                    #b0000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0021)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 31 0) s_mantissa)
-                    #b00000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0022)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 32 0) s_mantissa)
-                    #b000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0023)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 33 0) s_mantissa)
-                    #b0000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0024)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 34 0) s_mantissa)
-                    #b00000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0025)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 35 0) s_mantissa)
-                    #b000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0026)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 36 0) s_mantissa)
-                    #b0000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0027)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 37 0) s_mantissa)
-                    #b00000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0028)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 38 0) s_mantissa)
-                    #b000000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0029)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 39 0) s_mantissa)
-                    #b0000000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x002A)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 40 0) s_mantissa)
-                    #b00000000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x002B)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 41 0) s_mantissa)
-                    #b000000000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x002C)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 42 0) s_mantissa)
-                    #b0000000000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x002D)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 43 0) s_mantissa)
-                    #b00000000000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x002E)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 44 0) s_mantissa)
-                    #b000000000000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x002F)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 45 0) s_mantissa)
-                    #b0000000000000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0030)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 46 0) s_mantissa)
-                    #b00000000000000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0031)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 47 0) s_mantissa)
-                    #b000000000000000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0032)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 48 0) s_mantissa)
-                    #b0000000000000000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0033)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 49 0) s_mantissa)
-                    #b00000000000000000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0034)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 50 0) s_mantissa)
-                    #b000000000000000000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal s)))
-    (assert (= e_s (bvsub e_max #x0035)))
-    ; Conclusion:
-    (assert (not (= ((_ extract 51 0) s_mantissa)
-                    #b0000000000000000000000000000000000000000000000000000)))
-    (check-sat)
-(pop 1)
-
-; Theorem: If e_s == e_max - 53, then s is 0 or a power of 2.
-
-(define-fun isPow2 ((x (_ BitVec 52))) Bool
-    (= (bvand x (bvsub x #x0000000000001)) #x0000000000000))
-
-(push 1)
-    ; Hypotheses:
-    (assert (= e_s (bvsub e_max #x0035)))
-    ; Conclusion:
-    (assert (not  (or (= s_mantissa #x0000000000000)
-                      (and (= s_exponent #b00000000000) (isPow2 s_mantissa)))))
-    (check-sat)
-(pop 1)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

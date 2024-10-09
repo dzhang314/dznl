@@ -3,9 +3,7 @@ import z3
 
 
 PRECISION: int = 53
-MAX_EXPONENT: int = 1023
-MIN_NORMALIZED_EXPONENT: int = -1022
-ZERO_EXPONENT: int = MIN_NORMALIZED_EXPONENT - 1
+ZERO_EXPONENT: int = -1
 
 
 def prove(
@@ -35,32 +33,48 @@ class FPVariable(object):
 
     def __init__(self, solver: z3.Solver, name: str):
         self.name: str = name
+
+        # We explicitly model three attributes of a floating-point number:
+        # the sign bit, the exponent, and the number of nonzero bits (nnzb).
         self.sign_bit: z3.BoolRef = z3.Bool(name + "_sign_bit")
         self.exponent: z3.ArithRef = z3.Int(name + "_exponent")
-        self.is_pow2: z3.BoolRef = z3.Bool(name + "_is_pow2")
+        self.nnzb: z3.ArithRef = z3.Int(name + "_nnzb")
 
-        # We consider only computations without overflow or underflow.
+        # The count of nonzero bits does NOT include the implicit leading one.
+        solver.add(self.nnzb >= 0)
+        solver.add(self.nnzb < PRECISION)
+
+        # We model a hypothetical floating-point datatype with infinite
+        # exponent range, eliminating the possibility of overflow or underflow.
+        # This means that all results proven in this model assume that no
+        # overflow or underflow occurs when performing the actual computation.
+
+        # When analyzing floating-point addition and subtraction circuits, only
+        # relative values of the exponents matter, not absolute values. This
+        # means we can arbitrarily set the zero point anywhere without loss of
+        # generality. In this model, we consider 0.0 to have exponent -1 and
+        # assume all nonzero floating-point numbers have nonnegative exponents.
         solver.add(self.exponent >= ZERO_EXPONENT)
-        solver.add(self.exponent <= MAX_EXPONENT)
 
-        # We assume that zero is the only subnormal number.
+        # We do not consider infinities or NaNs in this model, so all
+        # floating-point numbers are either positive, negative, or zero.
         self.is_zero: z3.BoolRef = self.exponent == ZERO_EXPONENT
-
         self.is_positive: z3.BoolRef = z3.And(
-            self.exponent >= MIN_NORMALIZED_EXPONENT,
+            self.exponent > ZERO_EXPONENT,
             z3.Not(self.sign_bit),
         )
         self.is_negative: z3.BoolRef = z3.And(
-            self.exponent >= MIN_NORMALIZED_EXPONENT,
+            self.exponent > ZERO_EXPONENT,
             self.sign_bit,
         )
 
-    def is_equal(self, other: "FPVariable") -> z3.BoolRef:
+    def maybe_equal(self, other: "FPVariable") -> z3.BoolRef:
         return z3.Or(
             z3.And(self.is_zero, other.is_zero),
             z3.And(
                 self.sign_bit == other.sign_bit,
                 self.exponent == other.exponent,
+                self.nnzb == other.nnzb,
             ),
         )
 
@@ -71,14 +85,14 @@ class FPVariable(object):
             z3.And(self.is_negative, other.is_negative),
         )
 
-    def interpretation(self, model: z3.ModelRef) -> str:
-        exponent = model[self.exponent]
-        assert exponent is not None
-        if exponent == ZERO_EXPONENT:
-            return f"{self.name}: 0"
-        sign_bit = model[self.sign_bit]
-        sign = "?" if sign_bit is None else "-" if sign_bit else "+"
-        return f"{self.name}: {sign}2^{exponent}"
+    # def interpretation(self, model: z3.ModelRef) -> str:
+    #     exponent = model[self.exponent]
+    #     assert exponent is not None
+    #     if exponent == ZERO_EXPONENT:
+    #         return f"{self.name}: 0"
+    #     sign_bit = model[self.sign_bit]
+    #     sign = "?" if sign_bit is None else "-" if sign_bit else "+"
+    #     return f"{self.name}: {sign}2^{exponent}"
 
 
 def fp_sum(
@@ -92,96 +106,57 @@ def fp_sum(
     existing FPVariables.
     """
     s = FPVariable(solver, name)
+    e_x = x.exponent
+    e_y = y.exponent
+    e_s = s.exponent
+    e_min = z3.If(e_x < e_y, e_x, e_y)
+    e_max = z3.If(e_x > e_y, e_x, e_y)
 
-    ######################################################## IDENTITY PROPERTIES
+    ############################################################ ZERO PROPERTIES
 
-    # If both addends are zero, the sum is zero.
+    # Theorem: If x == 0 and y == 0, then s == 0.
     solver.add(z3.Implies(z3.And(x.is_zero, y.is_zero), s.is_zero))
 
-    # If either addend is zero, the sum equals the other one.
-    solver.add(z3.Implies(x.is_zero, s.is_equal(y)))
-    solver.add(z3.Implies(y.is_zero, s.is_equal(x)))
+    # Theorem: If x == 0, then s == y or s === y.
+    solver.add(z3.Implies(x.is_zero, s.maybe_equal(y)))
 
-    ############################################################## SIGN ANALYSIS
+    # Theorem: If y == 0, then s == x or s === x.
+    solver.add(z3.Implies(y.is_zero, s.maybe_equal(x)))
 
-    # If both addends have the same sign, the sum has the same sign.
-    solver.add(z3.Implies(z3.And(x.is_positive, y.is_positive), s.is_positive))
-    solver.add(z3.Implies(z3.And(x.is_negative, y.is_negative), s.is_negative))
+    ######################################################## EXPONENT PROPERTIES
 
-    # If the addends have different exponents, the sum is
-    # nonzero and has the same sign as the larger addend.
-    solver.add(z3.Implies(x.exponent != y.exponent, z3.Not(s.is_zero)))
-    solver.add(z3.Implies(x.exponent > y.exponent, s.has_same_sign(x)))
-    solver.add(z3.Implies(x.exponent < y.exponent, s.has_same_sign(y)))
+    # Theorem: If e_x > e_y + p + 1, then s === x.
+    solver.add(z3.Implies(e_x > e_y + PRECISION + 1, s.maybe_equal(x)))
+
+    # Theorem: If e_x + p + 1 < e_y, then s === y.
+    solver.add(z3.Implies(e_x + PRECISION + 1 < e_y, s.maybe_equal(y)))
 
     ###################################################### EXPONENT UPPER BOUNDS
 
-    max_exponent = z3.If(x.exponent > y.exponent, x.exponent, y.exponent)
+    # Theorem: e_s <= e_max + 1.
+    solver.add(e_s <= e_max + 1)
 
-    # Addition can only increase the exponent of the larger addend by one.
-    solver.add(s.exponent <= max_exponent + 1)
-
-    # If the addends have different signs, the exponent cannot increase.
-    solver.add(z3.Or(x.has_same_sign(y), s.exponent <= max_exponent))
-
-    # If the larger addend is a power of two and its exponent exceeds the
-    # smaller addend by at least two, the exponent of the sum cannot increase.
-    solver.add(
-        z3.Implies(
-            z3.Or(
-                z3.And(x.exponent > y.exponent + 1, x.is_pow2),
-                z3.And(x.exponent + 1 < y.exponent, y.is_pow2),
-            ),
-            s.exponent <= max_exponent,
-        )
-    )
-
-    # If both addends are powers of two with the same sign and
-    # different exponents, the exponent of the sum cannot increase.
-    solver.add(
-        z3.Implies(
-            z3.And(
-                x.is_pow2,
-                y.is_pow2,
-                x.has_same_sign(y),
-                x.exponent != y.exponent,
-            ),
-            s.exponent <= max_exponent,
-        )
-    )
+    # Theorem: If s_x != s_y, then e_s <= e_max.
+    solver.add(z3.Implies(x.sign_bit != y.sign_bit, e_s <= e_max))
 
     ###################################################### EXPONENT LOWER BOUNDS
 
-    # If the sum is nonzero, it is at least as large
-    # as the bit one past the end of the larger addend.
-    solver.add(z3.Or(s.is_zero, s.exponent >= max_exponent - PRECISION))
+    # Theorem: s == 0 or e_s >= e_min - (p - 1).
+    solver.add(z3.Or(s.is_zero, e_s >= e_min - (PRECISION - 1)))
 
-    # Moreover, if both addends have the same exponent, the
-    # sum is at least as large as the least significant bit.
-    solver.add(
-        z3.Implies(
-            x.exponent == y.exponent,
-            z3.Or(s.is_zero, s.exponent > max_exponent - PRECISION),
-        )
-    )
+    # Theorem: s == 0 or e_s >= e_max - p.
+    solver.add(z3.Or(s.is_zero, e_s >= e_max - PRECISION))
 
-    # If the exponent of the larger addend exceeds the smaller addend
-    # by at least two, the exponent of the sum can only decrease by one.
-    solver.add(
-        z3.Implies(
-            x.exponent > y.exponent + 1,
-            s.exponent >= x.exponent - 1,
-        )
-    )
-    solver.add(
-        z3.Implies(
-            x.exponent + 1 < y.exponent,
-            s.exponent >= y.exponent - 1,
-        )
-    )
+    # Theorem: If e_x > e_y + nnzb_y, then e_s >= e_y + nnzb_y.
+    solver.add(z3.Implies(e_x > e_y + y.nnzb, e_s >= e_y + y.nnzb))
 
-    # If both addends have the same sign, the exponent cannot decrease.
-    solver.add(z3.Implies(x.has_same_sign(y), s.exponent >= max_exponent))
+    # Theorem: If e_x + nnzb_x < e_y, then e_s >= e_x + nnzb_x.
+    solver.add(z3.Implies(e_x + x.nnzb < e_y, e_s >= e_x + x.nnzb))
+
+    ########################################################## NNZB UPPER BOUNDS
+
+    # Theorem: If s is not zero or subnormal, then nnzb_s + e_max <= e_s + p.
+    solver.add(z3.Implies(z3.Not(s.is_zero), s.nnzb + e_max <= e_s + PRECISION))
 
     return s
 
@@ -194,7 +169,7 @@ def is_ulp_nonoverlapping(x: FPVariable, y: FPVariable) -> z3.BoolRef:
     return z3.Or(
         y.is_zero,
         y.exponent < x.exponent - PRECISION,
-        z3.And(y.exponent == x.exponent - PRECISION, y.is_pow2),
+        z3.And(y.exponent == x.exponent - PRECISION, y.nnzb == 0),
     )
 
 
