@@ -171,6 +171,45 @@
     (check-sat)
 (pop 1)
 
+; Theorem: If e_x - nnzb_x > e_y + 1, then e_s <= e_x.
+(push 1)
+    ; Hypotheses:
+    (assert (bvugt (bvsub e_x nnzb_x) (bvadd e_y #x0001)))
+    ; Conclusion:
+    (assert (not (bvule e_s e_x)))
+    (check-sat)
+(pop 1)
+
+; Theorem: If e_x + 1 < e_y - nnzb_y, then e_s <= e_y.
+(push 1)
+    ; Hypotheses:
+    (assert (bvult (bvadd e_x #x0001) (bvsub e_y nnzb_y)))
+    ; Conclusion:
+    (assert (not (bvule e_s e_y)))
+    (check-sat)
+(pop 1)
+
+; Theorem: If e_x - nnzb_x > e_y and e_x - p < e_y - nnzb_y,
+; then e_s <= e_x.
+(push 1)
+    ; Hypotheses:
+    (assert (bvugt (bvsub e_x nnzb_x) e_y))
+    (assert (bvult (bvsub e_x #x0035) (bvsub e_y nnzb_y)))
+    ; Conclusion:
+    (assert (not (bvule e_s e_x)))
+    (check-sat)
+(pop 1)
+
+; Theorem: If e_x < e_y - nnzb_y and e_x - nnzb_x > e_y - p, then e_s <= e_y.
+(push 1)
+    ; Hypotheses:
+    (assert (bvult e_x (bvsub e_y nnzb_y)))
+    (assert (bvugt (bvsub e_x nnzb_x) (bvsub e_y #x0035)))
+    ; Conclusion:
+    (assert (not (bvule e_s e_y)))
+    (check-sat)
+(pop 1)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; EXPONENT LOWER BOUNDS
 
 ; Theorem: s == 0 or e_s >= e_min - (p - 1).
@@ -210,13 +249,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; NNZB UPPER BOUNDS
 
-; Theorem: If s is not zero or subnormal, then nnzb_s + e_max <= e_s + p.
+; Theorem: If s is not zero or subnormal, then e_s - nnzb_s >= e_max - p.
 
 (push 1)
     ; Hypotheses:
     (assert (not (fp.isZero s)))
     (assert (not (fp.isSubnormal s)))
     ; Conclusion:
-    (assert (not (bvule (bvadd nnzb_s e_max) (bvadd e_s #x0035))))
+    (assert (not (bvuge (bvsub e_s nnzb_s) (bvsub e_max #x0035))))
     (check-sat)
 (pop 1)
