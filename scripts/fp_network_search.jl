@@ -77,7 +77,7 @@ end
 const NUM_LIMBS = parse(Int, ARGS[1])
 const NUM_TERMS = NUM_LIMBS + NUM_LIMBS
 const IDEAL_OVERLAP_SCORE = 0
-const IDEAL_ACCURACY_SCORE = NUM_LIMBS * precision(Float64) + (NUM_LIMBS - 1)
+const IDEAL_ACCURACY_SCORE = NUM_LIMBS * precision(Float64)
 
 
 function renormalize!(v::AbstractVector{T}) where {T}
