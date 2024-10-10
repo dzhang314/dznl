@@ -97,19 +97,6 @@ function renormalize!(v::AbstractVector{T}) where {T}
 end
 
 
-function is_normalized(v::AbstractVector{T}) where {T}
-    @assert axes(v) == (Base.OneTo(NUM_TERMS),)
-    for i = 1:NUM_LIMBS-1
-        @inbounds x, y = v[i], v[i+1]
-        (s, e) = two_sum(x, y)
-        if (s != x) | (e != y)
-            return false
-        end
-    end
-    return true
-end
-
-
 function riffle!(
     v::AbstractVector{T},
     x::AbstractVector{T},
@@ -254,9 +241,6 @@ function screen_sum_network(network::AbstractVector{Tuple{Int,Int}})
     for test_case in CHALLENGING_TEST_CASES
         copy!(v, test_case)
         overlap_score, accuracy_score = test_sum_network!(v, network)
-        if !is_normalized(v)
-            return false
-        end
         if overlap_score > OVERLAP_THRESHOLD
             return false
         end
