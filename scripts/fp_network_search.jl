@@ -136,21 +136,18 @@ function test_sum_network!(
 end
 
 
-const EvaluationResult = Tuple{Int,Int,Vector{Float64},Vector{Float64},Int}
+const TERMINATE_EVALUATION = Atomic{Bool}(false)
+const EvaluationResult = Tuple{Union{Vector{Float64},Nothing},Int}
 
 
 function evaluate_sum_network(
     network::AbstractVector{Tuple{Int,Int}},
     duration_ns::UInt64,
 )
-    start = time_ns()
+    time_bound = time_ns() + duration_ns
     x = Vector{Float64}(undef, NUM_LIMBS)
     y = Vector{Float64}(undef, NUM_LIMBS)
     v = Vector{Float64}(undef, NUM_TERMS)
-    v_overlap = Vector{Float64}(undef, NUM_TERMS)
-    v_accuracy = Vector{Float64}(undef, NUM_TERMS)
-    overlap_score = IDEAL_OVERLAP_SCORE
-    accuracy_score = IDEAL_ACCURACY_SCORE
     num_tests = 0
     while true
         # Generate random (but renormalized) input data.
@@ -166,29 +163,24 @@ function evaluate_sum_network(
 
         # Combine input data and execute sum network.
         riffle!(v, x, y)
-        new_overlap_score, new_accuracy_score = test_sum_network!(v, network)
+        overlap_score, accuracy_score = test_sum_network!(v, network)
 
         # Update scores.
-        if new_overlap_score > overlap_score
-            overlap_score = new_overlap_score
-            riffle!(v_overlap, x, y)
+        if overlap_score > IDEAL_OVERLAP_SCORE
+            riffle!(v, x, y)
+            TERMINATE_EVALUATION[] = true
+            return (v, num_tests)
         end
-        if new_accuracy_score < accuracy_score
-            accuracy_score = new_accuracy_score
-            riffle!(v_accuracy, x, y)
+        if accuracy_score < IDEAL_ACCURACY_SCORE
+            riffle!(v, x, y)
+            TERMINATE_EVALUATION[] = true
+            return (v, num_tests)
         end
 
         # Check for termination.
         num_tests += 1
-        if time_ns() >= start + duration_ns
-            if overlap_score == IDEAL_OVERLAP_SCORE
-                empty!(v_overlap)
-            end
-            if accuracy_score == IDEAL_ACCURACY_SCORE
-                empty!(v_accuracy)
-            end
-            return (overlap_score, accuracy_score,
-                v_overlap, v_accuracy, num_tests)
+        if (time_ns() >= time_bound) || TERMINATE_EVALUATION[]
+            return (nothing, num_tests)
         end
     end
 end
@@ -200,28 +192,19 @@ function parallel_evaluate_sum_network(
 )
     N = nthreads()
     results = Vector{EvaluationResult}(undef, N)
+    TERMINATE_EVALUATION[] = false
     @threads for i = 1:N
         @inbounds results[i] = evaluate_sum_network(network, duration_ns)
     end
-    final_overlap_score = IDEAL_OVERLAP_SCORE
-    final_accuracy_score = IDEAL_ACCURACY_SCORE
-    final_v_overlap = Vector{Float64}(undef, 0)
-    final_v_accuracy = Vector{Float64}(undef, 0)
+    final_counterexample = nothing
     final_num_tests = 0
-    for (overlap_score, accuracy_score,
-        v_overlap, v_accuracy, num_tests) in results
-        if overlap_score > final_overlap_score
-            final_overlap_score = overlap_score
-            final_v_overlap = v_overlap
-        end
-        if accuracy_score < final_accuracy_score
-            final_accuracy_score = accuracy_score
-            final_v_accuracy = v_accuracy
+    for (counterexample, num_tests) in results
+        if isnothing(final_counterexample) && !isnothing(counterexample)
+            final_counterexample = counterexample
         end
         final_num_tests += num_tests
     end
-    return (final_overlap_score, final_accuracy_score,
-        final_v_overlap, final_v_accuracy, final_num_tests)
+    return (final_counterexample, final_num_tests)
 end
 
 
@@ -917,22 +900,15 @@ end
 end
 
 
-const PASSING_NETWORKS = Vector{Tuple{Int,Int}}[]
-const OVERLAP_THRESHOLD = parse(Int, ARGS[2])
-const ACCURACY_THRESHOLD = parse(Int, ARGS[3])
-@assert OVERLAP_THRESHOLD >= IDEAL_OVERLAP_SCORE
-@assert ACCURACY_THRESHOLD <= IDEAL_ACCURACY_SCORE
-
-
 function screen_sum_network(network::AbstractVector{Tuple{Int,Int}})
     v = Vector{Float64}(undef, NUM_TERMS)
     for test_case in CHALLENGING_TEST_CASES
         copy!(v, test_case)
         overlap_score, accuracy_score = test_sum_network!(v, network)
-        if overlap_score > OVERLAP_THRESHOLD
+        if overlap_score > IDEAL_OVERLAP_SCORE
             return false
         end
-        if accuracy_score < ACCURACY_THRESHOLD
+        if accuracy_score < IDEAL_ACCURACY_SCORE
             return false
         end
     end
@@ -997,30 +973,25 @@ function canonize_network!(network::AbstractVector{Tuple{Int,Int}})
 end
 
 
+const PASSING_NETWORKS = Vector{Tuple{Int,Int}}[]
+
+
 function main()
     network = prune_network!(build_random_network())
     println("Candidate network: ", network)
     flush(stdout)
     start = time_ns()
-    overlap_score, accuracy_score, v_overlap, v_accuracy, num_tests =
-        parallel_evaluate_sum_network(network, UInt64(5_000_000_000))
+    counterexample, num_tests = parallel_evaluate_sum_network(
+        network, UInt64(1_000_000_000))
     stop = time_ns()
     elapsed = (stop - start) / 1.0e9
     println("Performed ", num_tests, " tests in ", elapsed,
         " seconds (", num_tests / elapsed, " tests per second).")
-    println("Scores: ", (overlap_score, accuracy_score))
-    if overlap_score > OVERLAP_THRESHOLD
-        @assert !isempty(v_overlap)
-        println("Adding new overlap test case: ", v_overlap)
-        push!(CHALLENGING_TEST_CASES, v_overlap)
-    end
-    if accuracy_score < ACCURACY_THRESHOLD
-        @assert !isempty(v_accuracy)
-        println("Adding new accuracy test case: ", v_accuracy)
-        push!(CHALLENGING_TEST_CASES, v_accuracy)
-    end
-    if ((overlap_score <= OVERLAP_THRESHOLD) &
-        (accuracy_score >= ACCURACY_THRESHOLD))
+    if !isnothing(counterexample)
+        println("Candidate network failed final testing.")
+        println("Adding new test case: ", counterexample)
+        push!(CHALLENGING_TEST_CASES, counterexample)
+    else
         println("Candidate network passed final testing.")
         canonize_network!(network)
         println("Final network: ", network)
@@ -1028,8 +999,6 @@ function main()
             push!(PASSING_NETWORKS, network)
             sort!(PASSING_NETWORKS)
         end
-    else
-        println("Candidate network failed final testing.")
     end
     println()
     flush(stdout)
