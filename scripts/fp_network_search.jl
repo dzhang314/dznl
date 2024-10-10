@@ -128,6 +128,9 @@ end
 end
 
 
+const NUM_EVALUATIONS = Atomic{Int}(0)
+
+
 function evaluate_sum_network(
     network::AbstractVector{Tuple{Int,Int}},
     num_limbs::Int,
@@ -139,6 +142,7 @@ function evaluate_sum_network(
     v = Vector{Float64}(undef, num_limbs + num_limbs)
     overlap_score = 0
     error_score = typemax(Int)
+    num_evaluations = 0
     while true
         # Generate random (but renormalized) input data.
         for i = 1:num_limbs
@@ -165,7 +169,9 @@ function evaluate_sum_network(
                 _exponent_gap(v[1], v[num_limbs+i]))
         end
 
+        num_evaluations += 1
         if time_ns() >= start + duration_ns
+            atomic_add!(NUM_EVALUATIONS, num_evaluations)
             return (overlap_score, error_score)
         end
     end
@@ -179,10 +185,12 @@ function parallel_evaluate_sum_network(
 )
     N = nthreads()
     results = Vector{Tuple{Int,Int}}(undef, N)
+    NUM_EVALUATIONS[] = 0
     @threads for i = 1:N
         @inbounds results[i] = evaluate_sum_network(
             network, num_limbs, duration_ns)
     end
+    println("Performed ", NUM_EVALUATIONS[], " parallel evaluations.")
     return (maximum(overlap_score for (overlap_score, _) in results),
             minimum(error_score for (_, error_score) in results))
 end
