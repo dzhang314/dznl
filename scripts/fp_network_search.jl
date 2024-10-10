@@ -97,6 +97,19 @@ function renormalize!(v::AbstractVector{T}) where {T}
 end
 
 
+function is_normalized(v::AbstractVector{T}) where {T}
+    @assert axes(v) == (Base.OneTo(NUM_TERMS),)
+    for i = 1:NUM_LIMBS-1
+        @inbounds x, y = v[i], v[i+1]
+        (s, e) = two_sum(x, y)
+        if (s != x) | (e != y)
+            return false
+        end
+    end
+    return true
+end
+
+
 function riffle!(
     v::AbstractVector{T},
     x::AbstractVector{T},
@@ -241,6 +254,9 @@ function screen_sum_network(network::AbstractVector{Tuple{Int,Int}})
     for test_case in CHALLENGING_TEST_CASES
         copy!(v, test_case)
         overlap_score, accuracy_score = test_sum_network!(v, network)
+        if !is_normalized(v)
+            return false
+        end
         if overlap_score > OVERLAP_THRESHOLD
             return false
         end
@@ -290,6 +306,25 @@ function prune_network!(network::AbstractVector{Tuple{Int,Int}})
 end
 
 
+function canonize_network!(network::AbstractVector{Tuple{Int,Int}})
+    Base.require_one_based_indexing(network)
+    while true
+        changed = false
+        for i = 1:length(network)-1
+            (a, b) = network[i]
+            (c, d) = network[i+1]
+            if (a != c) & (a != d) & (b != c) & (b != d) & ((a, b) > (c, d))
+                network[i], network[i+1] = (c, d), (a, b)
+                changed = true
+            end
+        end
+        if !changed
+            return network
+        end
+    end
+end
+
+
 function main()
     network = prune_network!(build_random_network())
     println("Candidate network: ", network)
@@ -315,8 +350,12 @@ function main()
     if ((overlap_score <= OVERLAP_THRESHOLD) &
         (accuracy_score >= ACCURACY_THRESHOLD))
         println("Candidate network passed final testing.")
+        canonize_network!(network)
         println("Final network: ", network)
-        push!(PASSING_NETWORKS, network)
+        if !(network in PASSING_NETWORKS)
+            push!(PASSING_NETWORKS, network)
+            sort!(PASSING_NETWORKS)
+        end
     else
         println("Candidate network failed final testing.")
     end
@@ -326,8 +365,9 @@ function main()
     failures = (!).(screen_sum_network.(PASSING_NETWORKS))
     if any(failures)
         println("New test cases eliminated ", sum(failures), " networks.")
+        deleteat!(PASSING_NETWORKS, failures)
+        sort!(PASSING_NETWORKS)
     end
-    deleteat!(PASSING_NETWORKS, failures)
     println.(PASSING_NETWORKS)
     println()
     flush(stdout)
