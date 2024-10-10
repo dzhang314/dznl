@@ -75,8 +75,9 @@ end
 
 
 const NUM_LIMBS = parse(Int, ARGS[1])
+const NUM_TERMS = NUM_LIMBS + NUM_LIMBS
 const IDEAL_OVERLAP_SCORE = 0
-const IDEAL_ERROR_SCORE = NUM_LIMBS * precision(Float64) + (NUM_LIMBS - 1)
+const IDEAL_ACCURACY_SCORE = NUM_LIMBS * precision(Float64) + (NUM_LIMBS - 1)
 
 
 function renormalize!(v::AbstractVector{T}) where {T}
@@ -101,7 +102,7 @@ function riffle!(
     x::AbstractVector{T},
     y::AbstractVector{T},
 ) where {T}
-    @assert axes(v) == (Base.OneTo(NUM_LIMBS + NUM_LIMBS),)
+    @assert axes(v) == (Base.OneTo(NUM_TERMS),)
     @assert axes(x) == (Base.OneTo(NUM_LIMBS),)
     @assert axes(y) == (Base.OneTo(NUM_LIMBS),)
     for i = 1:NUM_LIMBS
@@ -117,7 +118,7 @@ function test_sum_network!(
     v::AbstractVector{T},
     network::AbstractVector{Tuple{Int,Int}},
 ) where {T}
-    @assert axes(v) == (Base.OneTo(NUM_LIMBS + NUM_LIMBS),)
+    @assert axes(v) == (Base.OneTo(NUM_TERMS),)
     for (i, j) in network
         v[i], v[j] = two_sum(v[i], v[j])
     end
@@ -126,12 +127,12 @@ function test_sum_network!(
         @inbounds overlap_score = max(overlap_score,
             _overlapping_bits(v[i], v[i+1]))
     end
-    error_score = IDEAL_ERROR_SCORE
+    accuracy_score = IDEAL_ACCURACY_SCORE
     for i = 1:NUM_LIMBS
-        @inbounds error_score = min(error_score,
+        @inbounds accuracy_score = min(accuracy_score,
             _exponent_gap(v[1], v[NUM_LIMBS+i]))
     end
-    return (overlap_score, error_score)
+    return (overlap_score, accuracy_score)
 end
 
 
@@ -145,11 +146,11 @@ function evaluate_sum_network(
     start = time_ns()
     x = Vector{Float64}(undef, NUM_LIMBS)
     y = Vector{Float64}(undef, NUM_LIMBS)
-    v = Vector{Float64}(undef, NUM_LIMBS + NUM_LIMBS)
-    v_overlap = Vector{Float64}(undef, NUM_LIMBS + NUM_LIMBS)
-    v_error = Vector{Float64}(undef, NUM_LIMBS + NUM_LIMBS)
+    v = Vector{Float64}(undef, NUM_TERMS)
+    v_overlap = Vector{Float64}(undef, NUM_TERMS)
+    v_accuracy = Vector{Float64}(undef, NUM_TERMS)
     overlap_score = IDEAL_OVERLAP_SCORE
-    error_score = IDEAL_ERROR_SCORE
+    accuracy_score = IDEAL_ACCURACY_SCORE
     num_tests = 0
     while true
         # Generate random (but renormalized) input data.
@@ -165,16 +166,16 @@ function evaluate_sum_network(
 
         # Combine input data and execute sum network.
         riffle!(v, x, y)
-        new_overlap_score, new_error_score = test_sum_network!(v, network)
+        new_overlap_score, new_accuracy_score = test_sum_network!(v, network)
 
         # Update scores.
         if new_overlap_score > overlap_score
             overlap_score = new_overlap_score
             riffle!(v_overlap, x, y)
         end
-        if new_error_score < error_score
-            error_score = new_error_score
-            riffle!(v_error, x, y)
+        if new_accuracy_score < accuracy_score
+            accuracy_score = new_accuracy_score
+            riffle!(v_accuracy, x, y)
         end
 
         # Check for termination.
@@ -183,10 +184,11 @@ function evaluate_sum_network(
             if overlap_score == IDEAL_OVERLAP_SCORE
                 empty!(v_overlap)
             end
-            if error_score == IDEAL_ERROR_SCORE
-                empty!(v_error)
+            if accuracy_score == IDEAL_ACCURACY_SCORE
+                empty!(v_accuracy)
             end
-            return (overlap_score, error_score, v_overlap, v_error, num_tests)
+            return (overlap_score, accuracy_score,
+                v_overlap, v_accuracy, num_tests)
         end
     end
 end
@@ -202,23 +204,24 @@ function parallel_evaluate_sum_network(
         @inbounds results[i] = evaluate_sum_network(network, duration_ns)
     end
     final_overlap_score = IDEAL_OVERLAP_SCORE
-    final_error_score = IDEAL_ERROR_SCORE
+    final_accuracy_score = IDEAL_ACCURACY_SCORE
     final_v_overlap = Vector{Float64}(undef, 0)
-    final_v_error = Vector{Float64}(undef, 0)
+    final_v_accuracy = Vector{Float64}(undef, 0)
     final_num_tests = 0
-    for (overlap_score, error_score, v_overlap, v_error, num_tests) in results
+    for (overlap_score, accuracy_score,
+        v_overlap, v_accuracy, num_tests) in results
         if overlap_score > final_overlap_score
             final_overlap_score = overlap_score
             final_v_overlap = v_overlap
         end
-        if error_score < final_error_score
-            final_error_score = error_score
-            final_v_error = v_error
+        if accuracy_score < final_accuracy_score
+            final_accuracy_score = accuracy_score
+            final_v_accuracy = v_accuracy
         end
         final_num_tests += num_tests
     end
-    return (final_overlap_score, final_error_score,
-        final_v_overlap, final_v_error, final_num_tests)
+    return (final_overlap_score, final_accuracy_score,
+        final_v_overlap, final_v_accuracy, final_num_tests)
 end
 
 
@@ -228,20 +231,20 @@ end
 const CHALLENGING_TEST_CASES = Vector{Float64}[]
 const PASSING_NETWORKS = Vector{Tuple{Int,Int}}[]
 const OVERLAP_THRESHOLD = parse(Int, ARGS[2])
-const ERROR_THRESHOLD = parse(Int, ARGS[3])
+const ACCURACY_THRESHOLD = parse(Int, ARGS[3])
 @assert OVERLAP_THRESHOLD >= IDEAL_OVERLAP_SCORE
-@assert ERROR_THRESHOLD <= IDEAL_ERROR_SCORE
+@assert ACCURACY_THRESHOLD <= IDEAL_ACCURACY_SCORE
 
 
 function screen_sum_network(network::AbstractVector{Tuple{Int,Int}})
-    v = Vector{Float64}(undef, NUM_LIMBS + NUM_LIMBS)
+    v = Vector{Float64}(undef, NUM_TERMS)
     for test_case in CHALLENGING_TEST_CASES
         copy!(v, test_case)
-        overlap_score, error_score = test_sum_network!(v, network)
+        overlap_score, accuracy_score = test_sum_network!(v, network)
         if overlap_score > OVERLAP_THRESHOLD
             return false
         end
-        if error_score < ERROR_THRESHOLD
+        if accuracy_score < ACCURACY_THRESHOLD
             return false
         end
     end
@@ -249,60 +252,68 @@ function screen_sum_network(network::AbstractVector{Tuple{Int,Int}})
 end
 
 
-function base_sum_network(k::Int)
-    result = Tuple{Int,Int}[]
-    for _ = 1:k
-        for i = 1:NUM_LIMBS
-            _2i = i + i
-            push!(result, (_2i - 1, _2i))
-        end
-        for i = 1:NUM_LIMBS-1
-            _2i = i + i
-            push!(result, (_2i, _2i + 1))
-        end
+function random_pair()
+    i = rand(1:NUM_TERMS)
+    j = rand(1:NUM_TERMS)
+    while i == j
+        j = rand(1:NUM_TERMS)
     end
-    return result
+    return minmax(i, j)
 end
 
 
-function main()
-    network = base_sum_network(10)
+function build_random_network()
+    network = Tuple{Int,Int}[]
+    while !screen_sum_network(network)
+        push!(network, random_pair())
+    end
+    return network
+end
+
+
+function prune_network!(network::AbstractVector{Tuple{Int,Int}})
     while true
         indices = shuffle(1:length(network))
-        found_improvement = false
+        pruned = false
         for i in indices
             new_network = deleteat!(copy(network), i)
             if screen_sum_network(new_network)
                 deleteat!(network, i)
-                found_improvement = true
+                pruned = true
                 break
             end
         end
-        if !found_improvement
-            break
+        if !pruned
+            return network
         end
     end
+end
+
+
+function main()
+    network = prune_network!(build_random_network())
     println("Candidate network: ", network)
     flush(stdout)
     start = time_ns()
-    overlap_score, error_score, v_overlap, v_error, num_tests =
+    overlap_score, accuracy_score, v_overlap, v_accuracy, num_tests =
         parallel_evaluate_sum_network(network, UInt64(1_000_000_000))
     stop = time_ns()
     elapsed = (stop - start) / 1.0e9
     println("Performed ", num_tests, " tests in ", elapsed,
         " seconds (", num_tests / elapsed, " tests per second).")
-    println("Scores: ", (overlap_score, error_score))
-    if overlap_score != IDEAL_OVERLAP_SCORE
+    println("Scores: ", (overlap_score, accuracy_score))
+    if overlap_score > OVERLAP_THRESHOLD
         @assert !isempty(v_overlap)
         println("Adding new overlap test case: ", v_overlap)
         push!(CHALLENGING_TEST_CASES, v_overlap)
     end
-    if error_score != IDEAL_ERROR_SCORE
-        @assert !isempty(v_error)
-        println("Adding new error test case: ", v_error)
-        push!(CHALLENGING_TEST_CASES, v_error)
+    if accuracy_score < ACCURACY_THRESHOLD
+        @assert !isempty(v_accuracy)
+        println("Adding new accuracy test case: ", v_accuracy)
+        push!(CHALLENGING_TEST_CASES, v_accuracy)
     end
-    if (overlap_score <= OVERLAP_THRESHOLD) & (error_score >= ERROR_THRESHOLD)
+    if ((overlap_score <= OVERLAP_THRESHOLD) &
+        (accuracy_score >= ACCURACY_THRESHOLD))
         println("Candidate network passed final testing.")
         println("Final network: ", network)
         push!(PASSING_NETWORKS, network)
