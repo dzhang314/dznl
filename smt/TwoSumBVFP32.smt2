@@ -168,27 +168,31 @@
     (check-sat)
 (pop 1)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-fun CASE0A () Bool (fp.isZero y))
+(define-fun CASE0B () Bool (fp.isZero x))
+(define-fun CASE1A () Bool (bvuge (bvsub e_x (bvadd p #x0002)) e_y))
+(define-fun CASE1B () Bool (bvule e_x (bvsub e_y (bvadd p #x0002))))
+(define-fun CASE2AS () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (= s_x s_y)))
+(define-fun CASE2ADN () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (not (= n_x #x0000))))
+(define-fun CASE2ADZZ () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (= n_x #x0000) (= n_y #x0000)))
+(define-fun CASE2ADZN () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (= n_x #x0000) (not (= n_y #x0000))))
+(define-fun CASE2BS () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (= s_x s_y)))
+(define-fun CASE2BD () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y))))
+(define-fun CASE2BDN () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (not (= n_y #x0000))))
+(define-fun CASE2BDZZ () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (= n_x #x0000) (= n_y #x0000)))
+(define-fun CASE2BDZN () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (not (= n_x #x0000)) (= n_y #x0000)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 0: ONE OR BOTH ADDENDS ARE ZERO
-
-; Theorem: If x and y are both zero, then s and e are both zero.
-
-(push 1)
-    ; Hypotheses:
-    (assert (fp.isZero x))
-    (assert (fp.isZero y))
-    ; Conclusion:
-    (assert (not (fp.isZero s)))
-    (assert (not (fp.isZero e)))
-    (check-sat)
-(pop 1)
 
 ; If x is zero, then s == y and e is zero.
 
 (push 1)
     ; Hypotheses:
-    (assert (fp.isZero x))
+    (assert CASE0A)
     ; Conclusion:
-    (assert (not (and (fp.eq s y) (fp.isZero e))))
+    (assert (not (and (fp.eq s x) (fp.isZero e))))
     (check-sat)
 (pop 1)
 
@@ -196,9 +200,9 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (fp.isZero y))
+    (assert CASE0B)
     ; Conclusion:
-    (assert (not (and (fp.eq s x) (fp.isZero e))))
+    (assert (not (and (fp.eq s y) (fp.isZero e))))
     (check-sat)
 (pop 1)
 
@@ -208,7 +212,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (bvugt (bvsub e_x (bvadd p #x0002)) e_y))
+    (assert CASE1A)
     ; Conclusion:
     (assert (not (and (= s x) (fp.eq e y))))
     (check-sat)
@@ -218,7 +222,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (bvule e_x (bvsub e_y (bvadd p #x0002))))
+    (assert CASE1B)
     ; Conclusion:
     (assert (not (and (= s y) (fp.eq e x))))
     (check-sat)
@@ -230,8 +234,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= (bvsub e_x (bvadd p #x0001)) e_y))
-    (assert (= s_x s_y))
+    (assert CASE2AS)
     ; Conclusion:
     (assert (not (and (= s x) (fp.eq e y))))
     (check-sat)
@@ -241,8 +244,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= e_x (bvsub e_y (bvadd p #x0001))))
-    (assert (= s_x s_y))
+    (assert CASE2BS)
     ; Conclusion:
     (assert (not (and (= s y) (fp.eq e x))))
     (check-sat)
@@ -253,9 +255,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= (bvsub e_x (bvadd p #x0001)) e_y))
-    (assert (not (= s_x s_y)))
-    (assert (not (= n_x #x0000)))
+    (assert CASE2ADN)
     ; Conclusion:
     (assert (not (and (= s x) (fp.eq e y))))
     (check-sat)
@@ -266,9 +266,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= e_x (bvsub e_y (bvadd p #x0001))))
-    (assert (not (= s_x s_y)))
-    (assert (not (= n_y #x0000)))
+    (assert CASE2BDN)
     ; Conclusion:
     (assert (not (and (= s y) (fp.eq e x))))
     (check-sat)
@@ -279,10 +277,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= (bvsub e_x (bvadd p #x0001)) e_y))
-    (assert (not (= s_x s_y)))
-    (assert (= n_x #x0000))
-    (assert (= n_y #x0000))
+    (assert CASE2ADZZ)
     ; Conclusion:
     (assert (not (and (= s x) (fp.eq e y))))
     (check-sat)
@@ -293,10 +288,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= e_x (bvsub e_y (bvadd p #x0001))))
-    (assert (not (= s_x s_y)))
-    (assert (= n_x #x0000))
-    (assert (= n_y #x0000))
+    (assert CASE2BDZZ)
     ; Conclusion:
     (assert (not (and (= s y) (fp.eq e x))))
     (check-sat)
@@ -308,10 +300,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= (bvsub e_x (bvadd p #x0001)) e_y))
-    (assert (not (= s_x s_y)))
-    (assert (= n_x #x0000))
-    (assert (not (= n_y #x0000)))
+    (assert CASE2ADZN)
     (assert (not (fp.isSubnormal y)))
     ; Conclusion:
     (assert (not (and (= s_s s_x)
@@ -328,10 +317,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= e_x (bvsub e_y (bvadd p #x0001))))
-    (assert (not (= s_x s_y)))
-    (assert (not (= n_x #x0000)))
-    (assert (= n_y #x0000))
+    (assert CASE2BDZN)
     (assert (not (fp.isSubnormal x)))
     ; Conclusion:
     (assert (not (and (= s_s s_y)
@@ -440,10 +426,13 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 4: ADDENDS PARTIALLY OVERLAP
 
+; Theorem: If e_x - p < e_y < e_x and s_x == s_y, then s_s == s_x == s_y and
+; e_s == e_x or e_s == e_x = 1.
+
 (push 1)
     ; Hypotheses:
     (assert (bvult (bvsub e_x p) e_y))
-    (assert (bvugt e_x e_y))
+    (assert (bvult e_y e_x))
     (assert (= s_x s_y))
     ; Conclusion:
     (assert (not (and (= s_s s_x)
