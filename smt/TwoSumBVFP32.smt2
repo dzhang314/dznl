@@ -425,7 +425,7 @@
     (assert (not (= s_x s_y)))
     ; Conclusion:
     (assert (not (and (= s_s s_x)
-                      (= e_s e_x))))
+                      (or (= e_s e_x) (= e_s (bvsub e_x #x0001))))))
     (check-sat)
 (pop 1)
 
@@ -434,6 +434,8 @@
     (assert (= e_x (bvsub e_y p)))
     (assert (not (= s_x s_y)))
     ; Conclusion:
+    (assert (not (and (= s_s s_y)
+                      (or (= e_s e_y) (= e_s (bvsub e_y #x0001))))))
     (check-sat)
 (pop 1)
 
@@ -445,6 +447,8 @@
     (assert (bvugt e_x e_y))
     (assert (= s_x s_y))
     ; Conclusion:
+    (assert (not (and (= s_s s_x)
+                      (or (= e_s e_x) (= e_s (bvadd e_x #x0001))))))
     (check-sat)
 (pop 1)
 
@@ -454,6 +458,8 @@
     (assert (bvult e_x e_y))
     (assert (= s_x s_y))
     ; Conclusion:
+    (assert (not (and (= s_s s_y)
+                      (or (= e_s e_y) (= e_s (bvadd e_y #x0001))))))
     (check-sat)
 (pop 1)
 
@@ -463,6 +469,8 @@
     (assert (bvugt e_x e_y))
     (assert (not (= s_x s_y)))
     ; Conclusion:
+    (assert (not (and (= s_s s_x)
+                      (bvule e_s e_x))))
     (check-sat)
 (pop 1)
 
@@ -472,6 +480,8 @@
     (assert (bvult e_x e_y))
     (assert (not (= s_x s_y)))
     ; Conclusion:
+    (assert (not (and (= s_s s_y)
+                      (bvule e_s e_y))))
     (check-sat)
 (pop 1)
 
