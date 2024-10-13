@@ -345,7 +345,135 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 3: ADDENDS ARE 0-SEPARATED
 
+(push 1)
+    ; Hypotheses:
+    (assert (= (bvsub e_x p) e_y))
+    (assert (= s_x s_y))
+    (assert (not (= o_x (bvsub p #x0001))))
+    (assert (not (fp.isSubnormal y)))
+    ; Conclusion:
+    (assert (not (and (= s_s s_x)
+                      (= e_s e_x)
+                      (or (and (= s x) (fp.eq e y))
+                          (and (not (= s_e s_x))
+                               (bvult e_e e_y))
+                          (and (not (= s_e s_x))
+                               (= e_e e_y)
+                               (= n_y #x0000)
+                               (= n_e #x0000))))))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert (= (bvsub e_x p) e_y))
+    (assert (= s_x s_y))
+    (assert (= o_x (bvsub p #x0001)))
+    (assert (not (fp.isZero y)))
+    (assert (not (fp.isSubnormal y)))
+    ; Conclusion:
+    (assert (not (and (= s_s s_x)
+                      (= e_s (bvadd e_x #x0001))
+                      (not (= s_e s_x))
+                      (or (bvult e_e e_y)
+                          (and (= e_e e_y)
+                               (= n_y #x0000)
+                               (= n_e #x0000))))))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert (= e_x (bvsub e_y p)))
+    (assert (= s_x s_y))
+    (assert (not (= o_y (bvsub p #x0001))))
+    (assert (not (fp.isSubnormal x)))
+    ; Conclusion:
+    (assert (not (and (= s_s s_y)
+                      (= e_s e_y)
+                      (or (and (= s y) (fp.eq e x))
+                          (and (not (= s_e s_y))
+                               (bvult e_e e_x))
+                          (and (not (= s_e s_y))
+                               (= e_e e_x)
+                               (= n_x #x0000)
+                               (= n_e #x0000))))))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert (= e_x (bvsub e_y p)))
+    (assert (= s_x s_y))
+    (assert (= o_y (bvsub p #x0001)))
+    (assert (not (fp.isZero x)))
+    (assert (not (fp.isSubnormal x)))
+    ; Conclusion:
+    (assert (not (and (= s_s s_y)
+                      (= e_s (bvadd e_y #x0001))
+                      (not (= s_e s_y))
+                      (or (bvult e_e e_x)
+                          (and (= e_e e_x)
+                               (= n_x #x0000)
+                               (= n_e #x0000))))))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert (= (bvsub e_x p) e_y))
+    (assert (not (= s_x s_y)))
+    ; Conclusion:
+    (assert (not (and (= s_s s_x)
+                      (= e_s e_x))))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert (= e_x (bvsub e_y p)))
+    (assert (not (= s_x s_y)))
+    ; Conclusion:
+    (check-sat)
+(pop 1)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 4: ADDENDS PARTIALLY OVERLAP
+
+(push 1)
+    ; Hypotheses:
+    (assert (bvult (bvsub e_x p) e_y))
+    (assert (bvugt e_x e_y))
+    (assert (= s_x s_y))
+    ; Conclusion:
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert (bvugt e_x (bvsub e_y p)))
+    (assert (bvult e_x e_y))
+    (assert (= s_x s_y))
+    ; Conclusion:
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert (bvult (bvsub e_x p) e_y))
+    (assert (bvugt e_x e_y))
+    (assert (not (= s_x s_y)))
+    ; Conclusion:
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert (bvugt e_x (bvsub e_y p)))
+    (assert (bvult e_x e_y))
+    (assert (not (= s_x s_y)))
+    ; Conclusion:
+    (check-sat)
+(pop 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 5: ADDENDS FULLY OVERLAP
 
