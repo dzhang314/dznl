@@ -182,23 +182,23 @@
 
 ; We do not use the expressions e_min and e_max in our concrete theorem
 ; statements. Instead, we state each theorem in two versions, A and B,
-; corresponding to e_x > e_y and e_x < e_y, respectively.
-
-; In some cases, we also differentiate between subcases S and D,
-; where x and y have the same or different signs, respectively.
+; corresponding to e_x > e_y and e_x < e_y, respectively. In some cases,
+; we also differentiate between subcases S and D, in which x and y have
+; the same or different signs, respectively. Further ad-hoc case splitting
+; is denoted by an underscore following this systematic name.
 
 (define-fun CASE0A () Bool (fp.isZero y))
 (define-fun CASE0B () Bool (fp.isZero x))
 (define-fun CASE1A () Bool (bvuge (bvsub e_x (bvadd p #x0002)) e_y))
 (define-fun CASE1B () Bool (bvule e_x (bvsub e_y (bvadd p #x0002))))
 (define-fun CASE2AS () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (= s_x s_y)))
-(define-fun CASE2ADN () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (not (= n_x #x0000))))
-(define-fun CASE2ADZZ () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (= n_x #x0000) (= n_y #x0000)))
-(define-fun CASE2ADZN () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (= n_x #x0000) (not (= n_y #x0000))))
+(define-fun CASE2AD_N () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (not (= n_x #x0000))))
+(define-fun CASE2AD_ZZ () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (= n_x #x0000) (= n_y #x0000)))
+(define-fun CASE2AD_ZN () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (= n_x #x0000) (not (= n_y #x0000))))
 (define-fun CASE2BS () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (= s_x s_y)))
-(define-fun CASE2BDN () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (not (= n_y #x0000))))
-(define-fun CASE2BDZZ () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (= n_x #x0000) (= n_y #x0000)))
-(define-fun CASE2BDZN () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (not (= n_x #x0000)) (= n_y #x0000)))
+(define-fun CASE2BD_N () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (not (= n_y #x0000))))
+(define-fun CASE2BD_ZZ () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (= n_x #x0000) (= n_y #x0000)))
+(define-fun CASE2BD_ZN () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (not (= n_x #x0000)) (= n_y #x0000)))
 (define-fun CASE3AS () Bool (and (= (bvsub e_x p) e_y) (= s_x s_y)))
 (define-fun CASE3AD () Bool (and (= (bvsub e_x p) e_y) (not (= s_x s_y))))
 (define-fun CASE3BS () Bool (and (= e_x (bvsub e_y p)) (= s_x s_y)))
@@ -207,19 +207,19 @@
 (define-fun CASE4AD () Bool (and (bvult (bvsub e_x p) e_y) (bvugt e_x e_y) (not (= s_x s_y))))
 (define-fun CASE4BS () Bool (and (bvugt e_x (bvsub e_y p)) (bvult e_x e_y) (= s_x s_y)))
 (define-fun CASE4BD () Bool (and (bvugt e_x (bvsub e_y p)) (bvult e_x e_y) (not (= s_x s_y))))
-(define-fun CASE5SX () Bool (and (= e_x e_y) (= s_x s_y) (not (fp.isZero x)) (not (fp.isZero y)) (xor (= n_x (bvsub p #x0001)) (= n_y (bvsub p #x0001)))))
-(define-fun CASE5SN () Bool (and (= e_x e_y) (= s_x s_y) (not (fp.isZero x)) (not (fp.isZero y)) (not (xor (= n_x (bvsub p #x0001)) (= n_y (bvsub p #x0001))))))
+(define-fun CASE5S_X () Bool (and (= e_x e_y) (= s_x s_y) (not (fp.isZero x)) (not (fp.isZero y)) (xor (= n_x (bvsub p #x0001)) (= n_y (bvsub p #x0001)))))
+(define-fun CASE5S_N () Bool (and (= e_x e_y) (= s_x s_y) (not (fp.isZero x)) (not (fp.isZero y)) (not (xor (= n_x (bvsub p #x0001)) (= n_y (bvsub p #x0001))))))
 (define-fun CASE5D () Bool (and (= e_x e_y) (not (= s_x s_y)) (not (fp.isZero x)) (not (fp.isZero y))))
 
 ; Theorem: The preceding cases are exhaustive.
 
 (push 1)
     (assert (not (or CASE0A CASE0B CASE1A CASE1B
-                     CASE2AS CASE2ADN CASE2ADZZ CASE2ADZN
-                     CASE2BS CASE2BDN CASE2BDZZ CASE2BDZN
+                     CASE2AS CASE2AD_N CASE2AD_ZZ CASE2AD_ZN
+                     CASE2BS CASE2BD_N CASE2BD_ZZ CASE2BD_ZN
                      CASE3AS CASE3AD CASE3BS CASE3BD
                      CASE4AS CASE4AD CASE4BS CASE4BD
-                     CASE5SX CASE5SN CASE5D)))
+                     CASE5S_X CASE5S_N CASE5D)))
     (check-sat)
 (pop 1)
 
@@ -294,7 +294,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE2ADN)
+    (assert CASE2AD_N)
     ; Conclusion:
     (assert (not (and (= s x) (fp.eq e y))))
     (check-sat)
@@ -305,7 +305,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE2BDN)
+    (assert CASE2BD_N)
     ; Conclusion:
     (assert (not (and (= s y) (fp.eq e x))))
     (check-sat)
@@ -316,7 +316,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE2ADZZ)
+    (assert CASE2AD_ZZ)
     ; Conclusion:
     (assert (not (and (= s x) (fp.eq e y))))
     (check-sat)
@@ -327,7 +327,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE2BDZZ)
+    (assert CASE2BD_ZZ)
     ; Conclusion:
     (assert (not (and (= s y) (fp.eq e x))))
     (check-sat)
@@ -339,7 +339,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE2ADZN)
+    (assert CASE2AD_ZN)
     (assert (not (fp.isSubnormal y)))
     ; Conclusion:
     (assert (not (and (= s_s s_x)
@@ -356,7 +356,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE2BDZN)
+    (assert CASE2BD_ZN)
     (assert (not (fp.isSubnormal x)))
     ; Conclusion:
     (assert (not (and (= s_s s_y)
@@ -389,23 +389,6 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE3AS)
-    (assert (= o_x (bvsub p #x0001)))
-    (assert (not (fp.isZero y)))
-    (assert (not (fp.isSubnormal y)))
-    ; Conclusion:
-    (assert (not (and (= s_s s_x)
-                      (= e_s (bvadd e_x #x0001))
-                      (not (= s_e s_x))
-                      (or (bvult e_e e_y)
-                          (and (= e_e e_y)
-                               (= n_y #x0000)
-                               (= n_e #x0000))))))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
     (assert CASE3BS)
     (assert (not (= o_y (bvsub p #x0001))))
     (assert (not (fp.isSubnormal x)))
@@ -418,6 +401,23 @@
                           (and (not (= s_e s_y))
                                (= e_e e_x)
                                (= n_x #x0000)
+                               (= n_e #x0000))))))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert CASE3AS)
+    (assert (= o_x (bvsub p #x0001)))
+    (assert (not (fp.isZero y)))
+    (assert (not (fp.isSubnormal y)))
+    ; Conclusion:
+    (assert (not (and (= s_s s_x)
+                      (= e_s (bvadd e_x #x0001))
+                      (not (= s_e s_x))
+                      (or (bvult e_e e_y)
+                          (and (= e_e e_y)
+                               (= n_y #x0000)
                                (= n_e #x0000))))))
     (check-sat)
 (pop 1)
@@ -504,9 +504,12 @@
 ; and none of x, y, or e are subnormal, then s_s == s_x == s_y,
 ; e_s == e_x + 1 == e_y + 1, and e is a nonzero power of two.
 
+; The sign of e is unpredictable in this case,
+; depending on round-to-even tiebreaking for s.
+
 (push 1)
     ; Hypotheses:
-    (assert CASE5SX)
+    (assert CASE5S_X)
     (assert (not (fp.isSubnormal x)))
     (assert (not (fp.isSubnormal y)))
     (assert (not (fp.isSubnormal e)))
@@ -515,7 +518,12 @@
                       (= s_s s_y)
                       (= e_s (bvadd e_x #x0001))
                       (= e_s (bvadd e_y #x0001))
-                      (not (fp.isZero e))
+                      ; I think the following statements are true,
+                      ; but they take a very long time to verify.
+                      ; (or (bvuge o_s o_x) (bvuge o_s o_y))
+                      ; (or (bvuge z_s z_x) (bvuge z_s z_y))
+                      (= e_e (bvsub e_x (bvsub p #x0001)))
+                      (= e_e (bvsub e_y (bvsub p #x0001)))
                       (= n_e #x0000))))
     (check-sat)
 (pop 1)
@@ -526,7 +534,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE5SN)
+    (assert CASE5S_N)
     (assert (not (fp.isSubnormal x)))
     (assert (not (fp.isSubnormal y)))
     (assert (not (fp.isSubnormal e)))
@@ -535,6 +543,10 @@
                       (= s_s s_y)
                       (= e_s (bvadd e_x #x0001))
                       (= e_s (bvadd e_y #x0001))
+                      ; I think the following statements are true,
+                      ; but they take a very long time to verify.
+                      ; (or (bvuge o_s o_x) (bvuge o_s o_y))
+                      ; (or (bvuge z_s z_x) (bvuge z_s z_y))
                       (fp.isZero e))))
     (check-sat)
 (pop 1)
@@ -547,9 +559,15 @@
     (assert CASE5D)
     (assert (not (fp.isSubnormal x)))
     (assert (not (fp.isSubnormal y)))
+    (assert (not (fp.isSubnormal s)))
     ; Conclusion:
-    (assert (not (and (bvult e_s e_x)
-                      (bvult e_s e_y)
+    (assert (not (and (or (fp.isZero s)
+                          (bvult e_s (bvsub e_x o_x))
+                          (bvult e_s (bvsub e_y o_y)))
+                      (or (fp.isZero s)
+                          (bvult e_s (bvsub e_x z_x))
+                          (bvult e_s (bvsub e_y z_y)))
                       (fp.isZero e))))
     (check-sat)
+    (get-model)
 (pop 1)
