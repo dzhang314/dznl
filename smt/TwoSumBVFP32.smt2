@@ -569,5 +569,4 @@
                           (bvult e_s (bvsub e_y z_y)))
                       (fp.isZero e))))
     (check-sat)
-    (get-model)
 (pop 1)
