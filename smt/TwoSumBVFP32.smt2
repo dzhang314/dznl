@@ -142,30 +142,29 @@
     (check-sat)
 (pop 1)
 
-; Theorem: 0 <= o_y <= n_y < p.
-
+; Theorem: Exactly one of z_x and o_x is zero.
 (push 1)
-    (assert (not (and (bvule #x0000 o_y)
-                      (bvule o_y n_y)
-                      (bvult n_y p))))
+    (assert (not (xor (= z_x #x0000) (= o_x #x0000))))
     (check-sat)
 (pop 1)
 
-; Theorem: 0 <= o_s <= n_s < p.
+; Theorem: If z_x < p - 1, then z_x < n_x.
 
 (push 1)
-    (assert (not (and (bvule #x0000 o_s)
-                      (bvule o_s n_s)
-                      (bvult n_s p))))
+    ; Hypotheses:
+    (assert (bvult z_x (bvsub p #x0001)))
+    ; Conclusion:
+    (assert (not (bvult z_x n_x)))
     (check-sat)
 (pop 1)
 
-; Theorem: 0 <= o_e <= n_e < p.
+; Theorem: If z_x == p - 1, then n_x == 0.
 
 (push 1)
-    (assert (not (and (bvule #x0000 o_e)
-                      (bvule o_e n_e)
-                      (bvult n_e p))))
+    ; Hypotheses:
+    (assert (= z_x (bvsub p #x0001)))
+    ; Conclusion:
+    (assert (not (= n_x #x0000)))
     (check-sat)
 (pop 1)
 
