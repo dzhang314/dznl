@@ -168,7 +168,24 @@
     (check-sat)
 (pop 1)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE ANALYSIS
+
+; Let e_min = min(e_x, e_y) and e_max = max(e_x, e_y). We split our
+; analysis into five cases based on the gap between e_min and e_max.
+
+; CASE 0: e_min == -inf (i.e., x or y is zero).
+; CASE 1: e_min <= e_max - (p + 2).
+; CASE 2: e_min == e_max - (p + 1).
+; CASE 3: e_min == e_max - p.
+; CASE 4: e_max - p < e_min < e_max.
+; CASE 5: e_min == e_max.
+
+; We do not use the expressions e_min and e_max in our concrete theorem
+; statements. Instead, we state each theorem in two versions, A and B,
+; corresponding to e_x > e_y and e_x < e_y, respectively.
+
+; In some cases, we also differentiate between subcases S and D,
+; where x and y have the same or different signs, respectively.
 
 (define-fun CASE0A () Bool (fp.isZero y))
 (define-fun CASE0B () Bool (fp.isZero x))
@@ -179,10 +196,32 @@
 (define-fun CASE2ADZZ () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (= n_x #x0000) (= n_y #x0000)))
 (define-fun CASE2ADZN () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (= n_x #x0000) (not (= n_y #x0000))))
 (define-fun CASE2BS () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (= s_x s_y)))
-(define-fun CASE2BD () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y))))
 (define-fun CASE2BDN () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (not (= n_y #x0000))))
 (define-fun CASE2BDZZ () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (= n_x #x0000) (= n_y #x0000)))
 (define-fun CASE2BDZN () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (not (= n_x #x0000)) (= n_y #x0000)))
+(define-fun CASE3AS () Bool (and (= (bvsub e_x p) e_y) (= s_x s_y)))
+(define-fun CASE3AD () Bool (and (= (bvsub e_x p) e_y) (not (= s_x s_y))))
+(define-fun CASE3BS () Bool (and (= e_x (bvsub e_y p)) (= s_x s_y)))
+(define-fun CASE3BD () Bool (and (= e_x (bvsub e_y p)) (not (= s_x s_y))))
+(define-fun CASE4AS () Bool (and (bvult (bvsub e_x p) e_y) (bvugt e_x e_y) (= s_x s_y)))
+(define-fun CASE4AD () Bool (and (bvult (bvsub e_x p) e_y) (bvugt e_x e_y) (not (= s_x s_y))))
+(define-fun CASE4BS () Bool (and (bvugt e_x (bvsub e_y p)) (bvult e_x e_y) (= s_x s_y)))
+(define-fun CASE4BD () Bool (and (bvugt e_x (bvsub e_y p)) (bvult e_x e_y) (not (= s_x s_y))))
+(define-fun CASE5SX () Bool (and (= e_x e_y) (= s_x s_y) (not (fp.isZero x)) (not (fp.isZero y)) (xor (= n_x (bvsub p #x0001)) (= n_y (bvsub p #x0001)))))
+(define-fun CASE5SN () Bool (and (= e_x e_y) (= s_x s_y) (not (fp.isZero x)) (not (fp.isZero y)) (not (xor (= n_x (bvsub p #x0001)) (= n_y (bvsub p #x0001))))))
+(define-fun CASE5D () Bool (and (= e_x e_y) (not (= s_x s_y)) (not (fp.isZero x)) (not (fp.isZero y))))
+
+; Theorem: The preceding cases are exhaustive.
+
+(push 1)
+    (assert (not (or CASE0A CASE0B CASE1A CASE1B
+                     CASE2AS CASE2ADN CASE2ADZZ CASE2ADZN
+                     CASE2BS CASE2BDN CASE2BDZZ CASE2BDZN
+                     CASE3AS CASE3AD CASE3BS CASE3BD
+                     CASE4AS CASE4AD CASE4BS CASE4BD
+                     CASE5SX CASE5SN CASE5D)))
+    (check-sat)
+(pop 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 0: ONE OR BOTH ADDENDS ARE ZERO
 
@@ -332,8 +371,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= (bvsub e_x p) e_y))
-    (assert (= s_x s_y))
+    (assert CASE3AS)
     (assert (not (= o_x (bvsub p #x0001))))
     (assert (not (fp.isSubnormal y)))
     ; Conclusion:
@@ -351,8 +389,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= (bvsub e_x p) e_y))
-    (assert (= s_x s_y))
+    (assert CASE3AS)
     (assert (= o_x (bvsub p #x0001)))
     (assert (not (fp.isZero y)))
     (assert (not (fp.isSubnormal y)))
@@ -369,8 +406,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= e_x (bvsub e_y p)))
-    (assert (= s_x s_y))
+    (assert CASE3BS)
     (assert (not (= o_y (bvsub p #x0001))))
     (assert (not (fp.isSubnormal x)))
     ; Conclusion:
@@ -388,8 +424,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= e_x (bvsub e_y p)))
-    (assert (= s_x s_y))
+    (assert CASE3BS)
     (assert (= o_y (bvsub p #x0001)))
     (assert (not (fp.isZero x)))
     (assert (not (fp.isSubnormal x)))
@@ -406,8 +441,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= (bvsub e_x p) e_y))
-    (assert (not (= s_x s_y)))
+    (assert CASE3AD)
     ; Conclusion:
     (assert (not (and (= s_s s_x)
                       (or (= e_s e_x) (= e_s (bvsub e_x #x0001))))))
@@ -416,8 +450,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= e_x (bvsub e_y p)))
-    (assert (not (= s_x s_y)))
+    (assert CASE3BD)
     ; Conclusion:
     (assert (not (and (= s_s s_y)
                       (or (= e_s e_y) (= e_s (bvsub e_y #x0001))))))
@@ -431,9 +464,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (bvult (bvsub e_x p) e_y))
-    (assert (bvult e_y e_x))
-    (assert (= s_x s_y))
+    (assert CASE4AS)
     ; Conclusion:
     (assert (not (and (= s_s s_x)
                       (or (= e_s e_x) (= e_s (bvadd e_x #x0001))))))
@@ -442,9 +473,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (bvugt e_x (bvsub e_y p)))
-    (assert (bvult e_x e_y))
-    (assert (= s_x s_y))
+    (assert CASE4BS)
     ; Conclusion:
     (assert (not (and (= s_s s_y)
                       (or (= e_s e_y) (= e_s (bvadd e_y #x0001))))))
@@ -453,9 +482,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (bvult (bvsub e_x p) e_y))
-    (assert (bvugt e_x e_y))
-    (assert (not (= s_x s_y)))
+    (assert CASE4AD)
     ; Conclusion:
     (assert (not (and (= s_s s_x)
                       (bvule e_s e_x))))
@@ -464,9 +491,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (bvugt e_x (bvsub e_y p)))
-    (assert (bvult e_x e_y))
-    (assert (not (= s_x s_y)))
+    (assert CASE4BD)
     ; Conclusion:
     (assert (not (and (= s_s s_y)
                       (bvule e_s e_y))))
@@ -481,12 +506,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= e_x e_y))
-    (assert (= s_x s_y))
-    (assert (not (fp.isZero x)))
-    (assert (not (fp.isZero y)))
-    (assert (xor (= n_x (bvsub p #x0001))
-                 (= n_y (bvsub p #x0001))))
+    (assert CASE5SX)
     (assert (not (fp.isSubnormal x)))
     (assert (not (fp.isSubnormal y)))
     (assert (not (fp.isSubnormal e)))
@@ -506,12 +526,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= e_x e_y))
-    (assert (= s_x s_y))
-    (assert (not (fp.isZero x)))
-    (assert (not (fp.isZero y)))
-    (assert (not (xor (= n_x (bvsub p #x0001))
-                      (= n_y (bvsub p #x0001)))))
+    (assert CASE5SN)
     (assert (not (fp.isSubnormal x)))
     (assert (not (fp.isSubnormal y)))
     (assert (not (fp.isSubnormal e)))
@@ -529,10 +544,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert (= e_x e_y))
-    (assert (not (= s_x s_y)))
-    (assert (not (fp.isZero x)))
-    (assert (not (fp.isZero y)))
+    (assert CASE5D)
     (assert (not (fp.isSubnormal x)))
     (assert (not (fp.isSubnormal y)))
     ; Conclusion:
