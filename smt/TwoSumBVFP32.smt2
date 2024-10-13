@@ -349,6 +349,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 5: ADDENDS FULLY OVERLAP
 
+; Theorem: If e_x == e_y, s_x == s_y, x and y are nonzero with different LSBs,
+; and none of x, y, or e are subnormal, then s_s == s_x == s_y,
+; e_s == e_x + 1 == e_y + 1, and e is a nonzero power of two.
+
 (push 1)
     ; Hypotheses:
     (assert (= e_x e_y))
@@ -370,6 +374,10 @@
     (check-sat)
 (pop 1)
 
+; Theorem: If e_x == e_y, s_x == s_y, x and y are nonzero with the same LSB,
+; and none of x, y, or e are subnormal, then s_s == s_x == s_y,
+; e_s == e_x + 1 == e_y + 1, and e is zero.
+
 (push 1)
     ; Hypotheses:
     (assert (= e_x e_y))
@@ -389,6 +397,9 @@
                       (fp.isZero e))))
     (check-sat)
 (pop 1)
+
+; Theorem: If e_x == e_y, s_x != s_y, x and y are nonzero and not subnormal,
+; then e_s < e_x == e_y and e is zero.
 
 (push 1)
     ; Hypotheses:
