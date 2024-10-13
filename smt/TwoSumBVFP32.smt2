@@ -345,6 +345,62 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 3: ADDENDS ARE 0-SEPARATED
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 4: ADDENDS OVERLAP
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 4: ADDENDS PARTIALLY OVERLAP
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 4.1: ADDENDS OVERLAP AND
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 5: ADDENDS FULLY OVERLAP
+
+(push 1)
+    ; Hypotheses:
+    (assert (= e_x e_y))
+    (assert (= s_x s_y))
+    (assert (not (fp.isZero x)))
+    (assert (not (fp.isZero y)))
+    (assert (xor (= n_x (bvsub p #x0001))
+                 (= n_y (bvsub p #x0001))))
+    (assert (not (fp.isSubnormal x)))
+    (assert (not (fp.isSubnormal y)))
+    (assert (not (fp.isSubnormal e)))
+    ; Conclusion:
+    (assert (not (and (= s_s s_x)
+                      (= s_s s_y)
+                      (= e_s (bvadd e_x #x0001))
+                      (= e_s (bvadd e_y #x0001))
+                      (not (fp.isZero e))
+                      (= n_e #x0000))))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert (= e_x e_y))
+    (assert (= s_x s_y))
+    (assert (not (fp.isZero x)))
+    (assert (not (fp.isZero y)))
+    (assert (not (xor (= n_x (bvsub p #x0001))
+                      (= n_y (bvsub p #x0001)))))
+    (assert (not (fp.isSubnormal x)))
+    (assert (not (fp.isSubnormal y)))
+    (assert (not (fp.isSubnormal e)))
+    ; Conclusion:
+    (assert (not (and (= s_s s_x)
+                      (= s_s s_y)
+                      (= e_s (bvadd e_x #x0001))
+                      (= e_s (bvadd e_y #x0001))
+                      (fp.isZero e))))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert (= e_x e_y))
+    (assert (not (= s_x s_y)))
+    (assert (not (fp.isZero x)))
+    (assert (not (fp.isZero y)))
+    (assert (not (fp.isSubnormal x)))
+    (assert (not (fp.isSubnormal y)))
+    ; Conclusion:
+    (assert (not (and (bvult e_s e_x)
+                      (bvult e_s e_y)
+                      (fp.isZero e))))
+    (check-sat)
+(pop 1)
