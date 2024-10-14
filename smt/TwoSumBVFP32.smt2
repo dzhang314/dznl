@@ -205,13 +205,17 @@
 (define-fun CASE_3BS_G () Bool (and (= e_x (bvsub e_y p)) (= s_x s_y) (not (= o_y (bvsub p #x0001)))))
 (define-fun CASE_3BS_S () Bool (and (= e_x (bvsub e_y p)) (= s_x s_y) (= o_y (bvsub p #x0001)) (not (fp.isZero x))))
 (define-fun CASE_3BD () Bool (and (= e_x (bvsub e_y p)) (not (= s_x s_y))))
-(define-fun CASE_4AS () Bool (and (bvult (bvsub e_x p) e_y) (bvugt e_x e_y) (= s_x s_y)))
-(define-fun CASE_4AD () Bool (and (bvult (bvsub e_x p) e_y) (bvugt e_x e_y) (not (= s_x s_y))))
-(define-fun CASE_4BS () Bool (and (bvugt e_x (bvsub e_y p)) (bvult e_x e_y) (= s_x s_y)))
-(define-fun CASE_4BD () Bool (and (bvugt e_x (bvsub e_y p)) (bvult e_x e_y) (not (= s_x s_y))))
-(define-fun CASE_5S_X () Bool (and (= e_x e_y) (= s_x s_y) (not (fp.isZero x)) (not (fp.isZero y)) (xor (= n_x (bvsub p #x0001)) (= n_y (bvsub p #x0001)))))
-(define-fun CASE_5S_N () Bool (and (= e_x e_y) (= s_x s_y) (not (fp.isZero x)) (not (fp.isZero y)) (not (xor (= n_x (bvsub p #x0001)) (= n_y (bvsub p #x0001))))))
-(define-fun CASE_5D () Bool (and (= e_x e_y) (not (= s_x s_y)) (not (fp.isZero x)) (not (fp.isZero y))))
+(define-fun CASE_4AS () Bool (and (bvult (bvsub e_x p) e_y) (bvugt (bvsub e_x #x0001) e_y) (= s_x s_y)))
+(define-fun CASE_4AD () Bool (and (bvult (bvsub e_x p) e_y) (bvugt (bvsub e_x #x0001) e_y) (not (= s_x s_y))))
+(define-fun CASE_4BS () Bool (and (bvugt e_x (bvsub e_y p)) (bvult e_x (bvsub e_y #x0001)) (= s_x s_y)))
+(define-fun CASE_4BD () Bool (and (bvugt e_x (bvsub e_y p)) (bvult e_x (bvsub e_y #x0001)) (not (= s_x s_y))))
+(define-fun CASE_5AS () Bool (and (= (bvsub e_x #x0001) e_y) (= s_x s_y)))
+(define-fun CASE_5AD () Bool (and (= (bvsub e_x #x0001) e_y) (not (= s_x s_y))))
+(define-fun CASE_5BS () Bool (and (= e_x (bvsub e_y #x0001)) (= s_x s_y)))
+(define-fun CASE_5BD () Bool (and (= e_x (bvsub e_y #x0001)) (not (= s_x s_y))))
+(define-fun CASE_6S_X () Bool (and (= e_x e_y) (= s_x s_y) (not (fp.isZero x)) (not (fp.isZero y)) (xor (= n_x (bvsub p #x0001)) (= n_y (bvsub p #x0001)))))
+(define-fun CASE_6S_N () Bool (and (= e_x e_y) (= s_x s_y) (not (fp.isZero x)) (not (fp.isZero y)) (not (xor (= n_x (bvsub p #x0001)) (= n_y (bvsub p #x0001))))))
+(define-fun CASE_6D () Bool (and (= e_x e_y) (not (= s_x s_y)) (not (fp.isZero x)) (not (fp.isZero y))))
 
 ; Theorem: The preceding cases are exhaustive.
 
@@ -222,7 +226,8 @@
                      CASE_3AS_G CASE_3AS_S CASE_3AD
                      CASE_3BS_G CASE_3BS_S CASE_3BD
                      CASE_4AS CASE_4AD CASE_4BS CASE_4BD
-                     CASE_5S_X CASE_5S_N CASE_5D)))
+                     CASE_5AS CASE_5AD CASE_5BS CASE_5BD
+                     CASE_6S_X CASE_6S_N CASE_6D)))
     (check-sat)
 (pop 1)
 
@@ -515,8 +520,9 @@
     (assert CASE_4AD)
     ; Conclusion:
     (assert (not (and (= s_s s_x)
-                      (bvule e_s e_x)
-                      (bvuge e_s (bvsub e_x p)))))
+                      (or (= e_s e_x)
+                          (= e_s (bvsub e_x #x0001))))))
+    (check-sat)
 (pop 1)
 
 (push 1)
@@ -524,11 +530,92 @@
     (assert CASE_4BD)
     ; Conclusion:
     (assert (not (and (= s_s s_y)
-                      (bvule e_s e_y)
-                      (bvuge e_s (bvsub e_y p)))))
+                      (or (= e_s e_y)
+                          (= e_s (bvsub e_y #x0001))))))
+    (check-sat)
 (pop 1)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 5: ADDENDS FULLY OVERLAP
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 5: ADDENDS ARE ADJACENT
+
+(push 1)
+    ; Hypotheses:
+    (assert CASE_5AS)
+    ; Conclusion:
+    (assert (not (and (= s_s s_x)
+                      (or (= e_s e_x) (= e_s (bvadd e_x #x0001))))))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert CASE_5AS)
+    (assert (bvugt (bvsub e_x n_x) e_y))
+    (assert (bvult (bvsub e_x p) (bvsub e_y n_y)))
+    ; Conclusion:
+    (assert (not (fp.isZero e)))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert CASE_5AS)
+    (assert (bvugt (bvsub e_x (bvadd o_x #x0001)) e_y))
+    (assert (bvult (bvsub e_x p) (bvsub e_y n_y)))
+    ; Conclusion:
+    (assert (not (fp.isZero e)))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert CASE_5BS)
+    ; Conclusion:
+    (assert (not (and (= s_s s_y)
+                      (or (= e_s e_y) (= e_s (bvadd e_y #x0001))))))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert CASE_5BS)
+    (assert (bvult e_x (bvsub e_y n_y)))
+    (assert (bvugt (bvsub e_x n_x) (bvsub e_y p)))
+    ; Conclusion:
+    (assert (not (fp.isZero e)))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert CASE_5BS)
+    (assert (bvult e_x (bvsub e_y (bvadd o_y #x0001))))
+    (assert (bvugt (bvsub e_x n_x) (bvsub e_y p)))
+    ; Conclusion:
+    (assert (not (fp.isZero e)))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert CASE_5AD)
+    ; Conclusion:
+    (assert (not (and (= s_s s_x)
+                      (bvule e_s e_x)
+                      (bvuge e_s (bvsub e_x p)))))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert CASE_5BD)
+    ; Conclusion:
+    (assert (not (and (= s_s s_y)
+                      (bvule e_s e_y)
+                      (bvuge e_s (bvsub e_y p)))))
+    (check-sat)
+(pop 1)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 6: ADDENDS FULLY OVERLAP
 
 ; Theorem: If e_x == e_y, s_x == s_y, x and y are nonzero with different LSBs,
 ; and none of x, y, or e are subnormal, then s_s == s_x == s_y,
@@ -539,7 +626,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE_5S_X)
+    (assert CASE_6S_X)
     (assert (not (fp.isSubnormal x)))
     (assert (not (fp.isSubnormal y)))
     (assert (not (fp.isSubnormal e)))
@@ -564,7 +651,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE_5S_N)
+    (assert CASE_6S_N)
     (assert (not (fp.isSubnormal x)))
     (assert (not (fp.isSubnormal y)))
     (assert (not (fp.isSubnormal e)))
@@ -586,7 +673,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE_5D)
+    (assert CASE_6D)
     (assert (not (fp.isSubnormal x)))
     (assert (not (fp.isSubnormal y)))
     (assert (not (fp.isSubnormal s)))
