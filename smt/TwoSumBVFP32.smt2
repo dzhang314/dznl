@@ -515,8 +515,8 @@
     (assert CASE_4AD)
     ; Conclusion:
     (assert (not (and (= s_s s_x)
-                      (bvule e_s e_x))))
-    (check-sat)
+                      (bvule e_s e_x)
+                      (bvuge e_s (bvsub e_x p)))))
 (pop 1)
 
 (push 1)
@@ -524,8 +524,8 @@
     (assert CASE_4BD)
     ; Conclusion:
     (assert (not (and (= s_s s_y)
-                      (bvule e_s e_y))))
-    (check-sat)
+                      (bvule e_s e_y)
+                      (bvuge e_s (bvsub e_y p)))))
 (pop 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 5: ADDENDS FULLY OVERLAP
@@ -597,6 +597,9 @@
                       (or (fp.isZero s)
                           (bvult e_s (bvsub e_x z_x))
                           (bvult e_s (bvsub e_y z_y)))
+                      (or (fp.isZero s)
+                          (and (bvuge e_s (bvsub e_x p))
+                               (bvuge e_s (bvsub e_y p))))
                       (fp.isZero e))))
     (check-sat)
 (pop 1)
