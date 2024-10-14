@@ -187,39 +187,39 @@
 ; the same or different signs, respectively. Further ad-hoc case splitting
 ; is denoted by an underscore following this systematic name.
 
-(define-fun CASE0A () Bool (fp.isZero y))
-(define-fun CASE0B () Bool (fp.isZero x))
-(define-fun CASE1A () Bool (bvuge (bvsub e_x (bvadd p #x0002)) e_y))
-(define-fun CASE1B () Bool (bvule e_x (bvsub e_y (bvadd p #x0002))))
-(define-fun CASE2AS () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (= s_x s_y)))
-(define-fun CASE2AD_N () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (not (= n_x #x0000))))
-(define-fun CASE2AD_ZZ () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (= n_x #x0000) (= n_y #x0000)))
-(define-fun CASE2AD_ZN () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (= n_x #x0000) (not (= n_y #x0000))))
-(define-fun CASE2BS () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (= s_x s_y)))
-(define-fun CASE2BD_N () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (not (= n_y #x0000))))
-(define-fun CASE2BD_ZZ () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (= n_x #x0000) (= n_y #x0000)))
-(define-fun CASE2BD_ZN () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (not (= n_x #x0000)) (= n_y #x0000)))
-(define-fun CASE3AS () Bool (and (= (bvsub e_x p) e_y) (= s_x s_y)))
-(define-fun CASE3AD () Bool (and (= (bvsub e_x p) e_y) (not (= s_x s_y))))
-(define-fun CASE3BS () Bool (and (= e_x (bvsub e_y p)) (= s_x s_y)))
-(define-fun CASE3BD () Bool (and (= e_x (bvsub e_y p)) (not (= s_x s_y))))
-(define-fun CASE4AS () Bool (and (bvult (bvsub e_x p) e_y) (bvugt e_x e_y) (= s_x s_y)))
-(define-fun CASE4AD () Bool (and (bvult (bvsub e_x p) e_y) (bvugt e_x e_y) (not (= s_x s_y))))
-(define-fun CASE4BS () Bool (and (bvugt e_x (bvsub e_y p)) (bvult e_x e_y) (= s_x s_y)))
-(define-fun CASE4BD () Bool (and (bvugt e_x (bvsub e_y p)) (bvult e_x e_y) (not (= s_x s_y))))
-(define-fun CASE5S_X () Bool (and (= e_x e_y) (= s_x s_y) (not (fp.isZero x)) (not (fp.isZero y)) (xor (= n_x (bvsub p #x0001)) (= n_y (bvsub p #x0001)))))
-(define-fun CASE5S_N () Bool (and (= e_x e_y) (= s_x s_y) (not (fp.isZero x)) (not (fp.isZero y)) (not (xor (= n_x (bvsub p #x0001)) (= n_y (bvsub p #x0001))))))
-(define-fun CASE5D () Bool (and (= e_x e_y) (not (= s_x s_y)) (not (fp.isZero x)) (not (fp.isZero y))))
+(define-fun CASE_0A () Bool (fp.isZero y))
+(define-fun CASE_0B () Bool (fp.isZero x))
+(define-fun CASE_1A () Bool (bvuge (bvsub e_x (bvadd p #x0002)) e_y))
+(define-fun CASE_1B () Bool (bvule e_x (bvsub e_y (bvadd p #x0002))))
+(define-fun CASE_2AS () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (= s_x s_y)))
+(define-fun CASE_2AD_N () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (not (= n_x #x0000))))
+(define-fun CASE_2AD_ZZ () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (= n_x #x0000) (= n_y #x0000)))
+(define-fun CASE_2AD_ZN () Bool (and (= (bvsub e_x (bvadd p #x0001)) e_y) (not (= s_x s_y)) (= n_x #x0000) (not (= n_y #x0000))))
+(define-fun CASE_2BS () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (= s_x s_y)))
+(define-fun CASE_2BD_N () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (not (= n_y #x0000))))
+(define-fun CASE_2BD_ZZ () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (= n_x #x0000) (= n_y #x0000)))
+(define-fun CASE_2BD_ZN () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (not (= n_x #x0000)) (= n_y #x0000)))
+(define-fun CASE_3AS () Bool (and (= (bvsub e_x p) e_y) (= s_x s_y)))
+(define-fun CASE_3AD () Bool (and (= (bvsub e_x p) e_y) (not (= s_x s_y))))
+(define-fun CASE_3BS () Bool (and (= e_x (bvsub e_y p)) (= s_x s_y)))
+(define-fun CASE_3BD () Bool (and (= e_x (bvsub e_y p)) (not (= s_x s_y))))
+(define-fun CASE_4AS () Bool (and (bvult (bvsub e_x p) e_y) (bvugt e_x e_y) (= s_x s_y)))
+(define-fun CASE_4AD () Bool (and (bvult (bvsub e_x p) e_y) (bvugt e_x e_y) (not (= s_x s_y))))
+(define-fun CASE_4BS () Bool (and (bvugt e_x (bvsub e_y p)) (bvult e_x e_y) (= s_x s_y)))
+(define-fun CASE_4BD () Bool (and (bvugt e_x (bvsub e_y p)) (bvult e_x e_y) (not (= s_x s_y))))
+(define-fun CASE_5S_X () Bool (and (= e_x e_y) (= s_x s_y) (not (fp.isZero x)) (not (fp.isZero y)) (xor (= n_x (bvsub p #x0001)) (= n_y (bvsub p #x0001)))))
+(define-fun CASE_5S_N () Bool (and (= e_x e_y) (= s_x s_y) (not (fp.isZero x)) (not (fp.isZero y)) (not (xor (= n_x (bvsub p #x0001)) (= n_y (bvsub p #x0001))))))
+(define-fun CASE_5D () Bool (and (= e_x e_y) (not (= s_x s_y)) (not (fp.isZero x)) (not (fp.isZero y))))
 
 ; Theorem: The preceding cases are exhaustive.
 
 (push 1)
-    (assert (not (or CASE0A CASE0B CASE1A CASE1B
-                     CASE2AS CASE2AD_N CASE2AD_ZZ CASE2AD_ZN
-                     CASE2BS CASE2BD_N CASE2BD_ZZ CASE2BD_ZN
-                     CASE3AS CASE3AD CASE3BS CASE3BD
-                     CASE4AS CASE4AD CASE4BS CASE4BD
-                     CASE5S_X CASE5S_N CASE5D)))
+    (assert (not (or CASE_0A CASE_0B CASE_1A CASE_1B
+                     CASE_2AS CASE_2AD_N CASE_2AD_ZZ CASE_2AD_ZN
+                     CASE_2BS CASE_2BD_N CASE_2BD_ZZ CASE_2BD_ZN
+                     CASE_3AS CASE_3AD CASE_3BS CASE_3BD
+                     CASE_4AS CASE_4AD CASE_4BS CASE_4BD
+                     CASE_5S_X CASE_5S_N CASE_5D)))
     (check-sat)
 (pop 1)
 
@@ -229,7 +229,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE0A)
+    (assert CASE_0A)
     ; Conclusion:
     (assert (not (and (fp.eq s x) (fp.isZero e))))
     (check-sat)
@@ -239,7 +239,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE0B)
+    (assert CASE_0B)
     ; Conclusion:
     (assert (not (and (fp.eq s y) (fp.isZero e))))
     (check-sat)
@@ -251,7 +251,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE1A)
+    (assert CASE_1A)
     ; Conclusion:
     (assert (not (and (= s x) (fp.eq e y))))
     (check-sat)
@@ -261,7 +261,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE1B)
+    (assert CASE_1B)
     ; Conclusion:
     (assert (not (and (= s y) (fp.eq e x))))
     (check-sat)
@@ -273,7 +273,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE2AS)
+    (assert CASE_2AS)
     ; Conclusion:
     (assert (not (and (= s x) (fp.eq e y))))
     (check-sat)
@@ -283,7 +283,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE2BS)
+    (assert CASE_2BS)
     ; Conclusion:
     (assert (not (and (= s y) (fp.eq e x))))
     (check-sat)
@@ -294,7 +294,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE2AD_N)
+    (assert CASE_2AD_N)
     ; Conclusion:
     (assert (not (and (= s x) (fp.eq e y))))
     (check-sat)
@@ -305,7 +305,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE2BD_N)
+    (assert CASE_2BD_N)
     ; Conclusion:
     (assert (not (and (= s y) (fp.eq e x))))
     (check-sat)
@@ -316,7 +316,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE2AD_ZZ)
+    (assert CASE_2AD_ZZ)
     ; Conclusion:
     (assert (not (and (= s x) (fp.eq e y))))
     (check-sat)
@@ -327,7 +327,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE2BD_ZZ)
+    (assert CASE_2BD_ZZ)
     ; Conclusion:
     (assert (not (and (= s y) (fp.eq e x))))
     (check-sat)
@@ -339,7 +339,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE2AD_ZN)
+    (assert CASE_2AD_ZN)
     (assert (not (fp.isSubnormal y)))
     ; Conclusion:
     (assert (not (and (= s_s s_x)
@@ -356,7 +356,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE2BD_ZN)
+    (assert CASE_2BD_ZN)
     (assert (not (fp.isSubnormal x)))
     ; Conclusion:
     (assert (not (and (= s_s s_y)
@@ -371,7 +371,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE3AS)
+    (assert CASE_3AS)
     (assert (not (= o_x (bvsub p #x0001))))
     (assert (not (fp.isSubnormal y)))
     ; Conclusion:
@@ -389,7 +389,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE3BS)
+    (assert CASE_3BS)
     (assert (not (= o_y (bvsub p #x0001))))
     (assert (not (fp.isSubnormal x)))
     ; Conclusion:
@@ -407,7 +407,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE3AS)
+    (assert CASE_3AS)
     (assert (= o_x (bvsub p #x0001)))
     (assert (not (fp.isZero y)))
     (assert (not (fp.isSubnormal y)))
@@ -424,7 +424,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE3BS)
+    (assert CASE_3BS)
     (assert (= o_y (bvsub p #x0001)))
     (assert (not (fp.isZero x)))
     (assert (not (fp.isSubnormal x)))
@@ -441,7 +441,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE3AD)
+    (assert CASE_3AD)
     ; Conclusion:
     (assert (not (and (= s_s s_x)
                       (or (= e_s e_x) (= e_s (bvsub e_x #x0001))))))
@@ -450,7 +450,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE3BD)
+    (assert CASE_3BD)
     ; Conclusion:
     (assert (not (and (= s_s s_y)
                       (or (= e_s e_y) (= e_s (bvsub e_y #x0001))))))
@@ -461,7 +461,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE4AS)
+    (assert CASE_4AS)
     ; Conclusion:
     (assert (not (and (= s_s s_x)
                       (or (= e_s e_x) (= e_s (bvadd e_x #x0001))))))
@@ -470,7 +470,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE4AS)
+    (assert CASE_4AS)
     (assert (bvugt (bvsub e_x n_x) e_y))
     (assert (bvult (bvsub e_x p) (bvsub e_y n_y)))
     ; Conclusion:
@@ -480,7 +480,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE4AS)
+    (assert CASE_4AS)
     (assert (bvugt (bvsub e_x (bvadd o_x #x0001)) e_y))
     (assert (bvult (bvsub e_x p) (bvsub e_y n_y)))
     ; Conclusion:
@@ -490,7 +490,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE4BS)
+    (assert CASE_4BS)
     ; Conclusion:
     (assert (not (and (= s_s s_y)
                       (or (= e_s e_y) (= e_s (bvadd e_y #x0001))))))
@@ -499,7 +499,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE4BS)
+    (assert CASE_4BS)
     (assert (bvult e_x (bvsub e_y n_y)))
     (assert (bvugt (bvsub e_x n_x) (bvsub e_y p)))
     ; Conclusion:
@@ -509,7 +509,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE4BS)
+    (assert CASE_4BS)
     (assert (bvult e_x (bvsub e_y (bvadd o_y #x0001))))
     (assert (bvugt (bvsub e_x n_x) (bvsub e_y p)))
     ; Conclusion:
@@ -519,7 +519,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE4AD)
+    (assert CASE_4AD)
     ; Conclusion:
     (assert (not (and (= s_s s_x)
                       (bvule e_s e_x))))
@@ -528,7 +528,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE4BD)
+    (assert CASE_4BD)
     ; Conclusion:
     (assert (not (and (= s_s s_y)
                       (bvule e_s e_y))))
@@ -546,7 +546,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE5S_X)
+    (assert CASE_5S_X)
     (assert (not (fp.isSubnormal x)))
     (assert (not (fp.isSubnormal y)))
     (assert (not (fp.isSubnormal e)))
@@ -571,7 +571,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE5S_N)
+    (assert CASE_5S_N)
     (assert (not (fp.isSubnormal x)))
     (assert (not (fp.isSubnormal y)))
     (assert (not (fp.isSubnormal e)))
@@ -593,7 +593,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE5D)
+    (assert CASE_5D)
     (assert (not (fp.isSubnormal x)))
     (assert (not (fp.isSubnormal y)))
     (assert (not (fp.isSubnormal s)))
