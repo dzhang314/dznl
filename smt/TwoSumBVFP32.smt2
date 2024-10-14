@@ -199,9 +199,11 @@
 (define-fun CASE_2BD_N () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (not (= n_y #x0000))))
 (define-fun CASE_2BD_ZZ () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (= n_x #x0000) (= n_y #x0000)))
 (define-fun CASE_2BD_ZN () Bool (and (= e_x (bvsub e_y (bvadd p #x0001))) (not (= s_x s_y)) (not (= n_x #x0000)) (= n_y #x0000)))
-(define-fun CASE_3AS () Bool (and (= (bvsub e_x p) e_y) (= s_x s_y)))
+(define-fun CASE_3AS_G () Bool (and (= (bvsub e_x p) e_y) (= s_x s_y) (not (= o_x (bvsub p #x0001)))))
+(define-fun CASE_3AS_S () Bool (and (= (bvsub e_x p) e_y) (= s_x s_y) (= o_x (bvsub p #x0001)) (not (fp.isZero y))))
 (define-fun CASE_3AD () Bool (and (= (bvsub e_x p) e_y) (not (= s_x s_y))))
-(define-fun CASE_3BS () Bool (and (= e_x (bvsub e_y p)) (= s_x s_y)))
+(define-fun CASE_3BS_G () Bool (and (= e_x (bvsub e_y p)) (= s_x s_y) (not (= o_y (bvsub p #x0001)))))
+(define-fun CASE_3BS_S () Bool (and (= e_x (bvsub e_y p)) (= s_x s_y) (= o_y (bvsub p #x0001)) (not (fp.isZero x))))
 (define-fun CASE_3BD () Bool (and (= e_x (bvsub e_y p)) (not (= s_x s_y))))
 (define-fun CASE_4AS () Bool (and (bvult (bvsub e_x p) e_y) (bvugt e_x e_y) (= s_x s_y)))
 (define-fun CASE_4AD () Bool (and (bvult (bvsub e_x p) e_y) (bvugt e_x e_y) (not (= s_x s_y))))
@@ -217,15 +219,14 @@
     (assert (not (or CASE_0A CASE_0B CASE_1A CASE_1B
                      CASE_2AS CASE_2AD_N CASE_2AD_ZZ CASE_2AD_ZN
                      CASE_2BS CASE_2BD_N CASE_2BD_ZZ CASE_2BD_ZN
-                     CASE_3AS CASE_3AD CASE_3BS CASE_3BD
+                     CASE_3AS_G CASE_3AS_S CASE_3AD
+                     CASE_3BS_G CASE_3BS_S CASE_3BD
                      CASE_4AS CASE_4AD CASE_4BS CASE_4BD
                      CASE_5S_X CASE_5S_N CASE_5D)))
     (check-sat)
 (pop 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 0: ONE OR BOTH ADDENDS ARE ZERO
-
-; If x is zero, then s == y and e is zero.
 
 (push 1)
     ; Hypotheses:
@@ -234,8 +235,6 @@
     (assert (not (and (fp.eq s x) (fp.isZero e))))
     (check-sat)
 (pop 1)
-
-; If y is zero, then s == x and e is zero.
 
 (push 1)
     ; Hypotheses:
@@ -371,8 +370,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE_3AS)
-    (assert (not (= o_x (bvsub p #x0001))))
+    (assert CASE_3AS_G)
     (assert (not (fp.isSubnormal y)))
     ; Conclusion:
     (assert (not (and (= s_s s_x)
@@ -389,8 +387,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE_3BS)
-    (assert (not (= o_y (bvsub p #x0001))))
+    (assert CASE_3BS_G)
     (assert (not (fp.isSubnormal x)))
     ; Conclusion:
     (assert (not (and (= s_s s_y)
@@ -407,9 +404,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE_3AS)
-    (assert (= o_x (bvsub p #x0001)))
-    (assert (not (fp.isZero y)))
+    (assert CASE_3AS_S)
     (assert (not (fp.isSubnormal y)))
     ; Conclusion:
     (assert (not (and (= s_s s_x)
@@ -424,9 +419,7 @@
 
 (push 1)
     ; Hypotheses:
-    (assert CASE_3BS)
-    (assert (= o_y (bvsub p #x0001)))
-    (assert (not (fp.isZero x)))
+    (assert CASE_3BS_S)
     (assert (not (fp.isSubnormal x)))
     ; Conclusion:
     (assert (not (and (= s_s s_y)
