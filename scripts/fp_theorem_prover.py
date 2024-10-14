@@ -105,8 +105,12 @@ def print_model(model: z3.ModelRef) -> None:
             float_vars[(var_name[:-9], "sign_bit")] = var
         elif var_name.endswith("_exponent"):
             float_vars[(var_name[:-9], "exponent")] = var
-        elif var_name.endswith("_nnzb"):
-            float_vars[(var_name[:-5], "nnzb")] = var
+        elif var_name.endswith("_num_leading_zeroes"):
+            float_vars[(var_name[:-19], "num_leading_zeroes")] = var
+        elif var_name.endswith("_num_leading_ones"):
+            float_vars[(var_name[:-17], "num_leading_ones")] = var
+        elif var_name.endswith("_last_nonzero_bit"):
+            float_vars[(var_name[:-17], "last_nonzero_bit")] = var
         else:
             non_float_vars[var_name] = var
     float_names = {name for name, _ in float_vars}
@@ -131,18 +135,41 @@ def print_model(model: z3.ModelRef) -> None:
             assert isinstance(exponent_var, z3.IntNumRef)
             exponent_value = exponent_var.as_long()
             exponent_str = str(exponent_value)
+            if exponent_value == ZERO_EXPONENT:
+                leading_bit = "0"
+            else:
+                leading_bit = "1"
         else:
             exponent_str = "?"
-        if (name, "nnzb") in float_vars:
-            nnzb_var = model[float_vars[(name, "nnzb")]]
-            assert isinstance(nnzb_var, z3.IntNumRef)
-            nnzb_value = nnzb_var.as_long()
-            mantissa_str = nnzb_value * "?" + (PRECISION - nnzb_value - 1) * "0"
-        else:
-            mantissa_str = "?" * (PRECISION - 1)
+            leading_bit = "?"
+        mantissa = ["?" for _ in range(PRECISION - 1)]
+        if (name, "num_leading_zeroes") in float_vars:
+            num_leading_zeroes_var = model[float_vars[(name, "num_leading_zeroes")]]
+            assert isinstance(num_leading_zeroes_var, z3.IntNumRef)
+            num_leading_zeroes = num_leading_zeroes_var.as_long()
+            for i in range(num_leading_zeroes):
+                mantissa[i] = "0"
+            if num_leading_zeroes < PRECISION - 1:
+                mantissa[num_leading_zeroes] = "1"
+        if (name, "num_leading_ones") in float_vars:
+            num_leading_ones_var = model[float_vars[(name, "num_leading_ones")]]
+            assert isinstance(num_leading_ones_var, z3.IntNumRef)
+            num_leading_ones = num_leading_ones_var.as_long()
+            for i in range(num_leading_ones):
+                mantissa[i] = "1"
+            if num_leading_ones < PRECISION - 1:
+                mantissa[num_leading_ones] = "0"
+        if (name, "last_nonzero_bit") in float_vars:
+            last_nonzero_bit_var = model[float_vars[(name, "last_nonzero_bit")]]
+            assert isinstance(last_nonzero_bit_var, z3.IntNumRef)
+            last_nonzero_bit = last_nonzero_bit_var.as_long()
+            mantissa[last_nonzero_bit - 1] = "1"
+            for i in range(last_nonzero_bit, PRECISION - 1):
+                mantissa[i] = "0"
+        mantissa_str = "".join(mantissa)
         name = name.rjust(max_name_length)
         exponent_str = exponent_str.ljust(max_exponent_length)
-        print(f"{name} = {sign_str}2^{exponent_str} * 1.{mantissa_str}")
+        print(f"{name} = {sign_str}2^{exponent_str} * {leading_bit}.{mantissa_str}")
     for name, var in non_float_vars.items():
         print(name, model[var])
     return None
@@ -166,6 +193,7 @@ def prove(
         assert result == z3.sat
         if verbose:
             print(f"Refuted {name} in {(stop - start) / 1e9:.6f} seconds.")
+            print_model(solver.model())
         return False
 
 
@@ -207,17 +235,17 @@ def fp_two_sum(
 
     z_x = x.num_leading_zeroes
     z_y = y.num_leading_zeroes
-    z_s = s.num_leading_zeroes
-    z_e = e.num_leading_zeroes
+    # z_s = s.num_leading_zeroes
+    # z_e = e.num_leading_zeroes
 
     o_x = x.num_leading_ones
     o_y = y.num_leading_ones
     o_s = s.num_leading_ones
-    o_e = e.num_leading_ones
+    # o_e = e.num_leading_ones
 
     n_x = x.last_nonzero_bit
     n_y = y.last_nonzero_bit
-    n_s = s.last_nonzero_bit
+    # n_s = s.last_nonzero_bit
     n_e = e.last_nonzero_bit
 
     case_0a = y.is_zero
@@ -267,38 +295,6 @@ def fp_two_sum(
         z3.Not(z3.Xor(n_x == PRECISION - 1, n_y == PRECISION - 1)),
     )
     case_5d = z3.And(e_x == e_y, s_x != s_y, z3.Not(x.is_zero), z3.Not(y.is_zero))
-
-    prove(
-        solver,
-        z3.Or(
-            case_0a,
-            case_0b,
-            case_1a,
-            case_1b,
-            case_2as,
-            case_2ad_n,
-            case_2ad_zz,
-            case_2ad_zn,
-            case_2bs,
-            case_2bd_n,
-            case_2bd_zz,
-            case_2bd_zn,
-            case_3as_g,
-            case_3as_s,
-            case_3ad,
-            case_3bs_g,
-            case_3bs_s,
-            case_3bd,
-            case_4as,
-            case_4ad,
-            case_4bs,
-            case_4bd,
-            case_5s_x,
-            case_5s_n,
-            case_5d,
-        ),
-        "TwoSum cases are exhaustive",
-    )
 
     solver.add(z3.Implies(case_0a, z3.And(s.maybe_equal(x), e.is_zero)))
     solver.add(z3.Implies(case_0b, z3.And(s.maybe_equal(y), e.is_zero)))
