@@ -453,6 +453,11 @@ def fp_two_sum(
             z3.And(
                 s_s == s_x,
                 z3.Or(e_s == e_x, e_s == e_x + 1),
+                z3.Or(
+                    e.is_zero,
+                    e_e <= e_x - PRECISION,
+                    z3.And(e_e == e_x - (PRECISION - 1), n_e == 0),
+                ),
             ),
         )
     )
@@ -477,6 +482,8 @@ def fp_two_sum(
             z3.And(
                 s_s == s_y,
                 z3.Or(e_s == e_y, e_s == e_y + 1),
+                z3.Or(e.is_zero, e_e <= e_y - PRECISION),
+                z3.And(e_e == e_y - (PRECISION - 1), n_e == 0),
             ),
         )
     )
@@ -498,14 +505,22 @@ def fp_two_sum(
     solver.add(
         z3.Implies(
             case_4ad,
-            z3.And(s_s == s_x, z3.Or(e_s == e_x, e_s == e_x - 1)),
+            z3.And(
+                s_s == s_x,
+                z3.Or(e_s == e_x, e_s == e_x - 1),
+                z3.Or(e.is_zero, e_e <= e_x - PRECISION),
+            ),
         )
     )
 
     solver.add(
         z3.Implies(
             case_4bd,
-            z3.And(s_s == s_y, z3.Or(e_s == e_y, e_s == e_y - 1)),
+            z3.And(
+                s_s == s_y,
+                z3.Or(e_s == e_y, e_s == e_y - 1),
+                z3.Or(e.is_zero, e_e <= e_y - PRECISION),
+            ),
         )
     )
 
@@ -515,6 +530,11 @@ def fp_two_sum(
             z3.And(
                 s_s == s_x,
                 z3.Or(e_s == e_x, e_s == e_x + 1),
+                z3.Or(
+                    e.is_zero,
+                    e_e <= e_x - PRECISION,
+                    z3.And(e_e == e_x - (PRECISION - 1), n_e == 0),
+                ),
             ),
         )
     )
@@ -539,6 +559,11 @@ def fp_two_sum(
             z3.And(
                 s_s == s_y,
                 z3.Or(e_s == e_y, e_s == e_y + 1),
+                z3.Or(
+                    e.is_zero,
+                    e_e <= e_y - PRECISION,
+                    z3.And(e_e == e_y - (PRECISION - 1), n_e == 0),
+                ),
             ),
         )
     )
@@ -560,14 +585,24 @@ def fp_two_sum(
     solver.add(
         z3.Implies(
             case_5ad,
-            z3.And(s_s == s_x, e_s <= e_x, e_s >= e_x - PRECISION),
+            z3.And(
+                s_s == s_x,
+                e_s <= e_x,
+                e_s >= e_x - PRECISION,
+                z3.Or(e.is_zero, e_e <= e_x - PRECISION),
+            ),
         )
     )
 
     solver.add(
         z3.Implies(
             case_5bd,
-            z3.And(s_s == s_y, e_s <= e_y, e_s >= e_y - PRECISION),
+            z3.And(
+                s_s == s_y,
+                e_s <= e_y,
+                e_s >= e_y - PRECISION,
+                z3.Or(e.is_zero, e_e <= e_y - PRECISION),
+            ),
         )
     )
 

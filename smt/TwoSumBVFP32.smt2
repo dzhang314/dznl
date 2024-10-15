@@ -460,10 +460,16 @@
 (push 1)
     ; Hypotheses:
     (assert CASE_4AS)
+    (assert (not (fp.isSubnormal e)))
     ; Conclusion:
     (assert (not (and (= s_s s_x)
-                      (or (= e_s e_x) (= e_s (bvadd e_x #x0001))))))
+                      (or (= e_s e_x) (= e_s (bvadd e_x #x0001)))
+                      (or (fp.isZero e)
+                          (bvule e_e (bvsub e_x p))
+                          (and (= e_e (bvsub e_x (bvsub p #x0001)))
+                               (= n_e #x0000))))))
     (check-sat)
+    (get-model)
 (pop 1)
 
 (push 1)
@@ -489,10 +495,16 @@
 (push 1)
     ; Hypotheses:
     (assert CASE_4BS)
+    (assert (not (fp.isSubnormal e)))
     ; Conclusion:
     (assert (not (and (= s_s s_y)
-                      (or (= e_s e_y) (= e_s (bvadd e_y #x0001))))))
+                      (or (= e_s e_y) (= e_s (bvadd e_y #x0001)))
+                      (or (fp.isZero e)
+                          (bvule e_e (bvsub e_y p))
+                          (and (= e_e (bvsub e_y (bvsub p #x0001)))
+                               (= n_e #x0000))))))
     (check-sat)
+    (get-model)
 (pop 1)
 
 (push 1)
@@ -518,21 +530,29 @@
 (push 1)
     ; Hypotheses:
     (assert CASE_4AD)
+    (assert (not (fp.isSubnormal e)))
     ; Conclusion:
     (assert (not (and (= s_s s_x)
                       (or (= e_s e_x)
-                          (= e_s (bvsub e_x #x0001))))))
+                          (= e_s (bvsub e_x #x0001)))
+                      (or (fp.isZero e)
+                          (bvule e_e (bvsub e_x p))))))
     (check-sat)
+    (get-model)
 (pop 1)
 
 (push 1)
     ; Hypotheses:
     (assert CASE_4BD)
+    (assert (not (fp.isSubnormal e)))
     ; Conclusion:
     (assert (not (and (= s_s s_y)
                       (or (= e_s e_y)
-                          (= e_s (bvsub e_y #x0001))))))
+                          (= e_s (bvsub e_y #x0001)))
+                      (or (fp.isZero e)
+                          (bvule e_e (bvsub e_y p))))))
     (check-sat)
+    (get-model)
 (pop 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 5: ADDENDS ARE ADJACENT
@@ -540,10 +560,16 @@
 (push 1)
     ; Hypotheses:
     (assert CASE_5AS)
+    (assert (not (fp.isSubnormal e)))
     ; Conclusion:
     (assert (not (and (= s_s s_x)
-                      (or (= e_s e_x) (= e_s (bvadd e_x #x0001))))))
+                      (or (= e_s e_x) (= e_s (bvadd e_x #x0001)))
+                      (or (fp.isZero e)
+                          (bvule e_e (bvsub e_x p))
+                          (and (= e_e (bvsub e_x (bvsub p #x0001)))
+                               (= n_e #x0000))))))
     (check-sat)
+    (get-model)
 (pop 1)
 
 (push 1)
@@ -569,10 +595,16 @@
 (push 1)
     ; Hypotheses:
     (assert CASE_5BS)
+    (assert (not (fp.isSubnormal e)))
     ; Conclusion:
     (assert (not (and (= s_s s_y)
-                      (or (= e_s e_y) (= e_s (bvadd e_y #x0001))))))
+                      (or (= e_s e_y) (= e_s (bvadd e_y #x0001)))
+                      (or (fp.isZero e)
+                          (bvule e_e (bvsub e_y p))
+                          (and (= e_e (bvsub e_y (bvsub p #x0001)))
+                               (= n_e #x0000))))))
     (check-sat)
+    (get-model)
 (pop 1)
 
 (push 1)
@@ -598,21 +630,29 @@
 (push 1)
     ; Hypotheses:
     (assert CASE_5AD)
+    (assert (not (fp.isSubnormal e)))
     ; Conclusion:
     (assert (not (and (= s_s s_x)
                       (bvule e_s e_x)
-                      (bvuge e_s (bvsub e_x p)))))
+                      (bvuge e_s (bvsub e_x p))
+                      (or (fp.isZero e)
+                          (bvule e_e (bvsub e_x p))))))
     (check-sat)
+    (get-model)
 (pop 1)
 
 (push 1)
     ; Hypotheses:
     (assert CASE_5BD)
+    (assert (not (fp.isSubnormal e)))
     ; Conclusion:
     (assert (not (and (= s_s s_y)
                       (bvule e_s e_y)
-                      (bvuge e_s (bvsub e_y p)))))
+                      (bvuge e_s (bvsub e_y p))
+                      (or (fp.isZero e)
+                          (bvule e_e (bvsub e_y p))))))
     (check-sat)
+    (get-model)
 (pop 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 6: ADDENDS FULLY OVERLAP
