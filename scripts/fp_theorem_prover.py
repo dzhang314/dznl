@@ -249,7 +249,14 @@ def fp_two_sum(
     # n_s = s.last_nonzero_bit
     n_e = e.last_nonzero_bit
 
-    solver.add(z3.Or(e.is_zero, e_e > e_x - PRECISION, e_e > e_y - PRECISION))
+    solver.add(
+        z3.Or(
+            e.is_zero,
+            e_e - n_e > e_x - PRECISION,
+            e_e - n_e > e_y - PRECISION,
+        )
+    )
+
     solver.add(is_ulp_nonoverlapping(s, e))
 
     case_0a = y.is_zero

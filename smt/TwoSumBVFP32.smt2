@@ -168,7 +168,7 @@
     (check-sat)
 (pop 1)
 
-; The four preceding results also hold for y, s, and e, in addition to x.
+; The four preceding results also hold for y, s, and e in addition to x.
 
 (push 1)
     ; Hypotheses:
@@ -178,8 +178,8 @@
     (assert (not (fp.isSubnormal e)))
     ; Conclusion:
     (assert (not (or (fp.isZero e)
-                     (bvugt e_e (bvsub e_x p))
-                     (bvugt e_e (bvsub e_y p)))))
+                     (bvugt (bvsub e_e n_e) (bvsub e_x p))
+                     (bvugt (bvsub e_e n_e) (bvsub e_y p)))))
     (check-sat)
 (pop 1)
 
