@@ -475,7 +475,6 @@
                           (and (= e_e (bvsub e_s (bvsub p #x0001)))
                                (= n_e #x0000))))))
     (check-sat)
-    (get-model)
 (pop 1)
 
 (push 1)
@@ -510,7 +509,6 @@
                           (and (= e_e (bvsub e_s (bvsub p #x0001)))
                                (= n_e #x0000))))))
     (check-sat)
-    (get-model)
 (pop 1)
 
 (push 1)
@@ -544,7 +542,6 @@
                       (or (fp.isZero e)
                           (bvule e_e (bvsub e_s p))))))
     (check-sat)
-    (get-model)
 (pop 1)
 
 (push 1)
@@ -558,7 +555,6 @@
                       (or (fp.isZero e)
                           (bvule e_e (bvsub e_s p))))))
     (check-sat)
-    (get-model)
 (pop 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 5: ADDENDS ARE ADJACENT
@@ -575,7 +571,6 @@
                           (and (= e_e (bvsub e_s (bvsub p #x0001)))
                                (= n_e #x0000))))))
     (check-sat)
-    (get-model)
 (pop 1)
 
 (push 1)
@@ -610,7 +605,6 @@
                           (and (= e_e (bvsub e_s (bvsub p #x0001)))
                                (= n_e #x0000))))))
     (check-sat)
-    (get-model)
 (pop 1)
 
 (push 1)
@@ -644,7 +638,6 @@
                       (or (fp.isZero e)
                           (bvule e_e (bvsub e_s p))))))
     (check-sat)
-    (get-model)
 (pop 1)
 
 (push 1)
@@ -658,7 +651,6 @@
                       (or (fp.isZero e)
                           (bvule e_e (bvsub e_s p))))))
     (check-sat)
-    (get-model)
 (pop 1)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 6: ADDENDS FULLY OVERLAP
