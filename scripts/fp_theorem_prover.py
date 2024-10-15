@@ -96,7 +96,7 @@ class FPVariable(object):
         )
 
 
-def print_model(model: z3.ModelRef) -> None:
+def print_model(model: z3.ModelRef, variable_ordering: list[str]) -> None:
     float_vars: dict[tuple[str, str], z3.FuncDeclRef] = {}
     non_float_vars: dict[str, z3.FuncDeclRef] = {}
     for var in model:
@@ -123,7 +123,7 @@ def print_model(model: z3.ModelRef) -> None:
             max_exponent_length = max(
                 max_exponent_length, len(str(exponent_var.as_long()))
             )
-    for name in float_names:
+    for name in variable_ordering + list(float_names - set(variable_ordering)):
         if (name, "sign_bit") in float_vars:
             sign_value = model[float_vars[(name, "sign_bit")]]
             assert isinstance(sign_value, z3.BoolRef)
@@ -179,6 +179,7 @@ def prove(
     solver: z3.Solver,
     claim: z3.BoolRef,
     name: str,
+    variable_ordering: list[str],
     *,
     verbose: bool = True,
 ) -> bool:
@@ -193,7 +194,7 @@ def prove(
         assert result == z3.sat
         if verbose:
             print(f"Refuted {name} in {(stop - start) / 1e9:.6f} seconds.")
-            print_model(solver.model())
+            print_model(solver.model(), variable_ordering)
         return False
 
 
@@ -247,6 +248,9 @@ def fp_two_sum(
     n_y = y.last_nonzero_bit
     # n_s = s.last_nonzero_bit
     n_e = e.last_nonzero_bit
+
+    solver.add(z3.Or(e.is_zero, e_e > e_x - PRECISION, e_e > e_y - PRECISION))
+    solver.add(is_ulp_nonoverlapping(s, e))
 
     case_0a = y.is_zero
     case_0b = x.is_zero
@@ -680,6 +684,7 @@ def fp_fast_two_sum(
         solver,
         fast_two_sum_preconditions(x, y),
         f"Fast2Sum preconditions for {x.name} and {y.name}",
+        [x.name, y.name, sum_name, err_name],
         verbose=verbose,
     )
     return fp_two_sum(solver, x, y, sum_name, err_name)
@@ -700,11 +705,13 @@ def verify_joldes_2017_algorithm_4():
         solver,
         is_ulp_nonoverlapping(z0, z1),
         "nonoverlapping",
+        ["x0", "y", "s0", "s1", "x1", "s1", "v", "err_v", "s0", "v", "z0", "z1"],
     )
     prove(
         solver,
         z3.Or(err_v.is_zero, err_v.exponent <= z0.exponent - 104),
         "error bound",
+        ["x0", "y", "s0", "s1", "x1", "s1", "v", "err_v", "s0", "v", "z0", "z1"],
     )
 
 
@@ -726,17 +733,20 @@ def refute_joldes_2017_algorithm_5():
         solver,
         is_ulp_nonoverlapping(z0, z1),
         "nonoverlapping",
+        [],
     )
     assert not prove(
         solver,
         z3.Or(err_v.is_zero, err_v.exponent <= z0.exponent + 1940),
         "error bound on v",
+        [],
         verbose=False,
     )
     prove(
         solver,
         z3.Or(err_w.is_zero, err_w.exponent <= z0.exponent - 103),
         "error bound on w",
+        [],
     )
 
 
@@ -760,16 +770,19 @@ def verify_joldes_2017_algorithm_6():
         solver,
         is_ulp_nonoverlapping(z0, z1),
         "nonoverlapping",
+        [],
     )
     prove(
         solver,
         z3.Or(err_c.is_zero, err_c.exponent <= z0.exponent - 102),
         "error bound on c",
+        [],
     )
     prove(
         solver,
         z3.Or(err_w.is_zero, err_w.exponent <= z0.exponent - 105),
         "error bound on w",
+        [],
     )
     pass
 

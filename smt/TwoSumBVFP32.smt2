@@ -131,7 +131,7 @@
 (define-fun n_s () (_ BitVec 16) (final_one_index s_mantissa))
 (define-fun n_e () (_ BitVec 16) (final_one_index e_mantissa))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; METATHEOREMS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; GENERAL THEOREMS
 
 ; Theorem: 0 <= o_x <= n_x < p.
 
@@ -165,6 +165,35 @@
     (assert (= z_x (bvsub p #x0001)))
     ; Conclusion:
     (assert (not (= n_x #x0000)))
+    (check-sat)
+(pop 1)
+
+; The four preceding results also hold for y, s, and e, in addition to x.
+
+(push 1)
+    ; Hypotheses:
+    (assert (not (fp.isSubnormal x)))
+    (assert (not (fp.isSubnormal y)))
+    (assert (not (fp.isSubnormal s)))
+    (assert (not (fp.isSubnormal e)))
+    ; Conclusion:
+    (assert (not (or (fp.isZero e)
+                     (bvugt e_e (bvsub e_x p))
+                     (bvugt e_e (bvsub e_y p)))))
+    (check-sat)
+(pop 1)
+
+(push 1)
+    ; Hypotheses:
+    (assert (not (fp.isSubnormal x)))
+    (assert (not (fp.isSubnormal y)))
+    (assert (not (fp.isSubnormal s)))
+    (assert (not (fp.isSubnormal e)))
+    ; Conclusion:
+    (assert (not (or (fp.isZero e)
+                     (bvult e_e (bvsub e_s p))
+                     (and (= e_e (bvsub e_s p))
+                          (= n_e #x0000)))))
     (check-sat)
 (pop 1)
 
