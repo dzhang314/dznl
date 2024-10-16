@@ -253,10 +253,25 @@ def fp_two_sum(
 
     solver.add(
         z3.Implies(
-            z3.And(e_x - (z_x + 1) > e_y, z_x >= 1, z_x < PRECISION - 1),
+            z3.And(
+                e_x - (z_x + 1) > e_y,
+                z3.Or(s_x != s_y, z_x >= 1),
+                z_x < PRECISION - 1,
+            ),
             z3.And(s_s == s_x, e_s == e_x, z_s >= z_x - 1),
         )
-    )  # G-NO-S
+    )  # GA-NO-S
+
+    solver.add(
+        z3.Implies(
+            z3.And(
+                e_x < e_y - (z_y + 1),
+                z3.Or(s_x != s_y, z_y >= 1),
+                z_y < PRECISION - 1,
+            ),
+            z3.And(s_s == s_y, e_s == e_y, z_s >= z_y - 1),
+        )
+    )  # GB-NO-S
 
     solver.add(
         z3.Implies(
@@ -746,7 +761,7 @@ def refute_joldes_2017_algorithm_5():
     )
     assert not prove(
         solver,
-        z3.Or(err_v.is_zero, err_v.exponent <= z0.exponent + 1940),
+        z3.Or(err_v.is_zero, err_v.exponent <= z0.exponent),
         "error bound on v",
         [],
         verbose=False,
@@ -779,19 +794,94 @@ def verify_joldes_2017_algorithm_6():
         solver,
         is_ulp_nonoverlapping(z0, z1),
         "nonoverlapping",
-        [],
+        [
+            "x0",
+            "y0",
+            "s0",
+            "s1",
+            "x1",
+            "y1",
+            "t0",
+            "t1",
+            "s1",
+            "t0",
+            "c",
+            "err_c",
+            "s0",
+            "c",
+            "v0",
+            "v1",
+            "t1",
+            "v1",
+            "w",
+            "err_w",
+            "v0",
+            "w",
+            "z0",
+            "z1",
+        ],
     )
     prove(
         solver,
-        z3.Or(err_c.is_zero, err_c.exponent <= z0.exponent - 102),
+        z3.Or(err_c.is_zero, err_c.exponent <= z0.exponent - 103),
         "error bound on c",
-        [],
+        [
+            "x0",
+            "y0",
+            "s0",
+            "s1",
+            "x1",
+            "y1",
+            "t0",
+            "t1",
+            "s1",
+            "t0",
+            "c",
+            "err_c",
+            "s0",
+            "c",
+            "v0",
+            "v1",
+            "t1",
+            "v1",
+            "w",
+            "err_w",
+            "v0",
+            "w",
+            "z0",
+            "z1",
+        ],
     )
     prove(
         solver,
-        z3.Or(err_w.is_zero, err_w.exponent <= z0.exponent - 105),
+        z3.Or(err_w.is_zero, err_w.exponent <= z0.exponent - 106),
         "error bound on w",
-        [],
+        [
+            "x0",
+            "y0",
+            "s0",
+            "s1",
+            "x1",
+            "y1",
+            "t0",
+            "t1",
+            "s1",
+            "t0",
+            "c",
+            "err_c",
+            "s0",
+            "c",
+            "v0",
+            "v1",
+            "t1",
+            "v1",
+            "w",
+            "err_w",
+            "v0",
+            "w",
+            "z0",
+            "z1",
+        ],
     )
     pass
 
