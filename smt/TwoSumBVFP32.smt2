@@ -260,57 +260,13 @@
     (check-sat)
 (pop 1)
 
-(push 1)
-    ; Hypotheses:
-    (assert CASE_3AD)
-    (assert (not (fp.isSubnormal e)))
-    ; Conclusion:
-    (assert (not (and (= s_s s_x)
-                      (or (= e_s e_x) (= e_s (bvsub e_x #x0001)))
-                      (or (fp.isZero e)
-                          (bvule e_e (bvsub e_s p))))))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert CASE_3BD)
-    (assert (not (fp.isSubnormal e)))
-    ; Conclusion:
-    (assert (not (and (= s_s s_y)
-                      (or (= e_s e_y) (= e_s (bvsub e_y #x0001)))
-                      (or (fp.isZero e)
-                          (bvule e_e (bvsub e_s p))))))
-    (check-sat)
-(pop 1)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 4: ADDENDS PARTIALLY OVERLAP
-
-(push 1)
-    ; Hypotheses:
-    (assert CASE_4AS)
-    (assert (bvugt (bvsub e_x n_x) e_y))
-    (assert (bvult (bvsub e_x p) (bvsub e_y n_y)))
-    ; Conclusion:
-    (assert (not (fp.isZero e)))
-    (check-sat)
-(pop 1)
 
 (push 1)
     ; Hypotheses:
     (assert CASE_4AS)
     (assert (bvugt (bvsub e_x (bvadd o_x #x0001)) e_y))
     (assert (bvult (bvsub e_x p) (bvsub e_y n_y)))
-    ; Conclusion:
-    (assert (not (fp.isZero e)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert CASE_4BS)
-    (assert (bvult e_x (bvsub e_y n_y)))
-    (assert (bvugt (bvsub e_x n_x) (bvsub e_y p)))
     ; Conclusion:
     (assert (not (fp.isZero e)))
     (check-sat)

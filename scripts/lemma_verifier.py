@@ -319,6 +319,15 @@ lemmas["2BD-ZN-UBEE"] = z3.Implies(
     case_2bd_zn, e_e < e_x
 )  # cannot be strengthened by a constant
 
+lemmas["3AS-SS"] = z3.Implies(case_3as, s_s == s_x)  # cannot be strengthened
+lemmas["3AS-ES"] = z3.Implies(case_3as, z3.Or(e_s == e_x, e_s == e_x + ONE_BV))
+lemmas["3BS-SS"] = z3.Implies(case_3bs, s_s == s_y)  # cannot be strengthened
+lemmas["3BS-ES"] = z3.Implies(case_3bs, z3.Or(e_s == e_y, e_s == e_y + ONE_BV))
+lemmas["3AD-SS"] = z3.Implies(case_3ad, s_s == s_x)  # cannot be strengthened
+lemmas["3AD-ES"] = z3.Implies(case_3ad, z3.Or(e_s == e_x, e_s == e_x - ONE_BV))
+lemmas["3BD-SS"] = z3.Implies(case_3bd, s_s == s_y)  # cannot be strengthened
+lemmas["3BD-ES"] = z3.Implies(case_3bd, z3.Or(e_s == e_y, e_s == e_y - ONE_BV))
+
 lemmas["4AS-SS"] = z3.Implies(case_4as, s_s == s_x)  # cannot be strengthened
 lemmas["4AS-ES"] = z3.Implies(case_4as, z3.Or(e_s == e_x, e_s == e_x + ONE_BV))
 lemmas["4BS-SS"] = z3.Implies(case_4bs, s_s == s_y)  # cannot be strengthened
@@ -363,7 +372,7 @@ expensive_lemmas: set[str] = {
     "G-LBES",
     "G-LBEE",
     "G-UBEE",
-    "G-E",
+    "G-NOC-E",
     "6S-X-E",
     "6S-N-E",
     "6D-E",

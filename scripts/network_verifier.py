@@ -273,6 +273,10 @@ def fp_two_sum(
     case_2bd_zz = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x == 0, n_y == 0)
     case_2ad_zn = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x == 0, n_y != 0)
     case_2bd_zn = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x != 0, n_y == 0)
+    case_3as = z3.And(e_x - PRECISION == e_y, s_x == s_y)
+    case_3bs = z3.And(e_x == e_y - PRECISION, s_x == s_y)
+    case_3ad = z3.And(e_x - PRECISION == e_y, s_x != s_y)
+    case_3bd = z3.And(e_x == e_y - PRECISION, s_x != s_y)
     case_4as = z3.And(e_x - PRECISION < e_y, e_x - 1 > e_y, s_x == s_y)
     case_4bs = z3.And(e_x > e_y - PRECISION, e_x < e_y - 1, s_x == s_y)
     case_4ad = z3.And(e_x - PRECISION < e_y, e_x - 1 > e_y, s_x != s_y)
@@ -339,6 +343,15 @@ def fp_two_sum(
     )  # 2BD-ZN-S
     solver.add(z3.Implies(case_2bd_zn, s_e == s_y))  # 2BD-ZN-SE
     solver.add(z3.Implies(case_2bd_zn, e_e < e_x))  # 2BD-ZN-UBEE
+
+    solver.add(z3.Implies(case_3as, s_s == s_x))  # 3AS-SS
+    solver.add(z3.Implies(case_3as, z3.Or(e_s == e_x, e_s == e_x + 1)))  # 3AS-ES
+    solver.add(z3.Implies(case_3bs, s_s == s_y))  # 3BS-SS
+    solver.add(z3.Implies(case_3bs, z3.Or(e_s == e_y, e_s == e_y + 1)))  # 3BS-ES
+    solver.add(z3.Implies(case_3ad, s_s == s_x))  # 3AD-SS
+    solver.add(z3.Implies(case_3ad, z3.Or(e_s == e_x, e_s == e_x - 1)))  # 3AD-ES
+    solver.add(z3.Implies(case_3bd, s_s == s_y))  # 3BD-SS
+    solver.add(z3.Implies(case_3bd, z3.Or(e_s == e_y, e_s == e_y - 1)))  # 3BD-ES
 
     solver.add(z3.Implies(case_4as, s_s == s_x))  # 4AS-SS
     solver.add(z3.Implies(case_4as, z3.Or(e_s == e_x, e_s == e_x + 1)))  # 4AS-ES
