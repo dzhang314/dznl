@@ -381,6 +381,15 @@ lemmas["4AD-ES"] = z3.Implies(case_4ad, z3.Or(e_s == e_x, e_s == e_x - ONE_BV))
 lemmas["4BD-SS"] = z3.Implies(case_4bd, s_s == s_y)  # cannot be strengthened
 lemmas["4BD-ES"] = z3.Implies(case_4bd, z3.Or(e_s == e_y, e_s == e_y - ONE_BV))
 
+lemmas["5AS-SS"] = z3.Implies(case_5as, s_s == s_x)  # cannot be strengthened
+lemmas["5AS-ES"] = z3.Implies(case_5as, z3.Or(e_s == e_x, e_s == e_x + ONE_BV))
+lemmas["5BS-SS"] = z3.Implies(case_5bs, s_s == s_y)  # cannot be strengthened
+lemmas["5BS-ES"] = z3.Implies(case_5bs, z3.Or(e_s == e_y, e_s == e_y + ONE_BV))
+lemmas["5AD-SS"] = z3.Implies(case_5ad, s_s == s_x)  # cannot be strengthened
+lemmas["5AD-ES"] = z3.Implies(case_5ad, z3.And(e_s <= e_x, e_s >= e_x - PRECISION_BV))
+lemmas["5BD-SS"] = z3.Implies(case_5bd, s_s == s_y)  # cannot be strengthened
+lemmas["5BD-ES"] = z3.Implies(case_5bd, z3.And(e_s <= e_y, e_s >= e_y - PRECISION_BV))
+
 lemmas["6S-X-SS"] = z3.Implies(case_6s_x, z3.And(s_s == s_x, s_s == s_y))
 lemmas["6S-X-ES"] = z3.Implies(
     case_6s_x, z3.And(e_s == e_x + ONE_BV, e_s == e_y + ONE_BV)

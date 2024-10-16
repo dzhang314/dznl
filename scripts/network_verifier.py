@@ -319,6 +319,10 @@ def fp_two_sum(
     case_4bs_n = z3.And(case_4bs, e_x < e_y - (o_y + 1))
     case_4ad = z3.And(e_x - PRECISION < e_y, e_x - 1 > e_y, s_x != s_y)
     case_4bd = z3.And(e_x > e_y - PRECISION, e_x < e_y - 1, s_x != s_y)
+    case_5as = z3.And(e_x - 1 == e_y, s_x == s_y)
+    case_5bs = z3.And(e_x == e_y - 1, s_x == s_y)
+    case_5ad = z3.And(e_x - 1 == e_y, s_x != s_y)
+    case_5bd = z3.And(e_x == e_y - 1, s_x != s_y)
     case_6s_x = z3.And(
         e_x == e_y,
         s_x == s_y,
@@ -405,6 +409,19 @@ def fp_two_sum(
     solver.add(z3.Implies(case_4ad, z3.Or(e_s == e_x, e_s == e_x - 1)))  # 4AD-ES
     solver.add(z3.Implies(case_4bd, s_s == s_y))  # 4BD-SS
     solver.add(z3.Implies(case_4bd, z3.Or(e_s == e_y, e_s == e_y - 1)))  # 4BD-ES
+
+    solver.add(z3.Implies(case_5as, s_s == s_x))  # 5AS-SS
+    solver.add(z3.Implies(case_5as, z3.Or(e_s == e_x, e_s == e_x + 1)))  # 5AS-ES
+    solver.add(z3.Implies(case_5bs, s_s == s_y))  # 5BS-SS
+    solver.add(z3.Implies(case_5bs, z3.Or(e_s == e_y, e_s == e_y + 1)))  # 5BS-ES
+    solver.add(z3.Implies(case_5ad, s_s == s_x))  # 5AD-SS
+    solver.add(
+        z3.Implies(case_5ad, z3.And(e_s <= e_x, e_s >= e_x - PRECISION))
+    )  # 5AD-ES
+    solver.add(z3.Implies(case_5bd, s_s == s_y))  # 5BD-SS
+    solver.add(
+        z3.Implies(case_5bd, z3.And(e_s <= e_y, e_s >= e_y - PRECISION))
+    )  # 5BD-ES
 
     solver.add(z3.Implies(case_6s_x, z3.And(s_s == s_x, s_s == s_y)))  # 6S-X-SS
     solver.add(z3.Implies(case_6s_x, z3.And(e_s == e_x + 1, e_s == e_y + 1)))  # 6S-X-ES
