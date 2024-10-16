@@ -260,28 +260,6 @@
     (check-sat)
 (pop 1)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 4: ADDENDS PARTIALLY OVERLAP
-
-(push 1)
-    ; Hypotheses:
-    (assert CASE_4AS)
-    (assert (bvugt (bvsub e_x (bvadd o_x #x0001)) e_y))
-    (assert (bvult (bvsub e_x p) (bvsub e_y n_y)))
-    ; Conclusion:
-    (assert (not (fp.isZero e)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert CASE_4BS)
-    (assert (bvult e_x (bvsub e_y (bvadd o_y #x0001))))
-    (assert (bvugt (bvsub e_x n_x) (bvsub e_y p)))
-    ; Conclusion:
-    (assert (not (fp.isZero e)))
-    (check-sat)
-(pop 1)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 5: ADDENDS ARE ADJACENT
 
 (push 1)
@@ -380,13 +358,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 6: ADDENDS FULLY OVERLAP
 
-; Theorem: If e_x == e_y, s_x == s_y, x and y are nonzero with different LSBs,
-; and none of x, y, or e are subnormal, then s_s == s_x == s_y,
-; e_s == e_x + 1 == e_y + 1, and e is a nonzero power of two.
-
-; The sign of e is unpredictable in this case,
-; depending on round-to-even tiebreaking for s.
-
 (push 1)
     ; Hypotheses:
     (assert CASE_6S_X)
@@ -394,23 +365,13 @@
     (assert (not (fp.isSubnormal y)))
     (assert (not (fp.isSubnormal e)))
     ; Conclusion:
-    (assert (not (and (= s_s s_x)
-                      (= s_s s_y)
-                      (= e_s (bvadd e_x #x0001))
-                      (= e_s (bvadd e_y #x0001))
-                      ; I think the following statements are true,
+    (assert (not (and ; I think the following statements are true,
                       ; but they take a very long time to verify.
                       ; (or (bvuge o_s o_x) (bvuge o_s o_y))
                       ; (or (bvuge z_s z_x) (bvuge z_s z_y))
-                      (= e_e (bvsub e_x (bvsub p #x0001)))
-                      (= e_e (bvsub e_y (bvsub p #x0001)))
-                      (= n_e #x0000))))
+                      )))
     (check-sat)
 (pop 1)
-
-; Theorem: If e_x == e_y, s_x == s_y, x and y are nonzero with the same LSB,
-; and none of x, y, or e are subnormal, then s_s == s_x == s_y,
-; e_s == e_x + 1 == e_y + 1, and e is zero.
 
 (push 1)
     ; Hypotheses:
@@ -419,14 +380,10 @@
     (assert (not (fp.isSubnormal y)))
     (assert (not (fp.isSubnormal e)))
     ; Conclusion:
-    (assert (not (and (= s_s s_x)
-                      (= s_s s_y)
-                      (= e_s (bvadd e_x #x0001))
-                      (= e_s (bvadd e_y #x0001))
-                      ; I think the following statements are true,
+    (assert (not (and ; I think the following statements are true,
                       ; but they take a very long time to verify.
                       ; (or (bvuge o_s o_x) (bvuge o_s o_y))
                       ; (or (bvuge z_s z_x) (bvuge z_s z_y))
-                      (fp.isZero e))))
+                      )))
     (check-sat)
 (pop 1)

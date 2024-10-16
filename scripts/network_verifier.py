@@ -255,7 +255,9 @@ def fp_two_sum(
         z3.Implies(
             z3.Or(
                 z3.And(e_x - n_x > e_y, e_x - PRECISION < e_y - n_y),
+                z3.And(e_x - (o_x + 1) > e_y, e_x - PRECISION < e_y - n_y),
                 z3.And(e_x < e_y - n_y, e_x - n_x > e_y - PRECISION),
+                z3.And(e_x < e_y - (o_y + 1), e_x - n_x > e_y - PRECISION),
             ),
             e.is_zero,
         )
