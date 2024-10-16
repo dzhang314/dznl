@@ -147,12 +147,14 @@ solver.add(z3.Not(z3.fpIsInf(e)))
 solver.add(z3.Not(z3.fpIsNaN(e)))
 solver.add(z3.Not(z3.fpIsSubnormal(e)))
 
-solver.add(s == x + y)
-x_prime = s - y
-y_prime = s - x_prime
-x_err = x - x_prime
-y_err = y - y_prime
-solver.add(e == x_err + y_err)
+RNE = z3.RoundNearestTiesToEven()
+print(type(RNE))
+solver.add(s == z3.fpAdd(RNE, x, y))
+x_prime = z3.fpSub(RNE, s, y)
+y_prime = z3.fpSub(RNE, s, x_prime)
+x_err = z3.fpSub(RNE, x, x_prime)
+y_err = z3.fpSub(RNE, y, y_prime)
+solver.add(e == z3.fpAdd(RNE, x_err, y_err))
 
 s_x = x_sign_bit
 s_y = y_sign_bit
