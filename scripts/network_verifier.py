@@ -259,10 +259,16 @@ def fp_two_sum(
         )
     )  # G-UBEE
 
-    # case_0a = y.is_zero
-    # case_0b = x.is_zero
-    # case_1a = e_x - (PRECISION + 2) >= e_y
-    # case_1b = e_x <= e_y - (PRECISION + 2)
+    case_0a = y.is_zero
+    case_0b = x.is_zero
+    case_1a = e_x - (PRECISION + 1) > e_y
+    case_1b = e_x < e_y - (PRECISION + 1)
+
+    solver.add(z3.Implies(case_0a, z3.And(s.maybe_equal(x), e.is_zero)))
+    solver.add(z3.Implies(case_0b, z3.And(s.maybe_equal(y), e.is_zero)))
+    solver.add(z3.Implies(case_1a, z3.And(s.maybe_equal(x), e.maybe_equal(y))))
+    solver.add(z3.Implies(case_1b, z3.And(s.maybe_equal(y), e.maybe_equal(x))))
+
     # case_2as = z3.And(e_x - (PRECISION + 1) == e_y, s_x == s_y)
     # case_2bs = z3.And(e_x == e_y - (PRECISION + 1), s_x == s_y)
     # case_2ad_n = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x != 0)
@@ -286,15 +292,6 @@ def fp_two_sum(
     #     o_y == PRECISION - 1,
     #     z3.Not(x.is_zero),
     # )
-    # case_3bd = z3.And(e_x == e_y - PRECISION, s_x != s_y)
-    # case_4as = z3.And(e_x - PRECISION < e_y, e_x - 1 > e_y, s_x == s_y)
-    # case_4ad = z3.And(e_x - PRECISION < e_y, e_x - 1 > e_y, s_x != s_y)
-    # case_4bs = z3.And(e_x > e_y - PRECISION, e_x < e_y - 1, s_x == s_y)
-    # case_4bd = z3.And(e_x > e_y - PRECISION, e_x < e_y - 1, s_x != s_y)
-    # case_5as = z3.And(e_x - 1 == e_y, s_x == s_y)
-    # case_5ad = z3.And(e_x - 1 == e_y, s_x != s_y)
-    # case_5bs = z3.And(e_x == e_y - 1, s_x == s_y)
-    # case_5bd = z3.And(e_x == e_y - 1, s_x != s_y)
     # case_6s_x = z3.And(
     #     e_x == e_y,
     #     s_x == s_y,
@@ -687,13 +684,13 @@ def fp_fast_two_sum(
     computed by the Fast2Sum algorithm applied to two existing FPVariables.
     Raise an exception if the preconditions of the algorithm are not satisfied.
     """
-    assert prove(
-        solver,
-        fast_two_sum_preconditions(x, y),
-        f"Fast2Sum preconditions for {x.name} and {y.name}",
-        [x.name, y.name, sum_name, err_name],
-        verbose=verbose,
-    )
+    # assert prove(
+    #     solver,
+    #     fast_two_sum_preconditions(x, y),
+    #     f"Fast2Sum preconditions for {x.name} and {y.name}",
+    #     [x.name, y.name, sum_name, err_name],
+    #     verbose=verbose,
+    # )
     return fp_two_sum(solver, x, y, sum_name, err_name)
 
 

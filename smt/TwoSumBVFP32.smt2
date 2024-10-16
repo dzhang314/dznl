@@ -260,46 +260,6 @@
     (check-sat)
 (pop 1)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 0: ONE OR BOTH ADDENDS ARE ZERO
-
-(push 1)
-    ; Hypotheses:
-    (assert CASE_0A)
-    ; Conclusion:
-    (assert (not (and (fp.eq s x) (fp.isZero e))))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert CASE_0B)
-    ; Conclusion:
-    (assert (not (and (fp.eq s y) (fp.isZero e))))
-    (check-sat)
-(pop 1)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 1: ADDENDS ARE AT LEAST 2-SEPARATED
-
-; Theorem: If e_x - (p + 2) >= e_y, then s === x and e == y.
-
-(push 1)
-    ; Hypotheses:
-    (assert CASE_1A)
-    ; Conclusion:
-    (assert (not (and (= s x) (fp.eq e y))))
-    (check-sat)
-(pop 1)
-
-; Theorem: If e_x <= e_y - (p + 2), then s === y and e == x.
-
-(push 1)
-    ; Hypotheses:
-    (assert CASE_1B)
-    ; Conclusion:
-    (assert (not (and (= s y) (fp.eq e x))))
-    (check-sat)
-(pop 1)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE 2: ADDENDS ARE 1-SEPARATED
 
 ; Theorem: If e_x - (p + 1) == e_y and s_x == s_y, then s === x and e == y.

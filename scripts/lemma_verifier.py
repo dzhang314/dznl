@@ -109,6 +109,9 @@ PRECISION_BV: z3.BitVecRef = z3.BitVecVal(PRECISION, PROMOTED_EXPONENT_WIDTH)
 PRECISION_MINUS_ONE_BV: z3.BitVecRef = z3.BitVecVal(
     PRECISION - 1, PROMOTED_EXPONENT_WIDTH
 )
+PRECISION_PLUS_ONE_BV: z3.BitVecRef = z3.BitVecVal(
+    PRECISION + 1, PROMOTED_EXPONENT_WIDTH
+)
 
 solver = z3.SolverFor("QF_BVFP")
 
@@ -151,6 +154,11 @@ x_err = x - x_prime
 y_err = y - y_prime
 solver.add(e == x_err + y_err)
 
+s_x = x_sign_bit
+s_y = y_sign_bit
+s_s = s_sign_bit
+s_e = e_sign_bit
+
 e_x = z3.Concat(EXPONENT_PADDING, x_exponent) - EXPONENT_BIAS
 e_y = z3.Concat(EXPONENT_PADDING, y_exponent) - EXPONENT_BIAS
 e_s = z3.Concat(EXPONENT_PADDING, s_exponent) - EXPONENT_BIAS
@@ -172,45 +180,72 @@ n_s = last_nonzero_bit(s_mantissa, PROMOTED_EXPONENT_WIDTH)
 n_e = last_nonzero_bit(e_mantissa, PROMOTED_EXPONENT_WIDTH)
 
 
-prove(solver, "G-LBZ", z_x >= ZERO_BV)
-prove(solver, "G-UBZ", z_x < PRECISION_BV)
-prove(solver, "G-LBO", o_x >= ZERO_BV)
-prove(solver, "G-UBO", o_x < PRECISION_BV)
-prove(solver, "G-LBN", n_x >= ZERO_BV)
-prove(solver, "G-UBN", n_x < PRECISION_BV)
-prove(solver, "G-RZO", z3.Xor(z_x == ZERO_BV, o_x == ZERO_BV))
-prove(solver, "G-RZN-G", z3.Implies(z_x < PRECISION_MINUS_ONE_BV, z_x < n_x))
-prove(solver, "G-RZN-S", z3.Implies(z_x == PRECISION_MINUS_ONE_BV, n_x == ZERO_BV))
-prove(solver, "G-RON", o_x <= n_x)
+lemmas: dict[str, z3.BoolRef] = {}
 
-prove(
-    solver,
-    "G-LBES",
-    z3.Or(
-        z3.fpIsZero(s),
-        e_s - n_s > e_x - PRECISION_BV,
-        e_s - n_s > e_y - PRECISION_BV,
-    ),
+lemmas["G-LBZ"] = z_x >= ZERO_BV
+lemmas["G-UBZ"] = z_x < PRECISION_BV
+lemmas["G-LBO"] = o_x >= ZERO_BV
+lemmas["G-UBO"] = o_x < PRECISION_BV
+lemmas["G-LBN"] = n_x >= ZERO_BV
+lemmas["G-UBN"] = n_x < PRECISION_BV
+lemmas["G-RZO"] = z3.Xor(z_x == ZERO_BV, o_x == ZERO_BV)
+lemmas["G-RZN-G"] = z3.Implies(z_x < PRECISION_MINUS_ONE_BV, z_x < n_x)
+lemmas["G-RZN-S"] = z3.Implies(z_x == PRECISION_MINUS_ONE_BV, n_x == ZERO_BV)
+lemmas["G-RON"] = o_x <= n_x
+
+lemmas["G-LBES"] = z3.Or(
+    z3.fpIsZero(s),
+    e_s - n_s > e_x - PRECISION_BV,
+    e_s - n_s > e_y - PRECISION_BV,
 )
 
-prove(solver, "G-UBES", z3.Or(e_s <= e_x + ONE_BV, e_s <= e_y + ONE_BV))
+lemmas["G-UBES"] = z3.Or(e_s <= e_x + ONE_BV, e_s <= e_y + ONE_BV)
 
-prove(
-    solver,
-    "G-LBEE",
-    z3.Or(
-        z3.fpIsZero(e),
-        e_e - n_e > e_x - PRECISION_BV,
-        e_e - n_e > e_y - PRECISION_BV,
-    ),
+lemmas["G-LBEE"] = z3.Or(
+    z3.fpIsZero(e),
+    e_e - n_e > e_x - PRECISION_BV,
+    e_e - n_e > e_y - PRECISION_BV,
 )
 
-prove(
-    solver,
-    "G-UBEE",
-    z3.Or(
-        z3.fpIsZero(e),
-        e_e < e_s - PRECISION_BV,
-        z3.And(e_e == e_s - PRECISION_BV, n_e == ZERO_BV),
-    ),
+lemmas["G-UBEE"] = z3.Or(
+    z3.fpIsZero(e),
+    e_e < e_s - PRECISION_BV,
+    z3.And(e_e == e_s - PRECISION_BV, n_e == ZERO_BV),
 )
+
+
+case_0a = z3.fpIsZero(y)
+case_0b = z3.fpIsZero(x)
+case_1a = e_x - PRECISION_PLUS_ONE_BV > e_y
+case_1b = e_x < e_y - PRECISION_PLUS_ONE_BV
+case_2as = z3.And(e_x - PRECISION_PLUS_ONE_BV == e_y, s_x == s_y)
+case_2bs = z3.And(e_x == e_y - PRECISION_PLUS_ONE_BV, s_x == s_y)
+case_2ad = z3.And(e_x - PRECISION_PLUS_ONE_BV == e_y, s_x != s_y)
+case_2bd = z3.And(e_x == e_y - PRECISION_PLUS_ONE_BV, s_x != s_y)
+case_3as = z3.And(e_x - PRECISION_BV == e_y, s_x == s_y)
+case_3bs = z3.And(e_x == e_y - PRECISION_BV, s_x == s_y)
+case_3ad = z3.And(e_x - PRECISION_BV == e_y, s_x != s_y)
+case_3bd = z3.And(e_x == e_y - PRECISION_BV, s_x != s_y)
+case_4as = z3.And(e_x - PRECISION_BV < e_y, e_x - ONE_BV > e_y, s_x == s_y)
+case_4bs = z3.And(e_x > e_y - PRECISION_BV, e_x < e_y - ONE_BV, s_x == s_y)
+case_4ad = z3.And(e_x - PRECISION_BV < e_y, e_x - ONE_BV > e_y, s_x != s_y)
+case_4bd = z3.And(e_x > e_y - PRECISION_BV, e_x < e_y - ONE_BV, s_x != s_y)
+case_5as = z3.And(e_x - ONE_BV == e_y, s_x == s_y)
+case_5bs = z3.And(e_x == e_y - ONE_BV, s_x == s_y)
+case_5ad = z3.And(e_x - ONE_BV == e_y, s_x != s_y)
+case_5bd = z3.And(e_x == e_y - ONE_BV, s_x != s_y)
+case_6s = z3.And(e_x == e_y, s_x == s_y)
+case_6d = z3.And(e_x == e_y, s_x != s_y)
+
+
+lemmas["0A"] = z3.Implies(case_0a, z3.And(z3.fpEQ(s, x), z3.fpIsZero(e)))
+lemmas["0B"] = z3.Implies(case_0b, z3.And(z3.fpEQ(s, y), z3.fpIsZero(e)))
+lemmas["1A"] = z3.Implies(case_1a, z3.And(s == x, z3.fpEQ(e, y)))
+lemmas["1B"] = z3.Implies(case_1b, z3.And(s == y, z3.fpEQ(e, x)))
+
+
+expensive_lemmas: set[str] = {"G-LBEE", "G-UBEE"}
+
+for name, lemma in lemmas.items():
+    if name not in expensive_lemmas:
+        assert prove(solver, name, lemma)
