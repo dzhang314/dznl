@@ -280,7 +280,9 @@ def fp_two_sum(
     case_3ad = z3.And(e_x - PRECISION == e_y, s_x != s_y)
     case_3bd = z3.And(e_x == e_y - PRECISION, s_x != s_y)
     case_4as = z3.And(e_x - PRECISION < e_y, e_x - 1 > e_y, s_x == s_y)
+    case_4as_n = z3.And(case_4as, e_x - (o_x + 1) > e_y)
     case_4bs = z3.And(e_x > e_y - PRECISION, e_x < e_y - 1, s_x == s_y)
+    case_4bs_n = z3.And(case_4bs, e_x < e_y - (o_y + 1))
     case_4ad = z3.And(e_x - PRECISION < e_y, e_x - 1 > e_y, s_x != s_y)
     case_4bd = z3.And(e_x > e_y - PRECISION, e_x < e_y - 1, s_x != s_y)
     case_6s_x = z3.And(
@@ -357,8 +359,10 @@ def fp_two_sum(
 
     solver.add(z3.Implies(case_4as, s_s == s_x))  # 4AS-SS
     solver.add(z3.Implies(case_4as, z3.Or(e_s == e_x, e_s == e_x + 1)))  # 4AS-ES
+    solver.add(z3.Implies(case_4as_n, e_s == e_x))  # 4AS-N-ES
     solver.add(z3.Implies(case_4bs, s_s == s_y))  # 4BS-SS
     solver.add(z3.Implies(case_4bs, z3.Or(e_s == e_y, e_s == e_y + 1)))  # 4BS-ES
+    solver.add(z3.Implies(case_4bs_n, e_s == e_y))  # 4BS-N-ES
     solver.add(z3.Implies(case_4ad, s_s == s_x))  # 4AD-SS
     solver.add(z3.Implies(case_4ad, z3.Or(e_s == e_x, e_s == e_x - 1)))  # 4AD-ES
     solver.add(z3.Implies(case_4bd, s_s == s_y))  # 4BD-SS
@@ -402,7 +406,6 @@ def fp_two_sum(
     #     o_x == PRECISION - 1,
     #     z3.Not(y.is_zero),
     # )
-    # case_3ad = z3.And(e_x - PRECISION == e_y, s_x != s_y)
     # case_3bs_g = z3.And(e_x == e_y - PRECISION, s_x == s_y, o_y != PRECISION - 1)
     # case_3bs_s = z3.And(
     #     e_x == e_y - PRECISION,
@@ -497,28 +500,6 @@ def fp_two_sum(
 
     # solver.add(
     #     z3.Implies(
-    #         case_3ad,
-    #         z3.And(
-    #             s_s == s_x,
-    #             z3.Or(e_s == e_x, e_s == e_x - 1),
-    #             z3.Or(e.is_zero, e_e <= e_s - PRECISION),
-    #         ),
-    #     )
-    # )
-
-    # solver.add(
-    #     z3.Implies(
-    #         case_3bd,
-    #         z3.And(
-    #             s_s == s_y,
-    #             z3.Or(e_s == e_y, e_s == e_y - 1),
-    #             z3.Or(e.is_zero, e_e <= e_s - PRECISION),
-    #         ),
-    #     )
-    # )
-
-    # solver.add(
-    #     z3.Implies(
     #         case_4as,
     #         z3.And(
     #             s_s == s_x,
@@ -572,28 +553,6 @@ def fp_two_sum(
     #     z3.Implies(
     #         z3.And(case_4bs, e_x < e_y - (o_y + 1), e_x - n_x < e_y - PRECISION),
     #         e.is_zero,
-    #     )
-    # )
-
-    # solver.add(
-    #     z3.Implies(
-    #         case_4ad,
-    #         z3.And(
-    #             s_s == s_x,
-    #             z3.Or(e_s == e_x, e_s == e_x - 1),
-    #             z3.Or(e.is_zero, e_e <= e_s - PRECISION),
-    #         ),
-    #     )
-    # )
-
-    # solver.add(
-    #     z3.Implies(
-    #         case_4bd,
-    #         z3.And(
-    #             s_s == s_y,
-    #             z3.Or(e_s == e_y, e_s == e_y - 1),
-    #             z3.Or(e.is_zero, e_e <= e_s - PRECISION),
-    #         ),
     #     )
     # )
 
@@ -736,7 +695,7 @@ def verify_joldes_2017_algorithm_4():
     )
     prove(
         solver,
-        z3.Or(err_v.is_zero, err_v.exponent <= z0.exponent - 104),
+        z3.Or(err_v.is_zero, err_v.exponent <= z0.exponent - 105),
         "error bound",
         ["x0", "y", "s0", "s1", "x1", "s1", "v", "err_v", "s0", "v", "z0", "z1"],
     )
