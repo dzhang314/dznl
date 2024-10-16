@@ -1,4 +1,6 @@
 import os
+import random
+import subprocess
 import time
 import z3
 
@@ -40,23 +42,54 @@ def last_nonzero_bit(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
 
 
 def prove(solver: z3.Solver, name: str, claim: z3.BoolRef):
+
+    # Write current solver state and claim to SMT-LIB2 file.
     solver.push()
     solver.add(z3.Not(claim))
     os.makedirs("smt2", exist_ok=True)
-    with open(os.path.join("smt2", name + ".smt2"), "w") as f:
+    filename = os.path.join("smt2", name + ".smt2")
+    with open(filename, "w") as f:
         f.write("(set-logic QF_BVFP)\n")
         f.write(solver.to_smt2())
     solver.pop()
-    # start = time.perf_counter_ns()
-    # result = solver.check(z3.Not(claim))
-    # stop = time.perf_counter_ns()
-    # if result == z3.unsat:
-    #     print(f"Verified {name} in {(stop - start) / 1e9:.6f} seconds.")
-    #     return True
-    # else:
-    #     assert result == z3.sat
-    #     print(f"Refuted {name} in {(stop - start) / 1e9:.6f} seconds.")
-    #     return False
+
+    # Invoke external solvers to prove or refute the claim.
+    external_solvers = ["bitwuzla", "cvc5", "mathsat", "z3"]
+    random.shuffle(external_solvers)
+    external_processes: list[tuple[str, int, subprocess.Popen[str]]] = []
+    for external_solver in external_solvers:
+        start = time.perf_counter_ns()
+        process = subprocess.Popen(
+            [external_solver, filename], stdout=subprocess.PIPE, text=True
+        )
+        external_processes.append((external_solver, start, process))
+
+    # Wait for the first solver to finish and check its result.
+    while True:
+        for external_solver, start, process in external_processes:
+            if process.poll() is not None:
+                stop = time.perf_counter_ns()
+                elapsed = (stop - start) / 1.0e9
+                assert process.returncode == 0
+                stdout, stderr = process.communicate()
+                assert stderr is None
+                for _, _, other_process in external_processes:
+                    other_process.kill()
+                if stdout == "unsat\n":
+                    print(f"{external_solver} proved {name} in {elapsed} seconds.")
+                    return True
+                elif stdout == "sat\n":
+                    print(f"{external_solver} refuted {name} in {elapsed} seconds.")
+                    return False
+                else:
+                    print(
+                        f"When attempting to prove {name}, {external_solver}",
+                        f"returned {stdout} in {elapsed} seconds.",
+                    )
+                    assert False
+        # Sleep for a short time to avoid busy waiting. (Even the fastest SMT
+        # solvers take a few milliseconds, so 0.1ms is a reasonable interval.)
+        time.sleep(1.0e-4)
 
 
 EXPONENT_WIDTH: int = 8
@@ -71,6 +104,7 @@ EXPONENT_BIAS: z3.BitVecRef = z3.BitVecVal(
 PRECISION: int = 24
 MANTISSA_WIDTH: int = PRECISION - 1
 ZERO_BV: z3.BitVecRef = z3.BitVecVal(0, PROMOTED_EXPONENT_WIDTH)
+ONE_BV: z3.BitVecRef = z3.BitVecVal(1, PROMOTED_EXPONENT_WIDTH)
 PRECISION_BV: z3.BitVecRef = z3.BitVecVal(PRECISION, PROMOTED_EXPONENT_WIDTH)
 PRECISION_MINUS_ONE_BV: z3.BitVecRef = z3.BitVecVal(
     PRECISION - 1, PROMOTED_EXPONENT_WIDTH
@@ -138,20 +172,32 @@ n_s = last_nonzero_bit(s_mantissa, PROMOTED_EXPONENT_WIDTH)
 n_e = last_nonzero_bit(e_mantissa, PROMOTED_EXPONENT_WIDTH)
 
 
-prove(solver, "G-LZ", ZERO_BV <= z_x)
-prove(solver, "G-UZ", z_x < PRECISION_BV)
-prove(solver, "G-LO", ZERO_BV <= o_x)
-prove(solver, "G-UO", o_x < PRECISION_BV)
-prove(solver, "G-LN", ZERO_BV <= n_x)
-prove(solver, "G-UN", n_x < PRECISION_BV)
-prove(solver, "G-ZO", z3.Xor(z_x == ZERO_BV, o_x == ZERO_BV))
-prove(solver, "G-ZN-G", z3.Implies(z_x < PRECISION_MINUS_ONE_BV, z_x < n_x))
-prove(solver, "G-ZN-S", z3.Implies(z_x == PRECISION_MINUS_ONE_BV, n_x == ZERO_BV))
-prove(solver, "G-ON", o_x <= n_x)
+prove(solver, "G-LBZ", ZERO_BV <= z_x)
+prove(solver, "G-UBZ", z_x < PRECISION_BV)
+prove(solver, "G-LBO", ZERO_BV <= o_x)
+prove(solver, "G-UBO", o_x < PRECISION_BV)
+prove(solver, "G-LBN", ZERO_BV <= n_x)
+prove(solver, "G-UBN", n_x < PRECISION_BV)
+prove(solver, "G-RZO", z3.Xor(z_x == ZERO_BV, o_x == ZERO_BV))
+prove(solver, "G-RZN-G", z3.Implies(z_x < PRECISION_MINUS_ONE_BV, z_x < n_x))
+prove(solver, "G-RZN-S", z3.Implies(z_x == PRECISION_MINUS_ONE_BV, n_x == ZERO_BV))
+prove(solver, "G-RON", o_x <= n_x)
 
 prove(
     solver,
-    "G-LEE",
+    "G-LBES",
+    z3.Or(
+        z3.fpIsZero(s),
+        e_s - n_s > e_x - PRECISION_BV,
+        e_s - n_s > e_y - PRECISION_BV,
+    ),
+)
+
+prove(solver, "G-UBES", z3.Or(e_s <= e_x + ONE_BV, e_s <= e_y + ONE_BV))
+
+prove(
+    solver,
+    "G-LBEE",
     z3.Or(
         z3.fpIsZero(e),
         e_e - n_e > e_x - PRECISION_BV,
@@ -161,7 +207,7 @@ prove(
 
 prove(
     solver,
-    "G-UEE",
+    "G-UBEE",
     z3.Or(
         z3.fpIsZero(e),
         e_e < e_s - PRECISION_BV,

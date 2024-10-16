@@ -4,6 +4,5 @@
         "joldes",
         "nnzb",
         "sexpr"
-    ],
-    "python.analysis.typeCheckingMode": "basic"
+    ]
 }
