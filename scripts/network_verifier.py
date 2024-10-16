@@ -23,29 +23,21 @@ class FPVariable(object):
         self.num_leading_ones: z3.ArithRef = z3.Int(name + "_num_leading_ones")
         self.last_nonzero_bit: z3.ArithRef = z3.Int(name + "_last_nonzero_bit")
 
-        solver.add(0 <= self.num_leading_ones)
-        solver.add(self.num_leading_ones <= self.last_nonzero_bit)
-        solver.add(self.last_nonzero_bit < PRECISION)
+        e = self.exponent
+        z = self.num_leading_zeroes
+        o = self.num_leading_ones
+        n = self.last_nonzero_bit
 
-        solver.add(0 <= self.num_leading_zeroes)
-        solver.add(self.num_leading_zeroes < PRECISION)
-
-        # The leading digit of the mantissa is either a 0 or a 1, not both.
-        solver.add(z3.Xor(self.num_leading_zeroes == 0, self.num_leading_ones == 0))
-
-        solver.add(
-            z3.Implies(
-                self.num_leading_zeroes < PRECISION - 1,
-                self.num_leading_zeroes < self.last_nonzero_bit,
-            )
-        )
-
-        solver.add(
-            z3.Implies(
-                self.num_leading_zeroes == PRECISION - 1,
-                self.last_nonzero_bit == 0,
-            )
-        )
+        solver.add(z >= 0)  # G-LBZ
+        solver.add(z < PRECISION)  # G-UBZ
+        solver.add(o >= 0)  # G-LBO
+        solver.add(o < PRECISION)  # G-UBO
+        solver.add(n >= 0)  # G-LBN
+        solver.add(n < PRECISION)  # G-UBN
+        solver.add(z3.Xor(z == 0, o == 0))  # G-RZO
+        solver.add(z3.Implies(z < PRECISION - 1, z < n))  # G-RZN-G
+        solver.add(z3.Implies(z == PRECISION - 1, n == 0))  # G-RZN-S
+        solver.add(o <= n)  # G-RON
 
         # We model a hypothetical floating-point datatype with infinite
         # exponent range, eliminating the possibility of overflow or underflow.
@@ -57,24 +49,16 @@ class FPVariable(object):
         # means we can arbitrarily set the zero point anywhere without loss of
         # generality. In this model, we consider 0.0 to have exponent -1 and
         # assume all nonzero floating-point numbers have nonnegative exponents.
-        solver.add(self.exponent >= ZERO_EXPONENT)
+        solver.add(e >= ZERO_EXPONENT)
 
         # We do not consider infinities or NaNs in this model, so all
         # floating-point numbers are either positive, negative, or zero.
-        self.is_zero: z3.BoolRef = self.exponent == ZERO_EXPONENT
-        solver.add(z3.Implies(self.is_zero, self.num_leading_zeroes == PRECISION - 1))
-        solver.add(z3.Implies(self.is_zero, self.num_leading_ones == 0))
-        solver.add(z3.Implies(self.is_zero, self.last_nonzero_bit == 0))
-
-        self.is_positive: z3.BoolRef = z3.And(
-            self.exponent > ZERO_EXPONENT,
-            z3.Not(self.sign_bit),
-        )
-
-        self.is_negative: z3.BoolRef = z3.And(
-            self.exponent > ZERO_EXPONENT,
-            self.sign_bit,
-        )
+        self.is_zero: z3.BoolRef = e == ZERO_EXPONENT
+        self.is_positive: z3.BoolRef = z3.And(e > ZERO_EXPONENT, z3.Not(self.sign_bit))
+        self.is_negative: z3.BoolRef = z3.And(e > ZERO_EXPONENT, self.sign_bit)
+        solver.add(z3.Implies(self.is_zero, z == PRECISION - 1))
+        solver.add(z3.Implies(self.is_zero, o == 0))
+        solver.add(z3.Implies(self.is_zero, n == 0))
 
     def maybe_equal(self, other: "FPVariable") -> z3.BoolRef:
         return z3.Or(
@@ -224,30 +208,40 @@ def fp_two_sum(
     s = FPVariable(solver, sum_name)
     e = FPVariable(solver, err_name)
 
-    s_x = x.sign_bit
-    s_y = y.sign_bit
-    s_s = s.sign_bit
-    s_e = e.sign_bit
+    # s_x = x.sign_bit
+    # s_y = y.sign_bit
+    # s_s = s.sign_bit
+    # s_e = e.sign_bit
 
     e_x = x.exponent
     e_y = y.exponent
     e_s = s.exponent
     e_e = e.exponent
 
-    z_x = x.num_leading_zeroes
-    z_y = y.num_leading_zeroes
+    # z_x = x.num_leading_zeroes
+    # z_y = y.num_leading_zeroes
     # z_s = s.num_leading_zeroes
     # z_e = e.num_leading_zeroes
 
-    o_x = x.num_leading_ones
-    o_y = y.num_leading_ones
-    o_s = s.num_leading_ones
+    # o_x = x.num_leading_ones
+    # o_y = y.num_leading_ones
+    # o_s = s.num_leading_ones
     # o_e = e.num_leading_ones
 
-    n_x = x.last_nonzero_bit
-    n_y = y.last_nonzero_bit
-    # n_s = s.last_nonzero_bit
+    # n_x = x.last_nonzero_bit
+    # n_y = y.last_nonzero_bit
+    n_s = s.last_nonzero_bit
     n_e = e.last_nonzero_bit
+
+    solver.add(
+        z3.Or(
+            s.is_zero,
+            e_s - n_s > e_x - PRECISION,
+            e_s - n_s > e_y - PRECISION,
+        )
+    )  # G-LBES
+
+    solver.add(z3.Or(e_s <= e_x + 1, e_s <= e_y + 1))  # G-UBES
 
     solver.add(
         z3.Or(
@@ -255,409 +249,415 @@ def fp_two_sum(
             e_e - n_e > e_x - PRECISION,
             e_e - n_e > e_y - PRECISION,
         )
-    )
-
-    solver.add(is_ulp_nonoverlapping(s, e))
-
-    case_0a = y.is_zero
-    case_0b = x.is_zero
-    case_1a = e_x - (PRECISION + 2) >= e_y
-    case_1b = e_x <= e_y - (PRECISION + 2)
-    case_2as = z3.And(e_x - (PRECISION + 1) == e_y, s_x == s_y)
-    case_2bs = z3.And(e_x == e_y - (PRECISION + 1), s_x == s_y)
-    case_2ad_n = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x != 0)
-    case_2bd_n = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_y != 0)
-    case_2ad_zz = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x == 0, n_y == 0)
-    case_2bd_zz = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x == 0, n_y == 0)
-    case_2ad_zn = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x == 0, n_y != 0)
-    case_2bd_zn = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x != 0, n_y == 0)
-    case_3as_g = z3.And(e_x - PRECISION == e_y, s_x == s_y, o_x != PRECISION - 1)
-    case_3as_s = z3.And(
-        e_x - PRECISION == e_y,
-        s_x == s_y,
-        o_x == PRECISION - 1,
-        z3.Not(y.is_zero),
-    )
-    case_3ad = z3.And(e_x - PRECISION == e_y, s_x != s_y)
-    case_3bs_g = z3.And(e_x == e_y - PRECISION, s_x == s_y, o_y != PRECISION - 1)
-    case_3bs_s = z3.And(
-        e_x == e_y - PRECISION,
-        s_x == s_y,
-        o_y == PRECISION - 1,
-        z3.Not(x.is_zero),
-    )
-    case_3bd = z3.And(e_x == e_y - PRECISION, s_x != s_y)
-    case_4as = z3.And(e_x - PRECISION < e_y, e_x - 1 > e_y, s_x == s_y)
-    case_4ad = z3.And(e_x - PRECISION < e_y, e_x - 1 > e_y, s_x != s_y)
-    case_4bs = z3.And(e_x > e_y - PRECISION, e_x < e_y - 1, s_x == s_y)
-    case_4bd = z3.And(e_x > e_y - PRECISION, e_x < e_y - 1, s_x != s_y)
-    case_5as = z3.And(e_x - 1 == e_y, s_x == s_y)
-    case_5ad = z3.And(e_x - 1 == e_y, s_x != s_y)
-    case_5bs = z3.And(e_x == e_y - 1, s_x == s_y)
-    case_5bd = z3.And(e_x == e_y - 1, s_x != s_y)
-    case_6s_x = z3.And(
-        e_x == e_y,
-        s_x == s_y,
-        z3.Not(x.is_zero),
-        z3.Not(y.is_zero),
-        z3.Xor(n_x == PRECISION - 1, n_y == PRECISION - 1),
-    )
-    case_6s_n = z3.And(
-        e_x == e_y,
-        s_x == s_y,
-        z3.Not(x.is_zero),
-        z3.Not(y.is_zero),
-        z3.Not(z3.Xor(n_x == PRECISION - 1, n_y == PRECISION - 1)),
-    )
-    case_6d = z3.And(e_x == e_y, s_x != s_y, z3.Not(x.is_zero), z3.Not(y.is_zero))
-
-    solver.add(z3.Implies(case_0a, z3.And(s.maybe_equal(x), e.is_zero)))
-    solver.add(z3.Implies(case_0b, z3.And(s.maybe_equal(y), e.is_zero)))
-    solver.add(z3.Implies(case_1a, z3.And(s.maybe_equal(x), e.maybe_equal(y))))
-    solver.add(z3.Implies(case_1b, z3.And(s.maybe_equal(y), e.maybe_equal(x))))
-    solver.add(z3.Implies(case_2as, z3.And(s.maybe_equal(x), e.maybe_equal(y))))
-    solver.add(z3.Implies(case_2bs, z3.And(s.maybe_equal(y), e.maybe_equal(x))))
-    solver.add(z3.Implies(case_2ad_n, z3.And(s.maybe_equal(x), e.maybe_equal(y))))
-    solver.add(z3.Implies(case_2bd_n, z3.And(s.maybe_equal(y), e.maybe_equal(x))))
-    solver.add(z3.Implies(case_2ad_zz, z3.And(s.maybe_equal(x), e.maybe_equal(y))))
-    solver.add(z3.Implies(case_2bd_zz, z3.And(s.maybe_equal(y), e.maybe_equal(x))))
+    )  # G-LBEE
 
     solver.add(
-        z3.Implies(
-            case_2ad_zn,
-            z3.And(
-                s_s == s_x,
-                e_s == e_x - 1,
-                o_s == PRECISION - 1,
-                s_e == s_x,
-                e_e < e_y,
-            ),
-        )
-    )
-
-    solver.add(
-        z3.Implies(
-            case_2bd_zn,
-            z3.And(
-                s_s == s_y,
-                e_s == e_y - 1,
-                o_s == PRECISION - 1,
-                s_e == s_y,
-                e_e < e_x,
-            ),
-        )
-    )
-
-    solver.add(
-        z3.Implies(
-            case_3as_g,
-            z3.And(
-                s_s == s_x,
-                e_s == e_x,
-                z3.Or(
-                    z3.And(s.maybe_equal(x), e.maybe_equal(y)),
-                    z3.And(
-                        s_e != s_x,
-                        e_e < e_y,
-                    ),
-                    z3.And(
-                        s_e != s_x,
-                        e_e == e_y,
-                        n_y == 0,
-                        n_e == 0,
-                    ),
-                ),
-            ),
-        )
-    )
-
-    solver.add(
-        z3.Implies(
-            case_3bs_g,
-            z3.And(
-                s_s == s_y,
-                e_s == e_y,
-                z3.Or(
-                    z3.And(s.maybe_equal(y), e.maybe_equal(x)),
-                    z3.And(
-                        s_e != s_y,
-                        e_e < e_x,
-                    ),
-                    z3.And(
-                        s_e != s_y,
-                        e_e == e_x,
-                        n_x == 0,
-                        n_e == 0,
-                    ),
-                ),
-            ),
-        )
-    )
-
-    solver.add(
-        z3.Implies(
-            case_3as_s,
-            z3.And(
-                s_s == s_x,
-                e_s == e_x + 1,
-                s_e != s_x,
-                z3.Or(
-                    e_e < e_y,
-                    z3.And(
-                        e_e == e_y,
-                        n_y == 0,
-                        n_e == 0,
-                    ),
-                ),
-            ),
-        )
-    )
-
-    solver.add(
-        z3.Implies(
-            case_3bs_s,
-            z3.And(
-                s_s == s_y,
-                e_s == e_y + 1,
-                s_e != s_y,
-                z3.Or(
-                    e_e < e_x,
-                    z3.And(
-                        e_e == e_x,
-                        n_x == 0,
-                        n_e == 0,
-                    ),
-                ),
-            ),
-        )
-    )
-
-    solver.add(
-        z3.Implies(
-            case_3ad,
-            z3.And(
-                s_s == s_x,
-                z3.Or(e_s == e_x, e_s == e_x - 1),
-                z3.Or(e.is_zero, e_e <= e_s - PRECISION),
-            ),
-        )
-    )
-
-    solver.add(
-        z3.Implies(
-            case_3bd,
-            z3.And(
-                s_s == s_y,
-                z3.Or(e_s == e_y, e_s == e_y - 1),
-                z3.Or(e.is_zero, e_e <= e_s - PRECISION),
-            ),
-        )
-    )
-
-    solver.add(
-        z3.Implies(
-            case_4as,
-            z3.And(
-                s_s == s_x,
-                z3.Or(e_s == e_x, e_s == e_x + 1),
-                z3.Or(
-                    e.is_zero,
-                    e_e <= e_s - PRECISION,
-                    z3.And(e_e == e_s - (PRECISION - 1), n_e == 0),
-                ),
-            ),
-        )
-    )
-
-    solver.add(
-        z3.Implies(
-            z3.And(case_4as, e_x - n_x > e_y, e_x - PRECISION < e_y - n_y),
+        z3.Or(
             e.is_zero,
+            e_e < e_s - PRECISION,
+            z3.And(e_e == e_s - PRECISION, n_e == 0),
         )
-    )
+    )  # G-UBEE
 
-    solver.add(
-        z3.Implies(
-            z3.And(case_4as, e_x - (o_x + 1) > e_y, e_x - PRECISION < e_y - n_y),
-            e.is_zero,
-        )
-    )
+    # case_0a = y.is_zero
+    # case_0b = x.is_zero
+    # case_1a = e_x - (PRECISION + 2) >= e_y
+    # case_1b = e_x <= e_y - (PRECISION + 2)
+    # case_2as = z3.And(e_x - (PRECISION + 1) == e_y, s_x == s_y)
+    # case_2bs = z3.And(e_x == e_y - (PRECISION + 1), s_x == s_y)
+    # case_2ad_n = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x != 0)
+    # case_2bd_n = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_y != 0)
+    # case_2ad_zz = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x == 0, n_y == 0)
+    # case_2bd_zz = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x == 0, n_y == 0)
+    # case_2ad_zn = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x == 0, n_y != 0)
+    # case_2bd_zn = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x != 0, n_y == 0)
+    # case_3as_g = z3.And(e_x - PRECISION == e_y, s_x == s_y, o_x != PRECISION - 1)
+    # case_3as_s = z3.And(
+    #     e_x - PRECISION == e_y,
+    #     s_x == s_y,
+    #     o_x == PRECISION - 1,
+    #     z3.Not(y.is_zero),
+    # )
+    # case_3ad = z3.And(e_x - PRECISION == e_y, s_x != s_y)
+    # case_3bs_g = z3.And(e_x == e_y - PRECISION, s_x == s_y, o_y != PRECISION - 1)
+    # case_3bs_s = z3.And(
+    #     e_x == e_y - PRECISION,
+    #     s_x == s_y,
+    #     o_y == PRECISION - 1,
+    #     z3.Not(x.is_zero),
+    # )
+    # case_3bd = z3.And(e_x == e_y - PRECISION, s_x != s_y)
+    # case_4as = z3.And(e_x - PRECISION < e_y, e_x - 1 > e_y, s_x == s_y)
+    # case_4ad = z3.And(e_x - PRECISION < e_y, e_x - 1 > e_y, s_x != s_y)
+    # case_4bs = z3.And(e_x > e_y - PRECISION, e_x < e_y - 1, s_x == s_y)
+    # case_4bd = z3.And(e_x > e_y - PRECISION, e_x < e_y - 1, s_x != s_y)
+    # case_5as = z3.And(e_x - 1 == e_y, s_x == s_y)
+    # case_5ad = z3.And(e_x - 1 == e_y, s_x != s_y)
+    # case_5bs = z3.And(e_x == e_y - 1, s_x == s_y)
+    # case_5bd = z3.And(e_x == e_y - 1, s_x != s_y)
+    # case_6s_x = z3.And(
+    #     e_x == e_y,
+    #     s_x == s_y,
+    #     z3.Not(x.is_zero),
+    #     z3.Not(y.is_zero),
+    #     z3.Xor(n_x == PRECISION - 1, n_y == PRECISION - 1),
+    # )
+    # case_6s_n = z3.And(
+    #     e_x == e_y,
+    #     s_x == s_y,
+    #     z3.Not(x.is_zero),
+    #     z3.Not(y.is_zero),
+    #     z3.Not(z3.Xor(n_x == PRECISION - 1, n_y == PRECISION - 1)),
+    # )
+    # case_6d = z3.And(e_x == e_y, s_x != s_y, z3.Not(x.is_zero), z3.Not(y.is_zero))
 
-    solver.add(
-        z3.Implies(
-            case_4bs,
-            z3.And(
-                s_s == s_y,
-                z3.Or(e_s == e_y, e_s == e_y + 1),
-                z3.Or(
-                    e.is_zero,
-                    e_e <= e_s - PRECISION,
-                    z3.And(e_e == e_s - (PRECISION - 1), n_e == 0),
-                ),
-            ),
-        )
-    )
+    # solver.add(z3.Implies(case_0a, z3.And(s.maybe_equal(x), e.is_zero)))
+    # solver.add(z3.Implies(case_0b, z3.And(s.maybe_equal(y), e.is_zero)))
+    # solver.add(z3.Implies(case_1a, z3.And(s.maybe_equal(x), e.maybe_equal(y))))
+    # solver.add(z3.Implies(case_1b, z3.And(s.maybe_equal(y), e.maybe_equal(x))))
+    # solver.add(z3.Implies(case_2as, z3.And(s.maybe_equal(x), e.maybe_equal(y))))
+    # solver.add(z3.Implies(case_2bs, z3.And(s.maybe_equal(y), e.maybe_equal(x))))
+    # solver.add(z3.Implies(case_2ad_n, z3.And(s.maybe_equal(x), e.maybe_equal(y))))
+    # solver.add(z3.Implies(case_2bd_n, z3.And(s.maybe_equal(y), e.maybe_equal(x))))
+    # solver.add(z3.Implies(case_2ad_zz, z3.And(s.maybe_equal(x), e.maybe_equal(y))))
+    # solver.add(z3.Implies(case_2bd_zz, z3.And(s.maybe_equal(y), e.maybe_equal(x))))
 
-    solver.add(
-        z3.Implies(
-            z3.And(case_4bs, e_x < e_y - n_y, e_x - n_x < e_y - PRECISION),
-            e.is_zero,
-        )
-    )
+    # solver.add(
+    #     z3.Implies(
+    #         case_2ad_zn,
+    #         z3.And(
+    #             s_s == s_x,
+    #             e_s == e_x - 1,
+    #             o_s == PRECISION - 1,
+    #             s_e == s_x,
+    #             e_e < e_y,
+    #         ),
+    #     )
+    # )
 
-    solver.add(
-        z3.Implies(
-            z3.And(case_4bs, e_x < e_y - (o_y + 1), e_x - n_x < e_y - PRECISION),
-            e.is_zero,
-        )
-    )
+    # solver.add(
+    #     z3.Implies(
+    #         case_2bd_zn,
+    #         z3.And(
+    #             s_s == s_y,
+    #             e_s == e_y - 1,
+    #             o_s == PRECISION - 1,
+    #             s_e == s_y,
+    #             e_e < e_x,
+    #         ),
+    #     )
+    # )
 
-    solver.add(
-        z3.Implies(
-            case_4ad,
-            z3.And(
-                s_s == s_x,
-                z3.Or(e_s == e_x, e_s == e_x - 1),
-                z3.Or(e.is_zero, e_e <= e_s - PRECISION),
-            ),
-        )
-    )
+    # solver.add(
+    #     z3.Implies(
+    #         case_3as_g,
+    #         z3.And(
+    #             s_s == s_x,
+    #             e_s == e_x,
+    #             z3.Or(
+    #                 z3.And(s.maybe_equal(x), e.maybe_equal(y)),
+    #                 z3.And(
+    #                     s_e != s_x,
+    #                     e_e < e_y,
+    #                 ),
+    #                 z3.And(
+    #                     s_e != s_x,
+    #                     e_e == e_y,
+    #                     n_y == 0,
+    #                     n_e == 0,
+    #                 ),
+    #             ),
+    #         ),
+    #     )
+    # )
 
-    solver.add(
-        z3.Implies(
-            case_4bd,
-            z3.And(
-                s_s == s_y,
-                z3.Or(e_s == e_y, e_s == e_y - 1),
-                z3.Or(e.is_zero, e_e <= e_s - PRECISION),
-            ),
-        )
-    )
+    # solver.add(
+    #     z3.Implies(
+    #         case_3bs_g,
+    #         z3.And(
+    #             s_s == s_y,
+    #             e_s == e_y,
+    #             z3.Or(
+    #                 z3.And(s.maybe_equal(y), e.maybe_equal(x)),
+    #                 z3.And(
+    #                     s_e != s_y,
+    #                     e_e < e_x,
+    #                 ),
+    #                 z3.And(
+    #                     s_e != s_y,
+    #                     e_e == e_x,
+    #                     n_x == 0,
+    #                     n_e == 0,
+    #                 ),
+    #             ),
+    #         ),
+    #     )
+    # )
 
-    solver.add(
-        z3.Implies(
-            case_5as,
-            z3.And(
-                s_s == s_x,
-                z3.Or(e_s == e_x, e_s == e_x + 1),
-                z3.Or(
-                    e.is_zero,
-                    e_e <= e_s - PRECISION,
-                    z3.And(e_e == e_s - (PRECISION - 1), n_e == 0),
-                ),
-            ),
-        )
-    )
+    # solver.add(
+    #     z3.Implies(
+    #         case_3as_s,
+    #         z3.And(
+    #             s_s == s_x,
+    #             e_s == e_x + 1,
+    #             s_e != s_x,
+    #             z3.Or(
+    #                 e_e < e_y,
+    #                 z3.And(
+    #                     e_e == e_y,
+    #                     n_y == 0,
+    #                     n_e == 0,
+    #                 ),
+    #             ),
+    #         ),
+    #     )
+    # )
 
-    solver.add(
-        z3.Implies(
-            z3.And(case_5as, e_x - n_x > e_y, e_x - PRECISION < e_y - n_y),
-            e.is_zero,
-        )
-    )
+    # solver.add(
+    #     z3.Implies(
+    #         case_3bs_s,
+    #         z3.And(
+    #             s_s == s_y,
+    #             e_s == e_y + 1,
+    #             s_e != s_y,
+    #             z3.Or(
+    #                 e_e < e_x,
+    #                 z3.And(
+    #                     e_e == e_x,
+    #                     n_x == 0,
+    #                     n_e == 0,
+    #                 ),
+    #             ),
+    #         ),
+    #     )
+    # )
 
-    solver.add(
-        z3.Implies(
-            z3.And(case_5as, e_x - (o_x + 1) > e_y, e_x - PRECISION < e_y - n_y),
-            e.is_zero,
-        )
-    )
+    # solver.add(
+    #     z3.Implies(
+    #         case_3ad,
+    #         z3.And(
+    #             s_s == s_x,
+    #             z3.Or(e_s == e_x, e_s == e_x - 1),
+    #             z3.Or(e.is_zero, e_e <= e_s - PRECISION),
+    #         ),
+    #     )
+    # )
 
-    solver.add(
-        z3.Implies(
-            case_5bs,
-            z3.And(
-                s_s == s_y,
-                z3.Or(e_s == e_y, e_s == e_y + 1),
-                z3.Or(
-                    e.is_zero,
-                    e_e <= e_s - PRECISION,
-                    z3.And(e_e == e_s - (PRECISION - 1), n_e == 0),
-                ),
-            ),
-        )
-    )
+    # solver.add(
+    #     z3.Implies(
+    #         case_3bd,
+    #         z3.And(
+    #             s_s == s_y,
+    #             z3.Or(e_s == e_y, e_s == e_y - 1),
+    #             z3.Or(e.is_zero, e_e <= e_s - PRECISION),
+    #         ),
+    #     )
+    # )
 
-    solver.add(
-        z3.Implies(
-            z3.And(case_5bs, e_x < e_y - n_y, e_x - n_x < e_y - PRECISION),
-            e.is_zero,
-        )
-    )
+    # solver.add(
+    #     z3.Implies(
+    #         case_4as,
+    #         z3.And(
+    #             s_s == s_x,
+    #             z3.Or(e_s == e_x, e_s == e_x + 1),
+    #             z3.Or(
+    #                 e.is_zero,
+    #                 e_e <= e_s - PRECISION,
+    #                 z3.And(e_e == e_s - (PRECISION - 1), n_e == 0),
+    #             ),
+    #         ),
+    #     )
+    # )
 
-    solver.add(
-        z3.Implies(
-            z3.And(case_5bs, e_x < e_y - (o_y + 1), e_x - n_x < e_y - PRECISION),
-            e.is_zero,
-        )
-    )
+    # solver.add(
+    #     z3.Implies(
+    #         z3.And(case_4as, e_x - n_x > e_y, e_x - PRECISION < e_y - n_y),
+    #         e.is_zero,
+    #     )
+    # )
 
-    solver.add(
-        z3.Implies(
-            case_5ad,
-            z3.And(
-                s_s == s_x,
-                e_s <= e_x,
-                e_s >= e_x - PRECISION,
-                z3.Or(e.is_zero, e_e <= e_s - PRECISION),
-            ),
-        )
-    )
+    # solver.add(
+    #     z3.Implies(
+    #         z3.And(case_4as, e_x - (o_x + 1) > e_y, e_x - PRECISION < e_y - n_y),
+    #         e.is_zero,
+    #     )
+    # )
 
-    solver.add(
-        z3.Implies(
-            case_5bd,
-            z3.And(
-                s_s == s_y,
-                e_s <= e_y,
-                e_s >= e_y - PRECISION,
-                z3.Or(e.is_zero, e_e <= e_s - PRECISION),
-            ),
-        )
-    )
+    # solver.add(
+    #     z3.Implies(
+    #         case_4bs,
+    #         z3.And(
+    #             s_s == s_y,
+    #             z3.Or(e_s == e_y, e_s == e_y + 1),
+    #             z3.Or(
+    #                 e.is_zero,
+    #                 e_e <= e_s - PRECISION,
+    #                 z3.And(e_e == e_s - (PRECISION - 1), n_e == 0),
+    #             ),
+    #         ),
+    #     )
+    # )
 
-    solver.add(
-        z3.Implies(
-            case_6s_x,
-            z3.And(
-                s_s == s_x,
-                s_s == s_y,
-                e_s == e_x + 1,
-                e_s == e_y + 1,
-                e_e == e_x - (PRECISION - 1),
-                e_e == e_y - (PRECISION - 1),
-                n_e == 0,
-            ),
-        )
-    )
+    # solver.add(
+    #     z3.Implies(
+    #         z3.And(case_4bs, e_x < e_y - n_y, e_x - n_x < e_y - PRECISION),
+    #         e.is_zero,
+    #     )
+    # )
 
-    solver.add(
-        z3.Implies(
-            case_6s_n,
-            z3.And(
-                s_s == s_x,
-                s_s == s_y,
-                e_s == e_x + 1,
-                e_s == e_y + 1,
-                e.is_zero,
-            ),
-        )
-    )
+    # solver.add(
+    #     z3.Implies(
+    #         z3.And(case_4bs, e_x < e_y - (o_y + 1), e_x - n_x < e_y - PRECISION),
+    #         e.is_zero,
+    #     )
+    # )
 
-    solver.add(
-        z3.Implies(
-            case_6d,
-            z3.And(
-                z3.Or(s.is_zero, e_s < e_x - o_x, e_s < e_y - o_y),
-                z3.Or(s.is_zero, e_s < e_x - z_x, e_s < e_y - z_y),
-                z3.Or(
-                    s.is_zero,
-                    z3.And(e_s >= e_x - PRECISION, e_s >= e_y - PRECISION),
-                ),
-                e.is_zero,
-            ),
-        )
-    )
+    # solver.add(
+    #     z3.Implies(
+    #         case_4ad,
+    #         z3.And(
+    #             s_s == s_x,
+    #             z3.Or(e_s == e_x, e_s == e_x - 1),
+    #             z3.Or(e.is_zero, e_e <= e_s - PRECISION),
+    #         ),
+    #     )
+    # )
+
+    # solver.add(
+    #     z3.Implies(
+    #         case_4bd,
+    #         z3.And(
+    #             s_s == s_y,
+    #             z3.Or(e_s == e_y, e_s == e_y - 1),
+    #             z3.Or(e.is_zero, e_e <= e_s - PRECISION),
+    #         ),
+    #     )
+    # )
+
+    # solver.add(
+    #     z3.Implies(
+    #         case_5as,
+    #         z3.And(
+    #             s_s == s_x,
+    #             z3.Or(e_s == e_x, e_s == e_x + 1),
+    #             z3.Or(
+    #                 e.is_zero,
+    #                 e_e <= e_s - PRECISION,
+    #                 z3.And(e_e == e_s - (PRECISION - 1), n_e == 0),
+    #             ),
+    #         ),
+    #     )
+    # )
+
+    # solver.add(
+    #     z3.Implies(
+    #         z3.And(case_5as, e_x - n_x > e_y, e_x - PRECISION < e_y - n_y),
+    #         e.is_zero,
+    #     )
+    # )
+
+    # solver.add(
+    #     z3.Implies(
+    #         z3.And(case_5as, e_x - (o_x + 1) > e_y, e_x - PRECISION < e_y - n_y),
+    #         e.is_zero,
+    #     )
+    # )
+
+    # solver.add(
+    #     z3.Implies(
+    #         case_5bs,
+    #         z3.And(
+    #             s_s == s_y,
+    #             z3.Or(e_s == e_y, e_s == e_y + 1),
+    #             z3.Or(
+    #                 e.is_zero,
+    #                 e_e <= e_s - PRECISION,
+    #                 z3.And(e_e == e_s - (PRECISION - 1), n_e == 0),
+    #             ),
+    #         ),
+    #     )
+    # )
+
+    # solver.add(
+    #     z3.Implies(
+    #         z3.And(case_5bs, e_x < e_y - n_y, e_x - n_x < e_y - PRECISION),
+    #         e.is_zero,
+    #     )
+    # )
+
+    # solver.add(
+    #     z3.Implies(
+    #         z3.And(case_5bs, e_x < e_y - (o_y + 1), e_x - n_x < e_y - PRECISION),
+    #         e.is_zero,
+    #     )
+    # )
+
+    # solver.add(
+    #     z3.Implies(
+    #         case_5ad,
+    #         z3.And(
+    #             s_s == s_x,
+    #             e_s <= e_x,
+    #             e_s >= e_x - PRECISION,
+    #             z3.Or(e.is_zero, e_e <= e_s - PRECISION),
+    #         ),
+    #     )
+    # )
+
+    # solver.add(
+    #     z3.Implies(
+    #         case_5bd,
+    #         z3.And(
+    #             s_s == s_y,
+    #             e_s <= e_y,
+    #             e_s >= e_y - PRECISION,
+    #             z3.Or(e.is_zero, e_e <= e_s - PRECISION),
+    #         ),
+    #     )
+    # )
+
+    # solver.add(
+    #     z3.Implies(
+    #         case_6s_x,
+    #         z3.And(
+    #             s_s == s_x,
+    #             s_s == s_y,
+    #             e_s == e_x + 1,
+    #             e_s == e_y + 1,
+    #             e_e == e_x - (PRECISION - 1),
+    #             e_e == e_y - (PRECISION - 1),
+    #             n_e == 0,
+    #         ),
+    #     )
+    # )
+
+    # solver.add(
+    #     z3.Implies(
+    #         case_6s_n,
+    #         z3.And(
+    #             s_s == s_x,
+    #             s_s == s_y,
+    #             e_s == e_x + 1,
+    #             e_s == e_y + 1,
+    #             e.is_zero,
+    #         ),
+    #     )
+    # )
+
+    # solver.add(
+    #     z3.Implies(
+    #         case_6d,
+    #         z3.And(
+    #             z3.Or(s.is_zero, e_s < e_x - o_x, e_s < e_y - o_y),
+    #             z3.Or(s.is_zero, e_s < e_x - z_x, e_s < e_y - z_y),
+    #             z3.Or(
+    #                 s.is_zero,
+    #                 z3.And(e_s >= e_x - PRECISION, e_s >= e_y - PRECISION),
+    #             ),
+    #             e.is_zero,
+    #         ),
+    #     )
+    # )
 
     return (s, e)
 
