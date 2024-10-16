@@ -218,15 +218,15 @@ def fp_two_sum(
     e_s = s.exponent
     e_e = e.exponent
 
-    # z_x = x.num_leading_zeroes
-    # z_y = y.num_leading_zeroes
+    z_x = x.num_leading_zeroes
+    z_y = y.num_leading_zeroes
     z_s = s.num_leading_zeroes
-    # z_e = e.num_leading_zeroes
+    z_e = e.num_leading_zeroes
 
-    # o_x = x.num_leading_ones
-    # o_y = y.num_leading_ones
+    o_x = x.num_leading_ones
+    o_y = y.num_leading_ones
     o_s = s.num_leading_ones
-    # o_e = e.num_leading_ones
+    o_e = e.num_leading_ones
 
     n_x = x.last_nonzero_bit
     n_y = y.last_nonzero_bit
@@ -271,6 +271,17 @@ def fp_two_sum(
     case_2bd_zz = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x == 0, n_y == 0)
     case_2ad_zn = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x == 0, n_y != 0)
     case_2bd_zn = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x != 0, n_y == 0)
+    case_6s_x = z3.And(
+        e_x == e_y,
+        s_x == s_y,
+        z3.Xor(n_x == PRECISION - 1, n_y == PRECISION - 1),
+    )
+    case_6s_n = z3.And(
+        e_x == e_y,
+        s_x == s_y,
+        z3.Not(z3.Xor(n_x == PRECISION - 1, n_y == PRECISION - 1)),
+    )
+    case_6d = z3.And(e_x == e_y, s_x != s_y)
 
     solver.add(z3.Implies(case_0a, s.maybe_equal(x)))  # 0A-S
     solver.add(z3.Implies(case_0a, e.is_zero))  # 0A-E
@@ -323,6 +334,37 @@ def fp_two_sum(
     solver.add(z3.Implies(case_2bd_zn, s_e == s_y))  # 2BD-ZN-SE
     solver.add(z3.Implies(case_2bd_zn, e_e < e_x))  # 2BD-ZN-UBEE
 
+    solver.add(z3.Implies(case_6s_x, z3.And(s_s == s_x, s_s == s_y)))  # 6S-X-SS
+    solver.add(z3.Implies(case_6s_x, z3.And(e_s == e_x + 1, e_s == e_y + 1)))  # 6S-X-ES
+    solver.add(
+        z3.Implies(
+            case_6s_x,
+            z3.And(
+                e_e == e_x - (PRECISION - 1),
+                e_e == e_y - (PRECISION - 1),
+                z_e == PRECISION - 1,
+                o_e == 0,
+                n_e == 0,
+            ),
+        )
+    )  # 6S-X-E
+    solver.add(z3.Implies(case_6s_x, n_e == 0))  # 6S-X-NE
+    solver.add(z3.Implies(case_6s_n, z3.And(s_s == s_x, s_s == s_y)))  # 6S-N-SS
+    solver.add(
+        z3.Implies(case_6s_n, z3.Or(s.is_zero, z3.And(e_s == e_x + 1, e_s == e_y + 1)))
+    )  # 6S-N-ES
+    solver.add(z3.Implies(case_6s_n, e.is_zero))  # 6S-N-E
+    solver.add(
+        z3.Implies(
+            case_6d,
+            z3.And(
+                z3.Or(s.is_zero, e_s < e_x - z_x, e_s < e_y - z_y),
+                z3.Or(s.is_zero, e_s < e_x - o_x, e_s < e_y - o_y),
+            ),
+        )
+    )  # 6D-UBES
+    solver.add(z3.Implies(case_6d, e.is_zero))  # 6D-E
+
     # case_3as_g = z3.And(e_x - PRECISION == e_y, s_x == s_y, o_x != PRECISION - 1)
     # case_3as_s = z3.And(
     #     e_x - PRECISION == e_y,
@@ -337,58 +379,6 @@ def fp_two_sum(
     #     s_x == s_y,
     #     o_y == PRECISION - 1,
     #     z3.Not(x.is_zero),
-    # )
-    # case_6s_x = z3.And(
-    #     e_x == e_y,
-    #     s_x == s_y,
-    #     z3.Not(x.is_zero),
-    #     z3.Not(y.is_zero),
-    #     z3.Xor(n_x == PRECISION - 1, n_y == PRECISION - 1),
-    # )
-    # case_6s_n = z3.And(
-    #     e_x == e_y,
-    #     s_x == s_y,
-    #     z3.Not(x.is_zero),
-    #     z3.Not(y.is_zero),
-    #     z3.Not(z3.Xor(n_x == PRECISION - 1, n_y == PRECISION - 1)),
-    # )
-    # case_6d = z3.And(e_x == e_y, s_x != s_y, z3.Not(x.is_zero), z3.Not(y.is_zero))
-
-    # solver.add(z3.Implies(case_0a, z3.And(s.maybe_equal(x), e.is_zero)))
-    # solver.add(z3.Implies(case_0b, z3.And(s.maybe_equal(y), e.is_zero)))
-    # solver.add(z3.Implies(case_1a, z3.And(s.maybe_equal(x), e.maybe_equal(y))))
-    # solver.add(z3.Implies(case_1b, z3.And(s.maybe_equal(y), e.maybe_equal(x))))
-    # solver.add(z3.Implies(case_2as, z3.And(s.maybe_equal(x), e.maybe_equal(y))))
-    # solver.add(z3.Implies(case_2bs, z3.And(s.maybe_equal(y), e.maybe_equal(x))))
-    # solver.add(z3.Implies(case_2ad_n, z3.And(s.maybe_equal(x), e.maybe_equal(y))))
-    # solver.add(z3.Implies(case_2bd_n, z3.And(s.maybe_equal(y), e.maybe_equal(x))))
-    # solver.add(z3.Implies(case_2ad_zz, z3.And(s.maybe_equal(x), e.maybe_equal(y))))
-    # solver.add(z3.Implies(case_2bd_zz, z3.And(s.maybe_equal(y), e.maybe_equal(x))))
-
-    # solver.add(
-    #     z3.Implies(
-    #         case_2ad_zn,
-    #         z3.And(
-    #             s_s == s_x,
-    #             e_s == e_x - 1,
-    #             o_s == PRECISION - 1,
-    #             s_e == s_x,
-    #             e_e < e_y,
-    #         ),
-    #     )
-    # )
-
-    # solver.add(
-    #     z3.Implies(
-    #         case_2bd_zn,
-    #         z3.And(
-    #             s_s == s_y,
-    #             e_s == e_y - 1,
-    #             o_s == PRECISION - 1,
-    #             s_e == s_y,
-    #             e_e < e_x,
-    #         ),
-    #     )
     # )
 
     # solver.add(
@@ -655,49 +645,6 @@ def fp_two_sum(
     #             e_s <= e_y,
     #             e_s >= e_y - PRECISION,
     #             z3.Or(e.is_zero, e_e <= e_s - PRECISION),
-    #         ),
-    #     )
-    # )
-
-    # solver.add(
-    #     z3.Implies(
-    #         case_6s_x,
-    #         z3.And(
-    #             s_s == s_x,
-    #             s_s == s_y,
-    #             e_s == e_x + 1,
-    #             e_s == e_y + 1,
-    #             e_e == e_x - (PRECISION - 1),
-    #             e_e == e_y - (PRECISION - 1),
-    #             n_e == 0,
-    #         ),
-    #     )
-    # )
-
-    # solver.add(
-    #     z3.Implies(
-    #         case_6s_n,
-    #         z3.And(
-    #             s_s == s_x,
-    #             s_s == s_y,
-    #             e_s == e_x + 1,
-    #             e_s == e_y + 1,
-    #             e.is_zero,
-    #         ),
-    #     )
-    # )
-
-    # solver.add(
-    #     z3.Implies(
-    #         case_6d,
-    #         z3.And(
-    #             z3.Or(s.is_zero, e_s < e_x - o_x, e_s < e_y - o_y),
-    #             z3.Or(s.is_zero, e_s < e_x - z_x, e_s < e_y - z_y),
-    #             z3.Or(
-    #                 s.is_zero,
-    #                 z3.And(e_s >= e_x - PRECISION, e_s >= e_y - PRECISION),
-    #             ),
-    #             e.is_zero,
     #         ),
     #     )
     # )

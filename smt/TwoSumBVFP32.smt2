@@ -594,26 +594,3 @@
                       (fp.isZero e))))
     (check-sat)
 (pop 1)
-
-; Theorem: If e_x == e_y, s_x != s_y, x and y are nonzero and not subnormal,
-; then e_s < e_x == e_y and e is zero.
-
-(push 1)
-    ; Hypotheses:
-    (assert CASE_6D)
-    (assert (not (fp.isSubnormal x)))
-    (assert (not (fp.isSubnormal y)))
-    (assert (not (fp.isSubnormal s)))
-    ; Conclusion:
-    (assert (not (and (or (fp.isZero s)
-                          (bvult e_s (bvsub e_x o_x))
-                          (bvult e_s (bvsub e_y o_y)))
-                      (or (fp.isZero s)
-                          (bvult e_s (bvsub e_x z_x))
-                          (bvult e_s (bvsub e_y z_y)))
-                      (or (fp.isZero s)
-                          (and (bvuge e_s (bvsub e_x p))
-                               (bvuge e_s (bvsub e_y p))))
-                      (fp.isZero e))))
-    (check-sat)
-(pop 1)

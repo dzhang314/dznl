@@ -251,8 +251,7 @@ case_6s_x = z3.And(
     s_x == s_y,
     z3.Xor(n_x == PRECISION_MINUS_ONE_BV, n_y == PRECISION_MINUS_ONE_BV),
 )
-
-case_6s_x = z3.And(
+case_6s_n = z3.And(
     e_x == e_y,
     s_x == s_y,
     z3.Not(z3.Xor(n_x == PRECISION_MINUS_ONE_BV, n_y == PRECISION_MINUS_ONE_BV)),
@@ -311,8 +310,38 @@ lemmas["2BD-ZN-UBEE"] = z3.Implies(
     case_2bd_zn, e_e < e_x
 )  # cannot be strengthened by a constant
 
+lemmas["6S-X-SS"] = z3.Implies(case_6s_x, z3.And(s_s == s_x, s_s == s_y))
+lemmas["6S-X-ES"] = z3.Implies(
+    case_6s_x, z3.And(e_s == e_x + ONE_BV, e_s == e_y + ONE_BV)
+)
+# In case 6S-X, s_e is difficult to determine a priori
+# because it depends on round-to-nearest-even tie breaking.
+lemmas["6S-X-E"] = z3.Implies(
+    case_6s_x,
+    z3.And(
+        e_e == e_x - PRECISION_MINUS_ONE_BV,
+        e_e == e_y - PRECISION_MINUS_ONE_BV,
+        z_e == PRECISION_MINUS_ONE_BV,
+        o_e == ZERO_BV,
+        n_e == ZERO_BV,
+    ),
+)  # likely cannot be strengthened
+lemmas["6S-N-SS"] = z3.Implies(case_6s_n, z3.And(s_s == s_x, s_s == s_y))
+lemmas["6S-N-ES"] = z3.Implies(
+    case_6s_n, z3.Or(z3.fpIsZero(s), z3.And(e_s == e_x + ONE_BV, e_s == e_y + ONE_BV))
+)
+lemmas["6S-N-E"] = z3.Implies(case_6s_n, z3.fpIsZero(e))  # cannot be strengthened
+lemmas["6D-UBES"] = z3.Implies(
+    case_6d,
+    z3.And(
+        z3.Or(z3.fpIsZero(s), e_s < e_x - z_x, e_s < e_y - z_y),
+        z3.Or(z3.fpIsZero(s), e_s < e_x - o_x, e_s < e_y - o_y),
+    ),
+)  # cannot be strengthened by a constant
+lemmas["6D-E"] = z3.Implies(case_6d, z3.fpIsZero(e))  # cannot be strengthened
 
-expensive_lemmas: set[str] = {"G-LBEE", "G-UBEE"}
+
+expensive_lemmas: set[str] = {"G-LBEE", "G-UBEE", "6D-E"}
 
 for name, lemma in lemmas.items():
     if name not in expensive_lemmas:
