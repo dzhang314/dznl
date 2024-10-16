@@ -208,10 +208,10 @@ def fp_two_sum(
     s = FPVariable(solver, sum_name)
     e = FPVariable(solver, err_name)
 
-    # s_x = x.sign_bit
-    # s_y = y.sign_bit
-    # s_s = s.sign_bit
-    # s_e = e.sign_bit
+    s_x = x.sign_bit
+    s_y = y.sign_bit
+    s_s = s.sign_bit
+    s_e = e.sign_bit
 
     e_x = x.exponent
     e_y = y.exponent
@@ -220,16 +220,16 @@ def fp_two_sum(
 
     # z_x = x.num_leading_zeroes
     # z_y = y.num_leading_zeroes
-    # z_s = s.num_leading_zeroes
+    z_s = s.num_leading_zeroes
     # z_e = e.num_leading_zeroes
 
     # o_x = x.num_leading_ones
     # o_y = y.num_leading_ones
-    # o_s = s.num_leading_ones
+    o_s = s.num_leading_ones
     # o_e = e.num_leading_ones
 
-    # n_x = x.last_nonzero_bit
-    # n_y = y.last_nonzero_bit
+    n_x = x.last_nonzero_bit
+    n_y = y.last_nonzero_bit
     n_s = s.last_nonzero_bit
     n_e = e.last_nonzero_bit
 
@@ -263,20 +263,66 @@ def fp_two_sum(
     case_0b = x.is_zero
     case_1a = e_x - (PRECISION + 1) > e_y
     case_1b = e_x < e_y - (PRECISION + 1)
+    case_2as = z3.And(e_x - (PRECISION + 1) == e_y, s_x == s_y)
+    case_2bs = z3.And(e_x == e_y - (PRECISION + 1), s_x == s_y)
+    case_2ad_n = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x != 0)
+    case_2bd_n = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_y != 0)
+    case_2ad_zz = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x == 0, n_y == 0)
+    case_2bd_zz = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x == 0, n_y == 0)
+    case_2ad_zn = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x == 0, n_y != 0)
+    case_2bd_zn = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x != 0, n_y == 0)
 
-    solver.add(z3.Implies(case_0a, z3.And(s.maybe_equal(x), e.is_zero)))
-    solver.add(z3.Implies(case_0b, z3.And(s.maybe_equal(y), e.is_zero)))
-    solver.add(z3.Implies(case_1a, z3.And(s.maybe_equal(x), e.maybe_equal(y))))
-    solver.add(z3.Implies(case_1b, z3.And(s.maybe_equal(y), e.maybe_equal(x))))
+    solver.add(z3.Implies(case_0a, s.maybe_equal(x)))  # 0A-S
+    solver.add(z3.Implies(case_0a, e.is_zero))  # 0A-E
+    solver.add(z3.Implies(case_0b, s.maybe_equal(y)))  # 0B-S
+    solver.add(z3.Implies(case_0b, e.is_zero))  # 0B-E
 
-    # case_2as = z3.And(e_x - (PRECISION + 1) == e_y, s_x == s_y)
-    # case_2bs = z3.And(e_x == e_y - (PRECISION + 1), s_x == s_y)
-    # case_2ad_n = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x != 0)
-    # case_2bd_n = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_y != 0)
-    # case_2ad_zz = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x == 0, n_y == 0)
-    # case_2bd_zz = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x == 0, n_y == 0)
-    # case_2ad_zn = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x == 0, n_y != 0)
-    # case_2bd_zn = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x != 0, n_y == 0)
+    solver.add(z3.Implies(case_1a, s.maybe_equal(x)))  # 1A-S
+    solver.add(z3.Implies(case_1a, e.maybe_equal(y)))  # 1A-E
+    solver.add(z3.Implies(case_1b, s.maybe_equal(y)))  # 1B-S
+    solver.add(z3.Implies(case_1b, e.maybe_equal(x)))  # 1B-E
+
+    solver.add(z3.Implies(case_2as, s.maybe_equal(x)))  # 2AS-S
+    solver.add(z3.Implies(case_2as, e.maybe_equal(y)))  # 2AS-E
+    solver.add(z3.Implies(case_2bs, s.maybe_equal(y)))  # 2BS-S
+    solver.add(z3.Implies(case_2bs, e.maybe_equal(x)))  # 2BS-E
+    solver.add(z3.Implies(case_2ad_n, s.maybe_equal(x)))  # 2AD-N-S
+    solver.add(z3.Implies(case_2ad_n, e.maybe_equal(y)))  # 2AD-N-E
+    solver.add(z3.Implies(case_2bd_n, s.maybe_equal(y)))  # 2BD-N-S
+    solver.add(z3.Implies(case_2bd_n, e.maybe_equal(x)))  # 2BD-N-E
+    solver.add(z3.Implies(case_2ad_zz, s.maybe_equal(x)))  # 2AD-ZZ-S
+    solver.add(z3.Implies(case_2ad_zz, e.maybe_equal(y)))  # 2AD-ZZ-E
+    solver.add(z3.Implies(case_2bd_zz, s.maybe_equal(y)))  # 2BD-ZZ-S
+    solver.add(z3.Implies(case_2bd_zz, e.maybe_equal(x)))  # 2BD-ZZ-E
+    solver.add(
+        z3.Implies(
+            case_2ad_zn,
+            z3.And(
+                s_s == s_x,
+                e_s == e_x - 1,
+                z_s == 0,
+                o_s == PRECISION - 1,
+                n_s == PRECISION - 1,
+            ),
+        )
+    )  # 2AD-ZN-S
+    solver.add(z3.Implies(case_2ad_zn, s_e == s_x))  # 2AD-ZN-SE
+    solver.add(z3.Implies(case_2ad_zn, e_e < e_y))  # 2AD-ZN-UBEE
+    solver.add(
+        z3.Implies(
+            case_2bd_zn,
+            z3.And(
+                s_s == s_y,
+                e_s == e_y - 1,
+                z_s == 0,
+                o_s == PRECISION - 1,
+                n_s == PRECISION - 1,
+            ),
+        )
+    )  # 2BD-ZN-S
+    solver.add(z3.Implies(case_2bd_zn, s_e == s_y))  # 2BD-ZN-SE
+    solver.add(z3.Implies(case_2bd_zn, e_e < e_x))  # 2BD-ZN-UBEE
+
     # case_3as_g = z3.And(e_x - PRECISION == e_y, s_x == s_y, o_x != PRECISION - 1)
     # case_3as_s = z3.And(
     #     e_x - PRECISION == e_y,
