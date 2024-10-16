@@ -148,7 +148,6 @@ solver.add(z3.Not(z3.fpIsNaN(e)))
 solver.add(z3.Not(z3.fpIsSubnormal(e)))
 
 RNE = z3.RoundNearestTiesToEven()
-print(type(RNE))
 solver.add(s == z3.fpAdd(RNE, x, y))
 x_prime = z3.fpSub(RNE, s, y)
 y_prime = z3.fpSub(RNE, s, x_prime)
