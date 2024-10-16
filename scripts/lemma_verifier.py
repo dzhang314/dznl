@@ -214,6 +214,14 @@ lemmas["G-UBEE"] = z3.Or(
     z3.And(e_e == e_s - PRECISION_BV, n_e == ZERO_BV),
 )
 
+lemmas["G-E"] = z3.Implies(
+    z3.Or(  # None of the following strict inequalities can be weakened.
+        z3.And(e_x - n_x > e_y, e_x - PRECISION_BV < e_y - n_y),
+        z3.And(e_x < e_y - n_y, e_x - n_x > e_y - PRECISION_BV),
+    ),
+    z3.fpIsZero(e),
+)
+
 
 case_0a = z3.fpIsZero(y)
 case_0b = z3.fpIsZero(x)
@@ -351,7 +359,15 @@ lemmas["6D-UBES"] = z3.Implies(
 lemmas["6D-E"] = z3.Implies(case_6d, z3.fpIsZero(e))  # cannot be strengthened
 
 
-expensive_lemmas: set[str] = {"G-LBES", "G-LBEE", "G-UBEE", "6S-X-E", "6S-N-E", "6D-E"}
+expensive_lemmas: set[str] = {
+    "G-LBES",
+    "G-LBEE",
+    "G-UBEE",
+    "G-E",
+    "6S-X-E",
+    "6S-N-E",
+    "6D-E",
+}
 
 for name, lemma in lemmas.items():
     if name not in expensive_lemmas:
