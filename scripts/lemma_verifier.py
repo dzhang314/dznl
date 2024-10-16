@@ -196,16 +196,16 @@ lemmas["G-RON"] = o_x <= n_x
 
 lemmas["G-LBES"] = z3.Or(
     z3.fpIsZero(s),
-    e_s - n_s > e_x - PRECISION_BV,
-    e_s - n_s > e_y - PRECISION_BV,
+    e_s - n_s >= e_x - n_x,
+    e_s - n_s >= e_y - n_y,
 )
 
 lemmas["G-UBES"] = z3.Or(e_s <= e_x + ONE_BV, e_s <= e_y + ONE_BV)
 
 lemmas["G-LBEE"] = z3.Or(
     z3.fpIsZero(e),
-    e_e - n_e > e_x - PRECISION_BV,
-    e_e - n_e > e_y - PRECISION_BV,
+    e_e - n_e >= e_x - n_x,
+    e_e - n_e >= e_y - n_y,
 )
 
 lemmas["G-UBEE"] = z3.Or(
@@ -310,6 +310,15 @@ lemmas["2BD-ZN-SE"] = z3.Implies(case_2bd_zn, s_e == s_y)
 lemmas["2BD-ZN-UBEE"] = z3.Implies(
     case_2bd_zn, e_e < e_x
 )  # cannot be strengthened by a constant
+
+lemmas["4AS-SS"] = z3.Implies(case_4as, s_s == s_x)  # cannot be strengthened
+lemmas["4AS-ES"] = z3.Implies(case_4as, z3.Or(e_s == e_x, e_s == e_x + ONE_BV))
+lemmas["4BS-SS"] = z3.Implies(case_4bs, s_s == s_y)  # cannot be strengthened
+lemmas["4BS-ES"] = z3.Implies(case_4bs, z3.Or(e_s == e_y, e_s == e_y + ONE_BV))
+lemmas["4AD-SS"] = z3.Implies(case_4ad, s_s == s_x)  # cannot be strengthened
+lemmas["4AD-ES"] = z3.Implies(case_4ad, z3.Or(e_s == e_x, e_s == e_x - ONE_BV))
+lemmas["4BD-SS"] = z3.Implies(case_4bd, s_s == s_y)  # cannot be strengthened
+lemmas["4BD-ES"] = z3.Implies(case_4bd, z3.Or(e_s == e_y, e_s == e_y - ONE_BV))
 
 lemmas["6S-X-SS"] = z3.Implies(case_6s_x, z3.And(s_s == s_x, s_s == s_y))
 lemmas["6S-X-ES"] = z3.Implies(

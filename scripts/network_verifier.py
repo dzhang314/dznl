@@ -234,21 +234,13 @@ def fp_two_sum(
     n_e = e.last_nonzero_bit
 
     solver.add(
-        z3.Or(
-            s.is_zero,
-            e_s - n_s > e_x - PRECISION,
-            e_s - n_s > e_y - PRECISION,
-        )
+        z3.Or(s.is_zero, e_s - n_s >= e_x - n_x, e_s - n_s >= e_y - n_y)
     )  # G-LBES
 
     solver.add(z3.Or(e_s <= e_x + 1, e_s <= e_y + 1))  # G-UBES
 
     solver.add(
-        z3.Or(
-            e.is_zero,
-            e_e - n_e > e_x - PRECISION,
-            e_e - n_e > e_y - PRECISION,
-        )
+        z3.Or(e.is_zero, e_e - n_e >= e_x - n_x, e_e - n_e >= e_y - n_y)
     )  # G-LBEE
 
     solver.add(
@@ -271,6 +263,10 @@ def fp_two_sum(
     case_2bd_zz = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x == 0, n_y == 0)
     case_2ad_zn = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x == 0, n_y != 0)
     case_2bd_zn = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x != 0, n_y == 0)
+    case_4as = z3.And(e_x - PRECISION < e_y, e_x - 1 > e_y, s_x == s_y)
+    case_4bs = z3.And(e_x > e_y - PRECISION, e_x < e_y - 1, s_x == s_y)
+    case_4ad = z3.And(e_x - PRECISION < e_y, e_x - 1 > e_y, s_x != s_y)
+    case_4bd = z3.And(e_x > e_y - PRECISION, e_x < e_y - 1, s_x != s_y)
     case_6s_x = z3.And(
         e_x == e_y,
         s_x == s_y,
@@ -333,6 +329,15 @@ def fp_two_sum(
     )  # 2BD-ZN-S
     solver.add(z3.Implies(case_2bd_zn, s_e == s_y))  # 2BD-ZN-SE
     solver.add(z3.Implies(case_2bd_zn, e_e < e_x))  # 2BD-ZN-UBEE
+
+    solver.add(z3.Implies(case_4as, s_s == s_x))  # 4AS-SS
+    solver.add(z3.Implies(case_4as, z3.Or(e_s == e_x, e_s == e_x + 1)))  # 4AS-ES
+    solver.add(z3.Implies(case_4bs, s_s == s_y))  # 4BS-SS
+    solver.add(z3.Implies(case_4bs, z3.Or(e_s == e_y, e_s == e_y + 1)))  # 4BS-ES
+    solver.add(z3.Implies(case_4ad, s_s == s_x))  # 4AD-SS
+    solver.add(z3.Implies(case_4ad, z3.Or(e_s == e_x, e_s == e_x - 1)))  # 4AD-ES
+    solver.add(z3.Implies(case_4bd, s_s == s_y))  # 4BD-SS
+    solver.add(z3.Implies(case_4bd, z3.Or(e_s == e_y, e_s == e_y - 1)))  # 4BD-ES
 
     solver.add(z3.Implies(case_6s_x, z3.And(s_s == s_x, s_s == s_y)))  # 6S-X-SS
     solver.add(z3.Implies(case_6s_x, z3.And(e_s == e_x + 1, e_s == e_y + 1)))  # 6S-X-ES

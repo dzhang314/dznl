@@ -131,72 +131,6 @@
 (define-fun n_s () (_ BitVec 16) (final_one_index s_mantissa))
 (define-fun n_e () (_ BitVec 16) (final_one_index e_mantissa))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; GENERAL THEOREMS
-
-; Theorem: 0 <= o_x <= n_x < p.
-
-(push 1)
-    (assert (not (and (bvule #x0000 o_x)
-                      (bvule o_x n_x)
-                      (bvult n_x p))))
-    (check-sat)
-(pop 1)
-
-; Theorem: Exactly one of z_x and o_x is zero.
-(push 1)
-    (assert (not (xor (= z_x #x0000) (= o_x #x0000))))
-    (check-sat)
-(pop 1)
-
-; Theorem: If z_x < p - 1, then z_x < n_x.
-
-(push 1)
-    ; Hypotheses:
-    (assert (bvult z_x (bvsub p #x0001)))
-    ; Conclusion:
-    (assert (not (bvult z_x n_x)))
-    (check-sat)
-(pop 1)
-
-; Theorem: If z_x == p - 1, then n_x == 0.
-
-(push 1)
-    ; Hypotheses:
-    (assert (= z_x (bvsub p #x0001)))
-    ; Conclusion:
-    (assert (not (= n_x #x0000)))
-    (check-sat)
-(pop 1)
-
-; The four preceding results also hold for y, s, and e in addition to x.
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal x)))
-    (assert (not (fp.isSubnormal y)))
-    (assert (not (fp.isSubnormal s)))
-    (assert (not (fp.isSubnormal e)))
-    ; Conclusion:
-    (assert (not (or (fp.isZero e)
-                     (bvugt (bvsub e_e n_e) (bvsub e_x p))
-                     (bvugt (bvsub e_e n_e) (bvsub e_y p)))))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert (not (fp.isSubnormal x)))
-    (assert (not (fp.isSubnormal y)))
-    (assert (not (fp.isSubnormal s)))
-    (assert (not (fp.isSubnormal e)))
-    ; Conclusion:
-    (assert (not (or (fp.isZero e)
-                     (bvult e_e (bvsub e_s p))
-                     (and (= e_e (bvsub e_s p))
-                          (= n_e #x0000)))))
-    (check-sat)
-(pop 1)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; CASE ANALYSIS
 
 ; Let e_min = min(e_x, e_y) and e_max = max(e_x, e_y). We split our
@@ -355,20 +289,6 @@
 (push 1)
     ; Hypotheses:
     (assert CASE_4AS)
-    (assert (not (fp.isSubnormal e)))
-    ; Conclusion:
-    (assert (not (and (= s_s s_x)
-                      (or (= e_s e_x) (= e_s (bvadd e_x #x0001)))
-                      (or (fp.isZero e)
-                          (bvule e_e (bvsub e_s p))
-                          (and (= e_e (bvsub e_s (bvsub p #x0001)))
-                               (= n_e #x0000))))))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert CASE_4AS)
     (assert (bvugt (bvsub e_x n_x) e_y))
     (assert (bvult (bvsub e_x p) (bvsub e_y n_y)))
     ; Conclusion:
@@ -389,20 +309,6 @@
 (push 1)
     ; Hypotheses:
     (assert CASE_4BS)
-    (assert (not (fp.isSubnormal e)))
-    ; Conclusion:
-    (assert (not (and (= s_s s_y)
-                      (or (= e_s e_y) (= e_s (bvadd e_y #x0001)))
-                      (or (fp.isZero e)
-                          (bvule e_e (bvsub e_s p))
-                          (and (= e_e (bvsub e_s (bvsub p #x0001)))
-                               (= n_e #x0000))))))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert CASE_4BS)
     (assert (bvult e_x (bvsub e_y n_y)))
     (assert (bvugt (bvsub e_x n_x) (bvsub e_y p)))
     ; Conclusion:
@@ -417,32 +323,6 @@
     (assert (bvugt (bvsub e_x n_x) (bvsub e_y p)))
     ; Conclusion:
     (assert (not (fp.isZero e)))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert CASE_4AD)
-    (assert (not (fp.isSubnormal e)))
-    ; Conclusion:
-    (assert (not (and (= s_s s_x)
-                      (or (= e_s e_x)
-                          (= e_s (bvsub e_x #x0001)))
-                      (or (fp.isZero e)
-                          (bvule e_e (bvsub e_s p))))))
-    (check-sat)
-(pop 1)
-
-(push 1)
-    ; Hypotheses:
-    (assert CASE_4BD)
-    (assert (not (fp.isSubnormal e)))
-    ; Conclusion:
-    (assert (not (and (= s_s s_y)
-                      (or (= e_s e_y)
-                          (= e_s (bvsub e_y #x0001)))
-                      (or (fp.isZero e)
-                          (bvule e_e (bvsub e_s p))))))
     (check-sat)
 (pop 1)
 
