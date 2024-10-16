@@ -351,7 +351,7 @@ lemmas["6D-UBES"] = z3.Implies(
 lemmas["6D-E"] = z3.Implies(case_6d, z3.fpIsZero(e))  # cannot be strengthened
 
 
-expensive_lemmas: set[str] = {"G-LBEE", "G-UBEE", "6D-E"}
+expensive_lemmas: set[str] = {"G-LBES", "G-LBEE", "G-UBEE", "6S-X-E", "6S-N-E", "6D-E"}
 
 for name, lemma in lemmas.items():
     if name not in expensive_lemmas:
