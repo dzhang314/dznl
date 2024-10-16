@@ -245,8 +245,24 @@ case_2ad_zn = z3.And(
 case_2bd_zn = z3.And(
     e_x == e_y - PRECISION_PLUS_ONE_BV, s_x != s_y, n_x != ZERO_BV, n_y == ZERO_BV
 )
-case_3as = z3.And(e_x - PRECISION_BV == e_y, s_x == s_y)
-case_3bs = z3.And(e_x == e_y - PRECISION_BV, s_x == s_y)
+case_3as_g = z3.And(
+    e_x - PRECISION_BV == e_y, s_x == s_y, o_x != PRECISION_MINUS_ONE_BV
+)
+case_3as_s = z3.And(
+    e_x - PRECISION_BV == e_y,
+    s_x == s_y,
+    o_x == PRECISION_MINUS_ONE_BV,
+    z3.Not(z3.fpIsZero(y)),
+)
+case_3bs_g = z3.And(
+    e_x == e_y - PRECISION_BV, s_x == s_y, o_y != PRECISION_MINUS_ONE_BV
+)
+case_3bs_s = z3.And(
+    e_x == e_y - PRECISION_BV,
+    s_x == s_y,
+    o_y == PRECISION_MINUS_ONE_BV,
+    z3.Not(z3.fpIsZero(x)),
+)
 case_3ad = z3.And(e_x - PRECISION_BV == e_y, s_x != s_y)
 case_3bd = z3.And(e_x == e_y - PRECISION_BV, s_x != s_y)
 case_4as = z3.And(e_x - PRECISION_BV < e_y, e_x - ONE_BV > e_y, s_x == s_y)
@@ -323,10 +339,14 @@ lemmas["2BD-ZN-UBEE"] = z3.Implies(
     case_2bd_zn, e_e < e_x
 )  # cannot be strengthened by a constant
 
-lemmas["3AS-SS"] = z3.Implies(case_3as, s_s == s_x)  # cannot be strengthened
-lemmas["3AS-ES"] = z3.Implies(case_3as, z3.Or(e_s == e_x, e_s == e_x + ONE_BV))
-lemmas["3BS-SS"] = z3.Implies(case_3bs, s_s == s_y)  # cannot be strengthened
-lemmas["3BS-ES"] = z3.Implies(case_3bs, z3.Or(e_s == e_y, e_s == e_y + ONE_BV))
+lemmas["3AS-G-SS"] = z3.Implies(case_3as_g, s_s == s_x)  # cannot be strengthened
+lemmas["3AS-G-ES"] = z3.Implies(case_3as_g, e_s == e_x)
+lemmas["3AS-S-SS"] = z3.Implies(case_3as_s, s_s == s_x)  # cannot be strengthened
+lemmas["3AS-S-ES"] = z3.Implies(case_3as_s, e_s == e_x + ONE_BV)
+lemmas["3BS-G-SS"] = z3.Implies(case_3bs_g, s_s == s_y)  # cannot be strengthened
+lemmas["3BS-G-ES"] = z3.Implies(case_3bs_g, e_s == e_y)
+lemmas["3BS-S-SS"] = z3.Implies(case_3bs_s, s_s == s_y)  # cannot be strengthened
+lemmas["3BS-S-ES"] = z3.Implies(case_3bs_s, e_s == e_y + ONE_BV)
 lemmas["3AD-SS"] = z3.Implies(case_3ad, s_s == s_x)  # cannot be strengthened
 lemmas["3AD-ES"] = z3.Implies(case_3ad, z3.Or(e_s == e_x, e_s == e_x - ONE_BV))
 lemmas["3BD-SS"] = z3.Implies(case_3bd, s_s == s_y)  # cannot be strengthened

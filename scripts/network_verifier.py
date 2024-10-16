@@ -275,8 +275,20 @@ def fp_two_sum(
     case_2bd_zz = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x == 0, n_y == 0)
     case_2ad_zn = z3.And(e_x - (PRECISION + 1) == e_y, s_x != s_y, n_x == 0, n_y != 0)
     case_2bd_zn = z3.And(e_x == e_y - (PRECISION + 1), s_x != s_y, n_x != 0, n_y == 0)
-    case_3as = z3.And(e_x - PRECISION == e_y, s_x == s_y)
-    case_3bs = z3.And(e_x == e_y - PRECISION, s_x == s_y)
+    case_3as_g = z3.And(e_x - PRECISION == e_y, s_x == s_y, o_x != PRECISION - 1)
+    case_3as_s = z3.And(
+        e_x - PRECISION == e_y,
+        s_x == s_y,
+        o_x == PRECISION - 1,
+        z3.Not(y.is_zero),
+    )
+    case_3bs_g = z3.And(e_x == e_y - PRECISION, s_x == s_y, o_y != PRECISION - 1)
+    case_3bs_s = z3.And(
+        e_x == e_y - PRECISION,
+        s_x == s_y,
+        o_y == PRECISION - 1,
+        z3.Not(x.is_zero),
+    )
     case_3ad = z3.And(e_x - PRECISION == e_y, s_x != s_y)
     case_3bd = z3.And(e_x == e_y - PRECISION, s_x != s_y)
     case_4as = z3.And(e_x - PRECISION < e_y, e_x - 1 > e_y, s_x == s_y)
@@ -348,10 +360,14 @@ def fp_two_sum(
     solver.add(z3.Implies(case_2bd_zn, s_e == s_y))  # 2BD-ZN-SE
     solver.add(z3.Implies(case_2bd_zn, e_e < e_x))  # 2BD-ZN-UBEE
 
-    solver.add(z3.Implies(case_3as, s_s == s_x))  # 3AS-SS
-    solver.add(z3.Implies(case_3as, z3.Or(e_s == e_x, e_s == e_x + 1)))  # 3AS-ES
-    solver.add(z3.Implies(case_3bs, s_s == s_y))  # 3BS-SS
-    solver.add(z3.Implies(case_3bs, z3.Or(e_s == e_y, e_s == e_y + 1)))  # 3BS-ES
+    solver.add(z3.Implies(case_3as_g, s_s == s_x))  # 3AS-G-SS
+    solver.add(z3.Implies(case_3as_g, e_s == e_x))  # 3AS-G-ES
+    solver.add(z3.Implies(case_3as_s, s_s == s_x))  # 3AS-S-SS
+    solver.add(z3.Implies(case_3as_s, e_s == e_x + 1))  # 3AS-S-ES
+    solver.add(z3.Implies(case_3bs_g, s_s == s_y))  # 3BS-G-SS
+    solver.add(z3.Implies(case_3bs_g, e_s == e_y))  # 3BS-G-ES
+    solver.add(z3.Implies(case_3bs_s, s_s == s_y))  # 3BS-S-SS
+    solver.add(z3.Implies(case_3bs_s, e_s == e_y + 1))  # 3BS-S-ES
     solver.add(z3.Implies(case_3ad, s_s == s_x))  # 3AD-SS
     solver.add(z3.Implies(case_3ad, z3.Or(e_s == e_x, e_s == e_x - 1)))  # 3AD-ES
     solver.add(z3.Implies(case_3bd, s_s == s_y))  # 3BD-SS

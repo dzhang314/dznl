@@ -201,9 +201,7 @@
     (assert CASE_3AS_G)
     (assert (not (fp.isSubnormal y)))
     ; Conclusion:
-    (assert (not (and (= s_s s_x)
-                      (= e_s e_x)
-                      (or (and (= s x) (fp.eq e y))
+    (assert (not (and (or (and (= s x) (fp.eq e y))
                           (and (not (= s_e s_x))
                                (bvult e_e e_y))
                           (and (not (= s_e s_x))
@@ -218,9 +216,7 @@
     (assert CASE_3BS_G)
     (assert (not (fp.isSubnormal x)))
     ; Conclusion:
-    (assert (not (and (= s_s s_y)
-                      (= e_s e_y)
-                      (or (and (= s y) (fp.eq e x))
+    (assert (not (and (or (and (= s y) (fp.eq e x))
                           (and (not (= s_e s_y))
                                (bvult e_e e_x))
                           (and (not (= s_e s_y))
@@ -235,9 +231,7 @@
     (assert CASE_3AS_S)
     (assert (not (fp.isSubnormal y)))
     ; Conclusion:
-    (assert (not (and (= s_s s_x)
-                      (= e_s (bvadd e_x #x0001))
-                      (not (= s_e s_x))
+    (assert (not (and (not (= s_e s_x))
                       (or (bvult e_e e_y)
                           (and (= e_e e_y)
                                (= n_y #x0000)
@@ -250,9 +244,7 @@
     (assert CASE_3BS_S)
     (assert (not (fp.isSubnormal x)))
     ; Conclusion:
-    (assert (not (and (= s_s s_y)
-                      (= e_s (bvadd e_y #x0001))
-                      (not (= s_e s_y))
+    (assert (not (and (not (= s_e s_y))
                       (or (bvult e_e e_x)
                           (and (= e_e e_x)
                                (= n_x #x0000)
