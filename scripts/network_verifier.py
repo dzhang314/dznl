@@ -253,6 +253,13 @@ def fp_two_sum(
 
     solver.add(
         z3.Implies(
+            z3.And(e_x - (z_x + 1) > e_y, z_x >= 1, z_x < PRECISION - 1),
+            z3.And(s_s == s_x, e_s == e_x, z_s >= z_x - 1),
+        )
+    )  # G-NO-S
+
+    solver.add(
+        z3.Implies(
             z3.Or(
                 z3.And(e_x - n_x > e_y, e_x - PRECISION < e_y - n_y),
                 z3.And(e_x - (o_x + 1) > e_y, e_x - PRECISION < e_y - n_y),
