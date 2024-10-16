@@ -214,7 +214,7 @@ lemmas["G-UBEE"] = z3.Or(
     z3.And(e_e == e_s - PRECISION_BV, n_e == ZERO_BV),
 )
 
-lemmas["G-E"] = z3.Implies(
+lemmas["G-NOC-E"] = z3.Implies(
     z3.Or(  # None of the following strict inequalities can be weakened.
         z3.And(e_x - n_x > e_y, e_x - PRECISION_BV < e_y - n_y),
         z3.And(e_x < e_y - n_y, e_x - n_x > e_y - PRECISION_BV),

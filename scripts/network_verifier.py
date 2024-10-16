@@ -259,7 +259,7 @@ def fp_two_sum(
             ),
             e.is_zero,
         )
-    )  # G-E
+    )  # G-NOC-E
 
     case_0a = y.is_zero
     case_0b = x.is_zero
