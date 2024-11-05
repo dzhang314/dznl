@@ -191,6 +191,10 @@ function main(
     _p = Int8(precision(T))
     _e_min = exponent(floatmin(T))
 
+    handled_zero = 0
+    handled_nonoverlapping = 0
+    handled_test_case = 0
+
     unhandled_none = 0
     unhandled_single = 0
     unhandled_multiple = 0
@@ -203,32 +207,44 @@ function main(
 
             if (rx == pos_zero) && (ry == pos_zero)
                 @assert only(s) == (pos_zero, pos_zero)
+                handled_zero += 1
             elseif (rx == pos_zero) && (ry == neg_zero)
                 @assert only(s) == (pos_zero, pos_zero)
+                handled_zero += 1
             elseif (rx == neg_zero) && (ry == pos_zero)
                 @assert only(s) == (pos_zero, pos_zero)
+                handled_zero += 1
             elseif (rx == neg_zero) && (ry == neg_zero)
                 @assert only(s) == (neg_zero, pos_zero)
+                handled_zero += 1
 
             elseif ry == pos_zero
                 @assert only(s) == (rx, pos_zero)
+                handled_zero += 1
             elseif ry == neg_zero
                 @assert only(s) == (rx, pos_zero)
+                handled_zero += 1
             elseif rx == pos_zero
                 @assert only(s) == (ry, pos_zero)
+                handled_zero += 1
             elseif rx == neg_zero
                 @assert only(s) == (ry, pos_zero)
+                handled_zero += 1
 
             elseif ex - (_p + 1) > ey
                 @assert only(s) == (rx, ry)
+                handled_nonoverlapping += 1
             elseif ex < ey - (_p + 1)
                 @assert only(s) == (ry, rx)
+                handled_nonoverlapping += 1
             elseif (ex - (_p + 1) == ey) && ((sx == sy) || (nx != 0) ||
                                              ((nx == 0) && (ny == 0)))
                 @assert only(s) == (rx, ry)
+                handled_nonoverlapping += 1
             elseif (ex == ey - (_p + 1)) && ((sx == sy) || (ny != 0) ||
                                              ((nx == 0) && (ny == 0)))
                 @assert only(s) == (ry, rx)
+                handled_nonoverlapping += 1
 
             elseif ((sx == sy) &&
                     (ex - ey < _p - 1) &&
@@ -253,6 +269,32 @@ function main(
                     push!(r, (rs, (sx, ee, my - (zy + _one), _zero, me, ne)))
                 end
                 @assert r == s
+                handled_test_case += 1
+
+            elseif ((sx == sy) &&
+                    (ey - ex < _p - 1) &&
+                    (oy > 0) &&
+                    (oy < my - 1) &&
+                    (my < ey - ex) &&
+                    (zx >= _p - (ey - ex)) &&
+                    (zx < mx) &&
+                    (mx < _p - 1))
+                rs = (sy, ey, _zero, oy, ey - ex, _p - _one)
+                ee = ex - (zx + _one)
+                me = _p - _one
+                ne = _p - (zx + _two)
+                r = PairSummary[]
+                if ee >= _e_min
+                    for oe = _one:mx-(zx+_two)
+                        push!(r, (rs, (sy, ee, _zero, oe, me, ne)))
+                    end
+                    for ze = _one:mx-(zx+_three)
+                        push!(r, (rs, (sy, ee, ze, _zero, me, ne)))
+                    end
+                    push!(r, (rs, (sy, ee, mx - (zx + _one), _zero, me, ne)))
+                end
+                @assert r == s
+                handled_test_case += 1
 
             else
                 if isempty(s)
@@ -261,12 +303,30 @@ function main(
                     unhandled_single += 1
                 else
                     unhandled_multiple += 1
+                    # println(summary_to_string(T, rx), ' ', rx)
+                    # println(summary_to_string(T, ry), ' ', ry)
+                    # println()
+                    # for (rs, re) in s
+                    #     println(summary_to_string(T, rs), ' ', rs)
+                    #     println(summary_to_string(T, re), ' ', re)
+                    #     println()
+                    # end
+                    # println('-'^80)
+                    # println()
                 end
             end
         end
     end
 
+    handled = handled_zero + handled_nonoverlapping + handled_test_case
     unhandled = unhandled_none + unhandled_single + unhandled_multiple
+    @assert handled + unhandled == length(summaries)^2
+
+    println(handled, " out of ", length(summaries)^2, " cases handled.")
+    println(handled_zero, " cases with zero inputs.")
+    println(handled_nonoverlapping, " cases with non-overlapping inputs.")
+    println(handled_test_case, " test cases.")
+
     println(unhandled, " out of ", length(summaries)^2, " cases unhandled.")
     println(unhandled_none, " cases with no summaries.")
     println(unhandled_single, " cases with a single summary.")
