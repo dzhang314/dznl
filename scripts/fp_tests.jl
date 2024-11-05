@@ -55,6 +55,67 @@ const FLOAT16_NEGATIVE_ZERO_SUMMARY = summarize(-zero(Float16))
 const FLOAT16_SUMMARIES = all_summaries(Float16)
 
 
+function summary_to_string(
+    ::Type{T},
+    (s, e, z, o, m, n)::FloatSummary,
+) where {T}
+
+    _p = precision(T)
+    _e_max = exponent(floatmax(T))
+    _e_min = exponent(floatmin(T))
+    result = ['0' for _ = 1:(_e_max-_e_min+_p)]
+
+    if e >= _e_min
+        mantissa = ['?' for _ = 1:_p-1]
+
+        # z: number of leading zeros
+        for i = 1:z
+            @assert (mantissa[i] == '?') || (mantissa[i] == '0')
+            mantissa[i] = '0'
+        end
+        if z + 1 < _p
+            @assert (mantissa[z+1] == '?') || (mantissa[z+1] == '1')
+            mantissa[z+1] = '1'
+        end
+
+        # o: number of leading ones
+        for i = 1:o
+            @assert (mantissa[i] == '?') || (mantissa[i] == '1')
+            mantissa[i] = '1'
+        end
+        if o + 1 < _p
+            @assert (mantissa[o+1] == '?') || (mantissa[o+1] == '0')
+            mantissa[o+1] = '0'
+        end
+
+        # m: index of final zero
+        if m > 0
+            @assert (mantissa[m] == '?') || (mantissa[m] == '0')
+            mantissa[m] = '0'
+        end
+        for i = m+1:_p-1
+            @assert (mantissa[i] == '?') || (mantissa[i] == '1')
+            mantissa[i] = '1'
+        end
+
+        # n: index of final one
+        if n > 0
+            @assert (mantissa[n] == '?') || (mantissa[n] == '1')
+            mantissa[n] = '1'
+        end
+        for i = n+1:_p-1
+            @assert (mantissa[i] == '?') || (mantissa[i] == '0')
+            mantissa[i] = '0'
+        end
+
+        result[_e_max-e+1] = '1'
+        result[_e_max-e+2:_e_max-e+_p] .= mantissa
+    end
+
+    return (s ? '-' : '+') * String(result)
+end
+
+
 function all_two_sum_summaries(::Type{T}, ::Type{U}) where {T,U}
     result = Set{Tuple{PairSummary,PairSummary}}()
     for i = typemin(U):typemax(U)
@@ -121,12 +182,16 @@ function main(
     summaries::Vector{FloatSummary},
     two_sum_summaries::Vector{Tuple{PairSummary,PairSummary}},
 ) where {T}
+
     _zero = zero(Int8)
     _one = one(Int8)
     _two = _one + _one
     _three = _two + _one
+
+    _p = Int8(precision(T))
+    _e_min = exponent(floatmin(T))
+
     unhandled = 0
-    p = Int8(precision(Float16))
     for rx in summaries
         for ry in summaries
             s = lookup_summaries(two_sum_summaries, rx, ry)
@@ -151,50 +216,53 @@ function main(
             elseif rx == neg_zero
                 @assert only(s) == (ry, pos_zero)
 
-            elseif ex - (p + 1) > ey
+            elseif ex - (_p + 1) > ey
                 @assert only(s) == (rx, ry)
-            elseif ex < ey - (p + 1)
+            elseif ex < ey - (_p + 1)
                 @assert only(s) == (ry, rx)
-            elseif (ex - (p + 1) == ey) && ((sx == sy) || (nx != 0) ||
-                                            ((nx == 0) && (ny == 0)))
+            elseif (ex - (_p + 1) == ey) && ((sx == sy) || (nx != 0) ||
+                                             ((nx == 0) && (ny == 0)))
                 @assert only(s) == (rx, ry)
-            elseif (ex == ey - (p + 1)) && ((sx == sy) || (ny != 0) ||
-                                            ((nx == 0) && (ny == 0)))
+            elseif (ex == ey - (_p + 1)) && ((sx == sy) || (ny != 0) ||
+                                             ((nx == 0) && (ny == 0)))
                 @assert only(s) == (ry, rx)
 
             elseif ((sx == sy) &&
-                    (ex - ey < p - 1) &&
+                    (ex - ey < _p - 1) &&
                     (ox > 0) &&
                     (ox < mx - 1) &&
                     (mx < ex - ey) &&
-                    (zy >= p - (ex - ey)) &&
+                    (zy >= _p - (ex - ey)) &&
                     (zy < my) &&
-                    (my < p - 1))
-                rs = (sx, ex, _zero, ox, ex - ey, p - _one)
+                    (my < _p - 1))
+                rs = (sx, ex, _zero, ox, ex - ey, _p - _one)
                 ee = ey - (zy + _one)
-                me = p - _one
-                ne = p - (zy + _two)
-                result = PairSummary[]
-                if ee >= exponent(floatmin(Float16))
+                me = _p - _one
+                ne = _p - (zy + _two)
+                r = PairSummary[]
+                if ee >= _e_min
                     for oe = _one:my-(zy+_two)
-                        push!(result, (rs, (sx, ee, _zero, oe, me, ne)))
+                        push!(r, (rs, (sx, ee, _zero, oe, me, ne)))
                     end
                     for ze = _one:my-(zy+_three)
-                        push!(result, (rs, (sx, ee, ze, _zero, me, ne)))
+                        push!(r, (rs, (sx, ee, ze, _zero, me, ne)))
                     end
-                    push!(result, (rs, (sx, ee, my - (zy + _one), _zero, me, ne)))
+                    push!(r, (rs, (sx, ee, my - (zy + _one), _zero, me, ne)))
                 end
-                @assert s == result
+                @assert r == s
 
             else
                 unhandled += 1
-                if length(s) == 1
-                    (rs, re) = only(s)
-                    if (rs == rx && re == ry) || (rs == ry && re == rx)
-                        @show (rx, ry)
-                        @show (rs, re)
-                    end
+                println(summary_to_string(T, rx), ' ', rx)
+                println(summary_to_string(T, ry), ' ', ry)
+                println()
+                for (rs, re) in s
+                    println(summary_to_string(T, rs), ' ', rs)
+                    println(summary_to_string(T, re), ' ', re)
+                    println()
                 end
+                println('-'^80)
+                println()
             end
         end
     end
