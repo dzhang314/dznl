@@ -191,7 +191,10 @@ function main(
     _p = Int8(precision(T))
     _e_min = exponent(floatmin(T))
 
-    unhandled = 0
+    unhandled_none = 0
+    unhandled_single = 0
+    unhandled_multiple = 0
+
     for rx in summaries
         for ry in summaries
             s = lookup_summaries(two_sum_summaries, rx, ry)
@@ -252,22 +255,22 @@ function main(
                 @assert r == s
 
             else
-                unhandled += 1
-                println(summary_to_string(T, rx), ' ', rx)
-                println(summary_to_string(T, ry), ' ', ry)
-                println()
-                for (rs, re) in s
-                    println(summary_to_string(T, rs), ' ', rs)
-                    println(summary_to_string(T, re), ' ', re)
-                    println()
+                if isempty(s)
+                    unhandled_none += 1
+                elseif isone(length(s))
+                    unhandled_single += 1
+                else
+                    unhandled_multiple += 1
                 end
-                println('-'^80)
-                println()
             end
         end
     end
 
+    unhandled = unhandled_none + unhandled_single + unhandled_multiple
     println(unhandled, " out of ", length(summaries)^2, " cases unhandled.")
+    println(unhandled_none, " cases with no summaries.")
+    println(unhandled_single, " cases with a single summary.")
+    println(unhandled_multiple, " cases with multiple summaries.")
 end
 
 
