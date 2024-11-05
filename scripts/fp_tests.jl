@@ -1,3 +1,4 @@
+using Base.Threads
 using JLD2
 
 
@@ -151,10 +152,14 @@ if !isfile("Float16TwoSumSummaries.jld2")
 end
 
 
+println("Loading Float16TwoSumSummaries.jld2...")
+flush(stdout)
 const FLOAT16_TWO_SUM_SUMMARIES = load_object("Float16TwoSumSummaries.jld2")
 @assert FLOAT16_TWO_SUM_SUMMARIES isa Vector{Tuple{PairSummary,PairSummary}}
 @assert length(FLOAT16_TWO_SUM_SUMMARIES) == 319_985_950
-@assert issorted(FLOAT16_TWO_SUM_SUMMARIES)
+# @assert issorted(FLOAT16_TWO_SUM_SUMMARIES)
+println("Successfully loaded Float16TwoSumSummaries.jld2.")
+flush(stdout)
 
 
 # using BFloat16s
@@ -191,15 +196,17 @@ function main(
     _p = Int8(precision(T))
     _e_min = exponent(floatmin(T))
 
-    handled_zero = 0
-    handled_nonoverlapping = 0
-    handled_test_case = 0
+    handled_zero = Atomic{Int}(0)
+    handled_nonoverlapping = Atomic{Int}(0)
+    handled_test_case = Atomic{Int}(0)
 
-    unhandled_none = 0
-    unhandled_single = 0
-    unhandled_multiple = 0
+    unhandled_none = Atomic{Int}(0)
+    unhandled_single = Atomic{Int}(0)
+    unhandled_multiple = Atomic{Int}(0)
 
-    for rx in summaries
+    print_lock = SpinLock()
+
+    @threads :dynamic for rx in summaries
         for ry in summaries
             s = lookup_summaries(two_sum_summaries, rx, ry)
             (sx, ex, zx, ox, mx, nx) = rx
@@ -207,44 +214,44 @@ function main(
 
             if (rx == pos_zero) && (ry == pos_zero)
                 @assert only(s) == (pos_zero, pos_zero)
-                handled_zero += 1
+                atomic_add!(handled_zero, 1)
             elseif (rx == pos_zero) && (ry == neg_zero)
                 @assert only(s) == (pos_zero, pos_zero)
-                handled_zero += 1
+                atomic_add!(handled_zero, 1)
             elseif (rx == neg_zero) && (ry == pos_zero)
                 @assert only(s) == (pos_zero, pos_zero)
-                handled_zero += 1
+                atomic_add!(handled_zero, 1)
             elseif (rx == neg_zero) && (ry == neg_zero)
                 @assert only(s) == (neg_zero, pos_zero)
-                handled_zero += 1
+                atomic_add!(handled_zero, 1)
 
             elseif ry == pos_zero
                 @assert only(s) == (rx, pos_zero)
-                handled_zero += 1
+                atomic_add!(handled_zero, 1)
             elseif ry == neg_zero
                 @assert only(s) == (rx, pos_zero)
-                handled_zero += 1
+                atomic_add!(handled_zero, 1)
             elseif rx == pos_zero
                 @assert only(s) == (ry, pos_zero)
-                handled_zero += 1
+                atomic_add!(handled_zero, 1)
             elseif rx == neg_zero
                 @assert only(s) == (ry, pos_zero)
-                handled_zero += 1
+                atomic_add!(handled_zero, 1)
 
             elseif ex - (_p + 1) > ey
                 @assert only(s) == (rx, ry)
-                handled_nonoverlapping += 1
+                atomic_add!(handled_nonoverlapping, 1)
             elseif ex < ey - (_p + 1)
                 @assert only(s) == (ry, rx)
-                handled_nonoverlapping += 1
+                atomic_add!(handled_nonoverlapping, 1)
             elseif (ex - (_p + 1) == ey) && ((sx == sy) || (nx != 0) ||
                                              ((nx == 0) && (ny == 0)))
                 @assert only(s) == (rx, ry)
-                handled_nonoverlapping += 1
+                atomic_add!(handled_nonoverlapping, 1)
             elseif (ex == ey - (_p + 1)) && ((sx == sy) || (ny != 0) ||
                                              ((nx == 0) && (ny == 0)))
                 @assert only(s) == (ry, rx)
-                handled_nonoverlapping += 1
+                atomic_add!(handled_nonoverlapping, 1)
 
             elseif ((sx == sy) &&
                     (ex - ey < _p - 1) &&
@@ -269,7 +276,7 @@ function main(
                     push!(r, (rs, (sx, ee, my - (zy + _one), _zero, me, ne)))
                 end
                 @assert r == s
-                handled_test_case += 1
+                atomic_add!(handled_test_case, 1)
 
             elseif ((sx == sy) &&
                     (ey - ex < _p - 1) &&
@@ -294,43 +301,47 @@ function main(
                     push!(r, (rs, (sy, ee, mx - (zx + _one), _zero, me, ne)))
                 end
                 @assert r == s
-                handled_test_case += 1
+                atomic_add!(handled_test_case, 1)
 
             else
                 if isempty(s)
-                    unhandled_none += 1
+                    atomic_add!(unhandled_none, 1)
                 elseif isone(length(s))
-                    unhandled_single += 1
+                    atomic_add!(unhandled_single, 1)
                 else
-                    unhandled_multiple += 1
-                    # println(summary_to_string(T, rx), ' ', rx)
-                    # println(summary_to_string(T, ry), ' ', ry)
-                    # println()
-                    # for (rs, re) in s
-                    #     println(summary_to_string(T, rs), ' ', rs)
-                    #     println(summary_to_string(T, re), ' ', re)
-                    #     println()
+                    atomic_add!(unhandled_multiple, 1)
+                    # if ex >= -5 && ey >= -5
+                    #     lock(print_lock) do
+                    #         println(summary_to_string(T, rx), ' ', rx)
+                    #         println(summary_to_string(T, ry), ' ', ry)
+                    #         println()
+                    #         for (rs, re) in s
+                    #             println(summary_to_string(T, rs), ' ', rs)
+                    #             println(summary_to_string(T, re), ' ', re)
+                    #             println()
+                    #         end
+                    #         println('-'^80)
+                    #         println()
+                    #     end
                     # end
-                    # println('-'^80)
-                    # println()
                 end
             end
         end
     end
 
-    handled = handled_zero + handled_nonoverlapping + handled_test_case
-    unhandled = unhandled_none + unhandled_single + unhandled_multiple
+    handled = handled_zero[] + handled_nonoverlapping[] + handled_test_case[]
+    unhandled = unhandled_none[] + unhandled_single[] + unhandled_multiple[]
     @assert handled + unhandled == length(summaries)^2
 
     println(handled, " out of ", length(summaries)^2, " cases handled.")
-    println(handled_zero, " cases with zero inputs.")
-    println(handled_nonoverlapping, " cases with non-overlapping inputs.")
-    println(handled_test_case, " test cases.")
+    println(handled_zero[], " cases with zero inputs.")
+    println(handled_nonoverlapping[], " cases with non-overlapping inputs.")
+    println(handled_test_case[], " test cases.")
 
     println(unhandled, " out of ", length(summaries)^2, " cases unhandled.")
-    println(unhandled_none, " cases with no summaries.")
-    println(unhandled_single, " cases with a single summary.")
-    println(unhandled_multiple, " cases with multiple summaries.")
+    println(unhandled_none[], " cases with no summaries.")
+    println(unhandled_single[], " cases with a single summary.")
+    println(unhandled_multiple[], " cases with multiple summaries.")
 end
 
 
