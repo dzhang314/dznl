@@ -1,212 +1,244 @@
-@inline expnt(x::Float16) = Int((reinterpret(UInt16, x) >> 10) & 0x1F) - 15
-@inline expnt(x::Float32) = Int((reinterpret(UInt32, x) >> 23) & 0xFF) - 127
-@inline expnt(x::Float64) = Int((reinterpret(UInt64, x) >> 52) & 0x7FF) - 1023
+using JLD2
 
 
-@assert iszero(expnt(one(Float16)))
-@assert iszero(expnt(one(Float32)))
-@assert iszero(expnt(one(Float64)))
+const FloatSummary = Tuple{Bool,Int8,Int8,Int8,Int8,Int8}
+const PairSummary = Tuple{FloatSummary,FloatSummary}
 
 
-function generate_test_values(
+@inline function summarize(x::T, ::Type{U}) where {T,U}
+    _bit_size = 8 * sizeof(T)
+    _mantissa_width = precision(T) - 1
+    _sign_exponent_width = _bit_size - _mantissa_width
+    _exponent_width = _sign_exponent_width - 1
+    _one = one(U)
+    _exponent_mask = ((_one << _exponent_width) - _one) << _mantissa_width
+    _exponent_bias = (1 << (_exponent_width - 1)) - 1
+    _mantissa_mask = (_one << _mantissa_width) - _one
+    _shifted_mask = _mantissa_mask << _sign_exponent_width
+    k = reinterpret(U, x)
+    return (signbit(x),
+        Int8(Int((k & _exponent_mask) >> _mantissa_width) - _exponent_bias),
+        Int8(leading_zeros((k << _sign_exponent_width) | ~_shifted_mask)),
+        Int8(leading_ones((k << _sign_exponent_width) & _shifted_mask)),
+        Int8(_mantissa_width - trailing_ones(k & _mantissa_mask)),
+        Int8(_mantissa_width - trailing_zeros(k | ~_mantissa_mask)))
+end
+
+
+@inline summarize(x::Float16) = summarize(x, UInt16)
+@inline summarize(x::Float32) = summarize(x, UInt32)
+@inline summarize(x::Float64) = summarize(x, UInt64)
+
+
+@inline isnormal(x) = isfinite(x) & ~issubnormal(x)
+
+
+function all_summaries(::Type{T}, ::Type{U}) where {T,U}
+    result = Set{FloatSummary}()
+    for i = typemin(U):typemax(U)
+        x = reinterpret(T, i)
+        if isnormal(x)
+            push!(result, summarize(x, U))
+        end
+    end
+    return sort!(collect(result))
+end
+
+
+@inline all_summaries(::Type{Float16}) = all_summaries(Float16, UInt16)
+@inline all_summaries(::Type{Float32}) = all_summaries(Float32, UInt32)
+@inline all_summaries(::Type{Float64}) = all_summaries(Float64, UInt64)
+
+
+const FLOAT16_POSITIVE_ZERO_SUMMARY = summarize(zero(Float16))
+const FLOAT16_NEGATIVE_ZERO_SUMMARY = summarize(-zero(Float16))
+const FLOAT16_SUMMARIES = all_summaries(Float16)
+
+
+function all_two_sum_summaries(::Type{T}, ::Type{U}) where {T,U}
+    result = Set{Tuple{PairSummary,PairSummary}}()
+    for i = typemin(U):typemax(U)
+        x = reinterpret(T, i)
+        if isnormal(x)
+            for j = typemin(U):typemax(U)
+                y = reinterpret(T, j)
+                if isnormal(y)
+                    s = x + y
+                    if isnormal(s)
+                        x_eff = s - y
+                        y_eff = s - x_eff
+                        x_err = x - x_eff
+                        y_err = y - y_eff
+                        e = x_err + y_err
+                        if isnormal(e)
+                            push!(result, (
+                                (summarize(x), summarize(y)),
+                                (summarize(s), summarize(e))))
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return sort!(collect(result))
+end
+
+
+if !isfile("Float16TwoSumSummaries.jld2")
+    save_object("Float16TwoSumSummaries.jld2",
+        all_two_sum_summaries(Float16, UInt16))
+end
+
+
+const FLOAT16_TWO_SUM_SUMMARIES = load_object("Float16TwoSumSummaries.jld2")
+@assert FLOAT16_TWO_SUM_SUMMARIES isa Vector{Tuple{PairSummary,PairSummary}}
+@assert length(FLOAT16_TWO_SUM_SUMMARIES) == 319_985_950
+@assert issorted(FLOAT16_TWO_SUM_SUMMARIES)
+
+
+# using BFloat16s
+# @inline summarize(x::BFloat16) = summarize(x, UInt16)
+# @inline Base.issubnormal(x::BFloat16) = issubnormal(Float32(x))
+# @inline all_summaries(::Type{BFloat16}) = all_summaries(BFloat16, UInt16)
+# const BFLOAT16_SUMMARIES = all_summaries(BFloat16, UInt16)
+# if !isfile("BFloat16TwoSumSummaries.jld2")
+#     save_object("BFloat16TwoSumSummaries.jld2",
+#         all_two_sum_summaries(BFloat16, UInt16))
+# end
+
+
+lookup_summaries(
+    s::AbstractVector{Tuple{PairSummary,PairSummary}},
+    rx::FloatSummary,
+    ry::FloatSummary,
+) = last.(view(s, searchsorted(s, ((rx, ry), (rx, ry)); by=first)))
+
+
+function main(
     ::Type{T},
-    num_random_values::Int,
-    exponent_min::Int,
-    exponent_max::Int,
+    pos_zero::FloatSummary,
+    neg_zero::FloatSummary,
+    summaries::Vector{FloatSummary},
+    two_sum_summaries::Vector{Tuple{PairSummary,PairSummary}},
 ) where {T}
-
-    result = T[]
-    _zero = zero(T)
-    push!(result, +_zero)
-    push!(result, -_zero)
-
-    _one = one(T)
-    _one_plus_eps = nextfloat(_one)
-    _one_plus_2eps = nextfloat(_one_plus_eps)
+    _zero = zero(Int8)
+    _one = one(Int8)
     _two = _one + _one
-    _two_minus_eps = prevfloat(_two)
-    _two_minus_2eps = prevfloat(_two_minus_eps)
-    @assert iszero(expnt(_one))
-    @assert iszero(expnt(_one_plus_eps))
-    @assert iszero(expnt(_one_plus_2eps))
-    @assert iszero(expnt(_two_minus_eps))
-    @assert iszero(expnt(_two_minus_2eps))
+    _three = _two + _one
+    unhandled = 0
+    p = Int8(precision(Float16))
+    for rx in summaries
+        for ry in summaries
+            s = lookup_summaries(two_sum_summaries, rx, ry)
+            (sx, ex, zx, ox, mx, nx) = rx
+            (sy, ey, zy, oy, my, ny) = ry
 
-    for e = exponent_min:exponent_max
-        push!(result, +ldexp(_one, e))
-        push!(result, -ldexp(_one, e))
-        push!(result, +ldexp(_one_plus_eps, e))
-        push!(result, -ldexp(_one_plus_eps, e))
-        push!(result, +ldexp(_one_plus_2eps, e))
-        push!(result, -ldexp(_one_plus_2eps, e))
-        push!(result, +ldexp(_two_minus_eps, e))
-        push!(result, -ldexp(_two_minus_eps, e))
-        push!(result, +ldexp(_two_minus_2eps, e))
-        push!(result, -ldexp(_two_minus_2eps, e))
-    end
+            if (rx == pos_zero) && (ry == pos_zero)
+                @assert only(s) == (pos_zero, pos_zero)
+            elseif (rx == pos_zero) && (ry == neg_zero)
+                @assert only(s) == (pos_zero, pos_zero)
+            elseif (rx == neg_zero) && (ry == pos_zero)
+                @assert only(s) == (pos_zero, pos_zero)
+            elseif (rx == neg_zero) && (ry == neg_zero)
+                @assert only(s) == (neg_zero, pos_zero)
 
-    for _ = 1:num_random_values
-        e = rand(exponent_min:exponent_max)
-        x = rand(T)
-        push!(result, +ldexp(x, e))
-        push!(result, -ldexp(x, e))
-    end
+            elseif ry == pos_zero
+                @assert only(s) == (rx, pos_zero)
+            elseif ry == neg_zero
+                @assert only(s) == (rx, pos_zero)
+            elseif rx == pos_zero
+                @assert only(s) == (ry, pos_zero)
+            elseif rx == neg_zero
+                @assert only(s) == (ry, pos_zero)
 
-    return result
-end
+            elseif ex - (p + 1) > ey
+                @assert only(s) == (rx, ry)
+            elseif ex < ey - (p + 1)
+                @assert only(s) == (ry, rx)
+            elseif (ex - (p + 1) == ey) && ((sx == sy) || (nx != 0) ||
+                                            ((nx == 0) && (ny == 0)))
+                @assert only(s) == (rx, ry)
+            elseif (ex == ey - (p + 1)) && ((sx == sy) || (ny != 0) ||
+                                            ((nx == 0) && (ny == 0)))
+                @assert only(s) == (ry, rx)
 
+            elseif ((sx == sy) &&
+                    (ex - ey < p - 1) &&
+                    (ox > 0) &&
+                    (ox < mx - 1) &&
+                    (mx < ex - ey) &&
+                    (zy >= p - (ex - ey)) &&
+                    (zy < my) &&
+                    (my < p - 1))
+                rs = (sx, ex, _zero, ox, ex - ey, p - _one)
+                ee = ey - (zy + _one)
+                me = p - _one
+                ne = p - (zy + _two)
+                result = PairSummary[]
+                if ee >= exponent(floatmin(Float16))
+                    for oe = _one:my-(zy+_two)
+                        push!(result, (rs, (sx, ee, _zero, oe, me, ne)))
+                    end
+                    for ze = _one:my-(zy+_three)
+                        push!(result, (rs, (sx, ee, ze, _zero, me, ne)))
+                    end
+                    push!(result, (rs, (sx, ee, my - (zy + _one), _zero, me, ne)))
+                end
+                @assert s == result
 
-@inline ispositive(x::T) where {T} = x > zero(T)
-@inline isnegative(x::T) where {T} = x < zero(T)
-@inline has_same_sign(x::T, y::T) where {T} =
-    (iszero(x) & iszero(y)) |
-    (ispositive(x) & ispositive(y)) |
-    (isnegative(x) & isnegative(y))
-@inline ispow2(x::T) where {T} = iszero(Base.mantissa(x)) & !iszero(x)
-
-
-function test_fp_sum(x::T, y::T) where {T}
-
-    s = x + y
-
-    ######################################################## IDENTITY PROPERTIES
-
-    # If both addends are zero, the sum is zero.
-    (iszero(x) && iszero(y)) && @assert iszero(s)
-
-    # If either addend is zero, the sum equals the other one.
-    iszero(x) && @assert s == y
-    iszero(y) && @assert s == x
-
-    ############################################################## SIGN ANALYSIS
-
-    # If both addends have the same sign, the sum has the same sign.
-    (ispositive(x) && ispositive(y)) && @assert ispositive(s)
-    (isnegative(x) && isnegative(y)) && @assert isnegative(s)
-
-    # If the addends have different exponents, the sum is
-    # nonzero and has the same sign as the larger addend.
-    (expnt(x) != expnt(y)) && @assert !iszero(s)
-    (expnt(x) > expnt(y)) && @assert has_same_sign(s, x)
-    (expnt(x) < expnt(y)) && @assert has_same_sign(s, y)
-
-    ###################################################### EXPONENT UPPER BOUNDS
-
-    max_expnt = max(expnt(x), expnt(y))
-
-    # Addition can only increase the exponent of the larger addend by one.
-    @assert expnt(s) <= max_expnt + 1
-
-    # If the addends have different signs, the exponent cannot increase.
-    @assert has_same_sign(x, y) || (expnt(s) <= max_expnt)
-
-    # If the larger addend is a power of two and its exponent exceeds the
-    # smaller addend by at least two, the exponent of the sum cannot increase.
-    ((expnt(x) > expnt(y) + 1) && ispow2(x) ||
-     (expnt(x) + 1 < expnt(y)) && ispow2(y)) && @assert expnt(s) <= max_expnt
-
-    # If both addends are powers of two with the same sign and
-    # different exponents, the exponent of the sum cannot increase.
-    (ispow2(x) && ispow2(y) && has_same_sign(x, y) && (expnt(x) != expnt(y))) &&
-        @assert expnt(s) <= max_expnt
-
-    ###################################################### EXPONENT LOWER BOUNDS
-
-    # If the sum is nonzero, it is at least as large
-    # as the bit one past the end of the larger addend.
-    @assert iszero(s) || (expnt(s) >= max_expnt - precision(T))
-
-    # Moreover, if both addends have the same exponent, the
-    # sum is at least as large as the least significant bit.
-    (expnt(x) == expnt(y)) && @assert iszero(s) ||
-                                      (expnt(s) > max_expnt - precision(T))
-
-    # If the exponent of the larger addend exceeds the smaller addend
-    # by at least two, the exponent of the sum can only decrease by one.
-    (expnt(x) > expnt(y) + 1) && @assert expnt(s) >= expnt(x) - 1
-    (expnt(x) + 1 < expnt(y)) && @assert expnt(s) >= expnt(y) - 1
-
-    # If both addends have the same sign, the exponent cannot decrease.
-    has_same_sign(x, y) && @assert expnt(s) >= max_expnt
-
-    return nothing
-end
-
-
-@inline function two_sum(x::T, y::T) where {T}
-    s = x + y
-    x_prime = s - y
-    y_prime = s - x_prime
-    x_err = x - x_prime
-    y_err = y - y_prime
-    e = x_err + y_err
-    return (s, e)
-end
-
-
-function test_fp_two_sum(x::T, y::T) where {T}
-
-    (s, e) = two_sum(x, y)
-
-    @assert s == x + y
-
-    # If either addend is zero, the error term is zero.
-    iszero(x) && @assert iszero(e)
-    iszero(y) && @assert iszero(e)
-
-    if isfinite(e) && !issubnormal(e)
-
-        # If the error term is nonzero, it is smaller
-        # than the least significant bit of the sum.
-        @assert iszero(e) || ispow2(e) || (expnt(e) < expnt(s) - precision(T))
-
-        # If the error term is nonzero, it is larger than
-        # the least significant bit of the smaller addend.
-        @assert iszero(e) ||
-                (expnt(e) > expnt(x) - precision(T)) ||
-                (expnt(e) > expnt(y) - precision(T))
-    end
-
-    return nothing
-end
-
-
-function main()
-
-    num_random_values = 2000
-
-    test_values_16 = generate_test_values(Float16,
-        num_random_values, -14, +15)
-    for x in test_values_16
-        for y in test_values_16
-            test_fp_sum(x, y)
-            test_fp_two_sum(x, y)
+            else
+                unhandled += 1
+                if length(s) == 1
+                    (rs, re) = only(s)
+                    if (rs == rx && re == ry) || (rs == ry && re == rx)
+                        @show (rx, ry)
+                        @show (rs, re)
+                    end
+                end
+            end
         end
     end
-    println("Float16 tests passed.")
 
-    test_values_32 = generate_test_values(Float32,
-        num_random_values, -126, +127)
-    for x in test_values_32
-        for y in test_values_32
-            test_fp_sum(x, y)
-            test_fp_two_sum(x, y)
-        end
-    end
-    println("Float32 tests passed.")
-
-    test_values_64 = generate_test_values(Float64,
-        num_random_values, -1022, +1023)
-    for x in test_values_64
-        for y in test_values_64
-            test_fp_sum(x, y)
-            test_fp_two_sum(x, y)
-        end
-    end
-    println("Float64 tests passed.")
-
-    return nothing
+    println(unhandled, " out of ", length(summaries)^2, " cases unhandled.")
 end
 
 
-main()
+main(
+    Float16,
+    FLOAT16_POSITIVE_ZERO_SUMMARY,
+    FLOAT16_NEGATIVE_ZERO_SUMMARY,
+    FLOAT16_SUMMARIES,
+    FLOAT16_TWO_SUM_SUMMARIES,
+)
+
+
+# function reference_two_sum_summaries(
+#     ::Type{T},
+#     ::Type{U},
+#     sx::FloatSummary,
+#     sy::FloatSummary,
+# ) where {T,U}
+#     result = Set{PairSummary}()
+#     for i = typemin(U):typemax(U)
+#         x = reinterpret(T, i)
+#         if isnormal(x) & (summarize(x) == sx)
+#             for j = typemin(U):typemax(U)
+#                 y = reinterpret(T, j)
+#                 if isnormal(y) & (summarize(y) == sy)
+#                     s = x + y
+#                     if isnormal(s)
+#                         x_eff = s - y
+#                         y_eff = s - x_eff
+#                         x_err = x - x_eff
+#                         y_err = y - y_eff
+#                         e = x_err + y_err
+#                         if isnormal(e)
+#                             push!(result, (summarize(s), summarize(e)))
+#                         end
+#                     end
+#                 end
+#             end
+#         end
+#     end
+#     return result
+# end
