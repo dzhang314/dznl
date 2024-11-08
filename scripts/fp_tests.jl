@@ -195,6 +195,8 @@ flush(stdout)
 const BFLOAT16_TWO_SUM_SUMMARIES = load_object("BFloat16TwoSumSummaries.jld2")
 @assert BFLOAT16_TWO_SUM_SUMMARIES isa Vector{Tuple{PairSummary,PairSummary}}
 @assert issorted(BFLOAT16_TWO_SUM_SUMMARIES)
+@assert length(BFLOAT16_TWO_SUM_SUMMARIES) == 1_172_449_766
+@assert issorted(BFLOAT16_TWO_SUM_SUMMARIES)
 println("Successfully loaded BFloat16TwoSumSummaries.jld2.")
 flush(stdout)
 
