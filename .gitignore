@@ -1,2 +1,3 @@
 /scripts/smt2
 /scripts/Float16TwoSumSummaries.jld2
+/scripts/BFloat16TwoSumSummaries.jld2
