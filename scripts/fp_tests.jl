@@ -1,5 +1,7 @@
 using Base.Threads
+using BFloat16s
 using JLD2
+using ProgressMeter
 
 
 const FloatSummary = Tuple{Bool,Int8,Int8,Int8,Int8,Int8}
@@ -27,10 +29,12 @@ end
 
 
 @inline summarize(x::Float16) = summarize(x, UInt16)
+@inline summarize(x::BFloat16) = summarize(x, UInt16)
 @inline summarize(x::Float32) = summarize(x, UInt32)
 @inline summarize(x::Float64) = summarize(x, UInt64)
 
 
+@inline Base.issubnormal(x::BFloat16) = issubnormal(Float32(x))
 @inline isnormal(x) = isfinite(x) & ~issubnormal(x)
 
 
@@ -47,6 +51,7 @@ end
 
 
 @inline all_summaries(::Type{Float16}) = all_summaries(Float16, UInt16)
+@inline all_summaries(::Type{BFloat16}) = all_summaries(BFloat16, UInt16)
 @inline all_summaries(::Type{Float32}) = all_summaries(Float32, UInt32)
 @inline all_summaries(::Type{Float64}) = all_summaries(Float64, UInt64)
 
@@ -54,6 +59,15 @@ end
 const FLOAT16_POSITIVE_ZERO_SUMMARY = summarize(zero(Float16))
 const FLOAT16_NEGATIVE_ZERO_SUMMARY = summarize(-zero(Float16))
 const FLOAT16_SUMMARIES = all_summaries(Float16)
+@assert length(FLOAT16_SUMMARIES) == 8882
+@assert issorted(FLOAT16_SUMMARIES)
+
+
+const BFLOAT16_POSITIVE_ZERO_SUMMARY = summarize(zero(BFloat16))
+const BFLOAT16_NEGATIVE_ZERO_SUMMARY = summarize(-zero(BFloat16))
+const BFLOAT16_SUMMARIES = all_summaries(BFloat16)
+@assert length(BFLOAT16_SUMMARIES) == 32514
+@assert issorted(BFLOAT16_SUMMARIES)
 
 
 function summary_to_string(
@@ -118,8 +132,10 @@ end
 
 
 function all_two_sum_summaries(::Type{T}, ::Type{U}) where {T,U}
-    result = Set{Tuple{PairSummary,PairSummary}}()
-    for i = typemin(U):typemax(U)
+    results = [Set{Tuple{PairSummary,PairSummary}}() for _ = 1:nthreads()]
+    p = Progress(length(typemin(U):typemax(U)); showspeed=true)
+    @threads for i = typemin(U):typemax(U)
+        result = results[threadid()]
         x = reinterpret(T, i)
         if isnormal(x)
             for j = typemin(U):typemax(U)
@@ -141,12 +157,16 @@ function all_two_sum_summaries(::Type{T}, ::Type{U}) where {T,U}
                 end
             end
         end
+        next!(p)
     end
-    return sort!(collect(result))
+    finish!(p)
+    return sort!(collect(union(results...)))
 end
 
 
 if !isfile("Float16TwoSumSummaries.jld2")
+    println("Computing Float16TwoSumSummaries.jld2...")
+    flush(stdout)
     save_object("Float16TwoSumSummaries.jld2",
         all_two_sum_summaries(Float16, UInt16))
 end
@@ -157,20 +177,26 @@ flush(stdout)
 const FLOAT16_TWO_SUM_SUMMARIES = load_object("Float16TwoSumSummaries.jld2")
 @assert FLOAT16_TWO_SUM_SUMMARIES isa Vector{Tuple{PairSummary,PairSummary}}
 @assert length(FLOAT16_TWO_SUM_SUMMARIES) == 319_985_950
-# @assert issorted(FLOAT16_TWO_SUM_SUMMARIES)
+@assert issorted(FLOAT16_TWO_SUM_SUMMARIES)
 println("Successfully loaded Float16TwoSumSummaries.jld2.")
 flush(stdout)
 
 
-# using BFloat16s
-# @inline summarize(x::BFloat16) = summarize(x, UInt16)
-# @inline Base.issubnormal(x::BFloat16) = issubnormal(Float32(x))
-# @inline all_summaries(::Type{BFloat16}) = all_summaries(BFloat16, UInt16)
-# const BFLOAT16_SUMMARIES = all_summaries(BFloat16, UInt16)
-# if !isfile("BFloat16TwoSumSummaries.jld2")
-#     save_object("BFloat16TwoSumSummaries.jld2",
-#         all_two_sum_summaries(BFloat16, UInt16))
-# end
+if !isfile("BFloat16TwoSumSummaries.jld2")
+    println("Computing BFloat16TwoSumSummaries.jld2...")
+    flush(stdout)
+    save_object("BFloat16TwoSumSummaries.jld2",
+        all_two_sum_summaries(BFloat16, UInt16))
+end
+
+
+println("Loading BFloat16TwoSumSummaries.jld2...")
+flush(stdout)
+const BFLOAT16_TWO_SUM_SUMMARIES = load_object("BFloat16TwoSumSummaries.jld2")
+@assert BFLOAT16_TWO_SUM_SUMMARIES isa Vector{Tuple{PairSummary,PairSummary}}
+@assert issorted(BFLOAT16_TWO_SUM_SUMMARIES)
+println("Successfully loaded BFloat16TwoSumSummaries.jld2.")
+flush(stdout)
 
 
 lookup_summaries(
