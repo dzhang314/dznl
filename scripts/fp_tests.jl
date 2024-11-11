@@ -61,15 +61,41 @@ end
 const FLOAT16_POSITIVE_ZERO_SUMMARY = summarize(zero(Float16))
 const FLOAT16_NEGATIVE_ZERO_SUMMARY = summarize(-zero(Float16))
 const FLOAT16_SUMMARIES = all_summaries(Float16)
+@assert FLOAT16_POSITIVE_ZERO_SUMMARY in FLOAT16_SUMMARIES
+@assert FLOAT16_NEGATIVE_ZERO_SUMMARY in FLOAT16_SUMMARIES
 @assert length(FLOAT16_SUMMARIES) == 8882
 @assert issorted(FLOAT16_SUMMARIES)
+const FLOAT16_POSITIVE_ZERO_SHORT_SUMMARY =
+    FLOAT16_POSITIVE_ZERO_SUMMARY[1:2]
+const FLOAT16_NEGATIVE_ZERO_SHORT_SUMMARY =
+    FLOAT16_NEGATIVE_ZERO_SUMMARY[1:2]
+const FLOAT16_SHORT_SUMMARIES =
+    sort!(collect(Set(s[1:2] for s in FLOAT16_SUMMARIES)))
+@assert FLOAT16_POSITIVE_ZERO_SHORT_SUMMARY in FLOAT16_SHORT_SUMMARIES
+@assert FLOAT16_NEGATIVE_ZERO_SHORT_SUMMARY in FLOAT16_SHORT_SUMMARIES
+@assert length(FLOAT16_SHORT_SUMMARIES) == 2 * (
+    exponent(floatmax(Float16)) - exponent(floatmin(Float16)) + 2)
+@assert issorted(FLOAT16_SHORT_SUMMARIES)
 
 
 const BFLOAT16_POSITIVE_ZERO_SUMMARY = summarize(zero(BFloat16))
 const BFLOAT16_NEGATIVE_ZERO_SUMMARY = summarize(-zero(BFloat16))
 const BFLOAT16_SUMMARIES = all_summaries(BFloat16)
+@assert BFLOAT16_POSITIVE_ZERO_SUMMARY in BFLOAT16_SUMMARIES
+@assert BFLOAT16_NEGATIVE_ZERO_SUMMARY in BFLOAT16_SUMMARIES
 @assert length(BFLOAT16_SUMMARIES) == 32514
 @assert issorted(BFLOAT16_SUMMARIES)
+const BFLOAT16_POSITIVE_ZERO_SHORT_SUMMARY =
+    BFLOAT16_POSITIVE_ZERO_SUMMARY[1:2]
+const BFLOAT16_NEGATIVE_ZERO_SHORT_SUMMARY =
+    BFLOAT16_NEGATIVE_ZERO_SUMMARY[1:2]
+const BFLOAT16_SHORT_SUMMARIES =
+    sort!(collect(Set(s[1:2] for s in BFLOAT16_SUMMARIES)))
+@assert BFLOAT16_POSITIVE_ZERO_SHORT_SUMMARY in BFLOAT16_SHORT_SUMMARIES
+@assert BFLOAT16_NEGATIVE_ZERO_SHORT_SUMMARY in BFLOAT16_SHORT_SUMMARIES
+@assert length(BFLOAT16_SHORT_SUMMARIES) == 2 * (
+    exponent(floatmax(BFloat16)) - exponent(floatmin(BFloat16)) + 2)
+@assert issorted(BFLOAT16_SHORT_SUMMARIES)
 
 
 function summary_to_string(
@@ -228,6 +254,13 @@ lookup_summaries(
     s::AbstractVector{Tuple{PairSummary,PairSummary}},
     rx::FloatSummary,
     ry::FloatSummary,
+) = last.(view(s, searchsorted(s, ((rx, ry), (rx, ry)); by=first)))
+
+
+lookup_summaries(
+    s::AbstractVector{Tuple{ShortPairSummary,ShortPairSummary}},
+    rx::ShortFloatSummary,
+    ry::ShortFloatSummary,
 ) = last.(view(s, searchsorted(s, ((rx, ry), (rx, ry)); by=first)))
 
 
