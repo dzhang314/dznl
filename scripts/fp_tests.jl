@@ -6,6 +6,8 @@ using ProgressMeter
 
 const FloatSummary = Tuple{Bool,Int8,Int8,Int8,Int8,Int8}
 const PairSummary = Tuple{FloatSummary,FloatSummary}
+const ShortFloatSummary = Tuple{Bool,Int8}
+const ShortPairSummary = Tuple{ShortFloatSummary,ShortFloatSummary}
 
 
 @inline function summarize(x::T, ::Type{U}) where {T,U}
@@ -174,10 +176,21 @@ end
 
 println("Loading Float16TwoSumSummaries.jld2...")
 flush(stdout)
-const FLOAT16_TWO_SUM_SUMMARIES = load_object("Float16TwoSumSummaries.jld2")
-@assert FLOAT16_TWO_SUM_SUMMARIES isa Vector{Tuple{PairSummary,PairSummary}}
+const FLOAT16_TWO_SUM_SUMMARIES = load_object(
+    "Float16TwoSumSummaries.jld2")
+@assert FLOAT16_TWO_SUM_SUMMARIES isa Vector{
+    Tuple{PairSummary,PairSummary}}
 @assert length(FLOAT16_TWO_SUM_SUMMARIES) == 319_985_950
 @assert issorted(FLOAT16_TWO_SUM_SUMMARIES)
+const FLOAT16_SHORT_TWO_SUM_SUMMARIES = sort!(collect(Set(
+    (((sx, ex), (sy, ey)), ((ss, es), (se, ee))) for (
+        ((sx, ex, _, _, _, _), (sy, ey, _, _, _, _)),
+        ((ss, es, _, _, _, _), (se, ee, _, _, _, _))
+    ) in FLOAT16_TWO_SUM_SUMMARIES)))
+@assert FLOAT16_SHORT_TWO_SUM_SUMMARIES isa Vector{
+    Tuple{ShortPairSummary,ShortPairSummary}}
+@assert length(FLOAT16_SHORT_TWO_SUM_SUMMARIES) == 38_638
+@assert issorted(FLOAT16_SHORT_TWO_SUM_SUMMARIES)
 println("Successfully loaded Float16TwoSumSummaries.jld2.")
 flush(stdout)
 
@@ -192,11 +205,21 @@ end
 
 println("Loading BFloat16TwoSumSummaries.jld2...")
 flush(stdout)
-const BFLOAT16_TWO_SUM_SUMMARIES = load_object("BFloat16TwoSumSummaries.jld2")
-@assert BFLOAT16_TWO_SUM_SUMMARIES isa Vector{Tuple{PairSummary,PairSummary}}
-@assert issorted(BFLOAT16_TWO_SUM_SUMMARIES)
+const BFLOAT16_TWO_SUM_SUMMARIES = load_object(
+    "BFloat16TwoSumSummaries.jld2")
+@assert BFLOAT16_TWO_SUM_SUMMARIES isa Vector{
+    Tuple{PairSummary,PairSummary}}
 @assert length(BFLOAT16_TWO_SUM_SUMMARIES) == 1_172_449_766
 @assert issorted(BFLOAT16_TWO_SUM_SUMMARIES)
+const BFLOAT16_SHORT_TWO_SUM_SUMMARIES = sort!(collect(Set(
+    (((sx, ex), (sy, ey)), ((ss, es), (se, ee))) for (
+        ((sx, ex, _, _, _, _), (sy, ey, _, _, _, _)),
+        ((ss, es, _, _, _, _), (se, ee, _, _, _, _))
+    ) in BFLOAT16_TWO_SUM_SUMMARIES)))
+@assert BFLOAT16_SHORT_TWO_SUM_SUMMARIES isa Vector{
+    Tuple{ShortPairSummary,ShortPairSummary}}
+@assert length(BFLOAT16_SHORT_TWO_SUM_SUMMARIES) == 548_026
+@assert issorted(BFLOAT16_SHORT_TWO_SUM_SUMMARIES)
 println("Successfully loaded BFloat16TwoSumSummaries.jld2.")
 flush(stdout)
 
