@@ -264,6 +264,67 @@ lookup_summaries(
 ) = last.(view(s, searchsorted(s, ((rx, ry), (rx, ry)); by=first)))
 
 
+struct RangePusher
+    e_min::Int
+    e_max::Int
+end
+
+
+function (rp::RangePusher)(
+    v::Vector{ShortPairSummary},
+    ss::Bool,
+    es_range::AbstractRange,
+    se::Bool,
+    ee::Integer,
+)
+    for es in es_range
+        if rp.e_min <= es <= rp.e_max
+            push!(v, ((ss, es), (se, ee)))
+        end
+    end
+    return v
+end
+
+
+function (rp::RangePusher)(
+    v::Vector{ShortPairSummary},
+    ss::Bool,
+    es::Integer,
+    se::Bool,
+    ee_range::AbstractRange,
+)
+    for ee in ee_range
+        if rp.e_min <= ee <= rp.e_max
+            push!(v, ((ss, es), (se, ee)))
+        end
+    end
+    return v
+end
+
+
+function (rp::RangePusher)(
+    v::Vector{ShortPairSummary},
+    ss::Bool,
+    es_range::AbstractRange,
+    se::Bool,
+    ee_range::AbstractRange,
+)
+    for es in es_range
+        if rp.e_min <= es <= rp.e_max
+            for ee in ee_range
+                if rp.e_min <= ee <= rp.e_max
+                    push!(v, ((ss, es), (se, ee)))
+                end
+            end
+        end
+    end
+    return v
+end
+
+
+@inline (rp::RangePusher)(v, (ss, es), (se, ee)) = rp(v, ss, es, se, ee)
+
+
 function main(
     ::Type{T},
     pos_zero::ShortFloatSummary,
@@ -273,8 +334,9 @@ function main(
 ) where {T}
 
     p = precision(T)
-    e_max = exponent(floatmax(T))
     e_min = exponent(floatmin(T))
+    e_max = exponent(floatmax(T))
+    push_range! = RangePusher(e_min, e_max)
 
     for rx in summaries
         for ry in summaries
@@ -322,30 +384,14 @@ function main(
             elseif (ex + p + 1 == ey) & (sx == sy)
                 @assert only(s) == (ry, rx)
             elseif (ex == ey + p + 1) & (sx != sy)
-                let
-                    t = ShortPairSummary[]
-                    for ee = max(e_min, ey - (p - 1)):(ey-1)
-                        ss, es, se = sx, ex - 1, sx
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    let
-                        ss, es, se, ee = sx, ex, sy, ey
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    @assert s == t
+                let t = [(rx, ry)]
+                    push_range!(t, (sx, ex - 1), (!sy, ey-(p-1):ey-1))
+                    @assert s == sort!(t)
                 end
             elseif (ex + p + 1 == ey) & (sx != sy)
-                let
-                    t = ShortPairSummary[]
-                    for ee = max(e_min, ex - (p - 1)):(ex-1)
-                        ss, es, se = sy, ey - 1, sy
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    let
-                        ss, es, se, ee = sy, ey, sx, ex
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    @assert s == t
+                let t = [(ry, rx)]
+                    push_range!(t, (sy, ey - 1), (!sx, ex-(p-1):ex-1))
+                    @assert s == sort!(t)
                 end
 
                 #===============================================================
@@ -354,96 +400,30 @@ function main(
                 ===============================================================#
 
             elseif (ex == ey + p) & (sx == sy)
-                let
-                    t = ShortPairSummary[]
-                    for ee = max(e_min, ey - (p - 1)):ey
-                        ss, es, se = sx, ex, !sx
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    if ex < e_max
-                        for ee = max(e_min, ey - (p - 1)):ey
-                            ss, es, se = sx, ex + 1, !sx
-                            push!(t, ((ss, es), (se, ee)))
-                        end
-                    end
-                    let
-                        ss, es, se, ee = sx, ex, sy, ey
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    sort!(t)
-                    @assert s == t
+                let t = [(rx, ry)]
+                    push_range!(t, (sx, ex:ex+1), (!sy, ey-(p-1):ey))
+                    @assert s == sort!(t)
                 end
             elseif (ex + p == ey) & (sx == sy)
-                let
-                    t = ShortPairSummary[]
-                    for ee = max(e_min, ex - (p - 1)):ex
-                        ss, es, se = sy, ey, !sy
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    if ey < e_max
-                        for ee = max(e_min, ex - (p - 1)):ex
-                            ss, es, se = sy, ey + 1, !sy
-                            push!(t, ((ss, es), (se, ee)))
-                        end
-                    end
-                    let
-                        ss, es, se, ee = sy, ey, sx, ex
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    sort!(t)
-                    @assert s == t
+                let t = [(ry, rx)]
+                    push_range!(t, (sy, ey:ey+1), (!sx, ex-(p-1):ex))
+                    @assert s == sort!(t)
                 end
             elseif (ex == ey + p) & (sx != sy)
-                let
-                    t = ShortPairSummary[]
-                    let
-                        ss, es = sx, ex - 1
-                        push!(t, ((ss, es), pos_zero))
-                    end
-                    for ee = max(e_min, ey - (p - 1)):(ey-1)
-                        ss, es, se = sx, ex - 1, sx
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    for ee = max(e_min, ey - (p - 1)):(ey-2)
-                        ss, es, se = sx, ex - 1, sy
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    for ee = max(e_min, ey - (p - 1)):ey
-                        ss, es, se = sx, ex, sx
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    let
-                        ss, es, se, ee = sx, ex, sy, ey
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    sort!(t)
-                    @assert s == t
+                let t = [(rx, ry)]
+                    push!(t, ((sx, ex - 1), pos_zero))
+                    push_range!(t, (sx, ex - 1), (sy, ey-(p-1):ey-2))
+                    push_range!(t, (sx, ex - 1), (!sy, ey-(p-1):ey-1))
+                    push_range!(t, (sx, ex), (!sy, ey-(p-1):ey))
+                    @assert s == sort!(t)
                 end
             elseif (ex + p == ey) & (sx != sy)
-                let
-                    t = ShortPairSummary[]
-                    let
-                        ss, es = sy, ey - 1
-                        push!(t, ((ss, es), pos_zero))
-                    end
-                    for ee = max(e_min, ex - (p - 1)):ex-1
-                        ss, es, se = sy, ey - 1, sy
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    for ee = max(e_min, ex - (p - 1)):ex-2
-                        ss, es, se = sy, ey - 1, sx
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    for ee = max(e_min, ex - (p - 1)):ex
-                        ss, es, se = sy, ey, sy
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    let
-                        ss, es, se, ee = sy, ey, sx, ex
-                        push!(t, ((ss, es), (se, ee)))
-                    end
-                    sort!(t)
-                    @assert s == t
+                let t = [(ry, rx)]
+                    push!(t, ((sy, ey - 1), pos_zero))
+                    push_range!(t, (sy, ey - 1), (sx, ex-(p-1):ex-2))
+                    push_range!(t, (sy, ey - 1), (!sx, ex-(p-1):ex-1))
+                    push_range!(t, (sy, ey), (!sx, ex-(p-1):ex))
+                    @assert s == sort!(t)
                 end
 
                 #===============================================================
@@ -452,29 +432,18 @@ function main(
                 ===============================================================#
 
             elseif (ex == ey) & (sx == sy)
-                let
-                    t = ShortPairSummary[]
-                    ss, es = sx, ex + 1
-                    if es <= e_max
-                        push!(t, ((ss, es), pos_zero))
-                        ee = ex - (p - 1)
-                        if ee >= e_min
-                            push!(t, ((ss, es), (false, ee)))
-                            push!(t, ((ss, es), (true, ee)))
-                        end
+                let t = ShortPairSummary[]
+                    if ex < e_max
+                        push!(t, ((sx, ex + 1), pos_zero))
+                        push_range!(t, (sx, ex + 1), (false, ex-(p-1):ex-(p-1)))
+                        push_range!(t, (sx, ex + 1), (true, ex-(p-1):ex-(p-1)))
                     end
                     @assert s == t
                 end
             elseif (ex == ey) & (sx != sy)
-                let
-                    t = ShortPairSummary[]
-                    push!(t, (pos_zero, pos_zero))
-                    for es = max(e_min, ey - (p - 1)):(ey-1)
-                        push!(t, ((false, es), pos_zero))
-                    end
-                    for es = max(e_min, ey - (p - 1)):(ey-1)
-                        push!(t, ((true, es), pos_zero))
-                    end
+                let t = [(pos_zero, pos_zero)]
+                    push_range!(t, (false, ex-(p-1):ex-1), pos_zero)
+                    push_range!(t, (true, ex-(p-1):ex-1), pos_zero)
                     @assert s == t
                 end
 
