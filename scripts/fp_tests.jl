@@ -427,6 +427,44 @@ function main(
                 end
 
                 #===============================================================
+                    CASE N-1: Both inputs are nonzero
+                    and their exponents differ by 1.
+                ===============================================================#
+
+            elseif (ex == ey + 1) & (sx == sy)
+                let t = ShortPairSummary[]
+                    push_range!(t, (sx, ex:ex+1), pos_zero)
+                    push_range!(t, (sx, ex), (sy, ey-(p-1):ey-(p-1)))
+                    push_range!(t, (sx, ex), (!sy, ey-(p-1):ey-(p-1)))
+                    push_range!(t, (sx, ex+1:ex+1), (sy, ey-(p-1):ey-(p-2)))
+                    push_range!(t, (sx, ex+1:ex+1), (!sy, ey-(p-1):ey-(p-2)))
+                    @assert s == sort!(t)
+                end
+            elseif (ex == ey + 1) & (sx == sy)
+                let t = ShortPairSummary[]
+                    push_range!(t, (sy, ey:ey+1), pos_zero)
+                    push_range!(t, (sy, ey), (sx, ex-(p-1):ex-(p-1)))
+                    push_range!(t, (sy, ey), (!sx, ex-(p-1):ex-(p-1)))
+                    push_range!(t, (sy, ey+1:ey+1), (sx, ex-(p-1):ex-(p-2)))
+                    push_range!(t, (sy, ey+1:ey+1), (!sx, ex-(p-1):ex-(p-2)))
+                    @assert s == sort!(t)
+                end
+            elseif (ex == ey + 1) & (sx != sy)
+                let t = ShortPairSummary[]
+                    push_range!(t, (sx, ex-p:ex), pos_zero)
+                    push_range!(t, (sx, ex), (sy, ey-(p-1):ey-(p-1)))
+                    push_range!(t, (sx, ex), (!sy, ey-(p-1):ey-(p-1)))
+                    @assert s == sort!(t)
+                end
+            elseif (ex + 1 == ey) & (sx != sy)
+                let t = ShortPairSummary[]
+                    push_range!(t, (sy, ey-p:ey), pos_zero)
+                    push_range!(t, (sy, ey), (sx, ex-(p-1):ex-(p-1)))
+                    push_range!(t, (sy, ey), (!sx, ex-(p-1):ex-(p-1)))
+                    @assert s == sort!(t)
+                end
+
+                #===============================================================
                     CASE N: Both inputs are nonzero
                     and have the same exponent.
                 ===============================================================#
