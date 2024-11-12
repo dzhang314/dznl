@@ -338,6 +338,41 @@ function main(
     e_max = exponent(floatmax(T))
     push_range! = RangePusher(e_min, e_max)
 
+    case_0pp_count = 0
+    case_0pn_count = 0
+    case_0np_count = 0
+    case_0nn_count = 0
+    case_0x_count = 0
+    case_0y_count = 0
+    case_1x_count = 0
+    case_1y_count = 0
+    case_2xs_count = 0
+    case_2ys_count = 0
+    case_2xd_count = 0
+    case_2yd_count = 0
+    case_3xs_count = 0
+    case_3ys_count = 0
+    case_3xd_count = 0
+    case_3yd_count = 0
+    case_4xs_count = 0
+    case_4ys_count = 0
+    case_4xd_count = 0
+    case_4yd_count = 0
+    case_5xs_count = 0
+    case_5ys_count = 0
+    case_5xd_count = 0
+    case_5yd_count = 0
+    case_6xs_count = 0
+    case_6ys_count = 0
+    case_6xd_count = 0
+    case_6yd_count = 0
+    case_7xs_count = 0
+    case_7ys_count = 0
+    case_7xd_count = 0
+    case_7yd_count = 0
+    case_8s_count = 0
+    case_8d_count = 0
+
     for rx in summaries
         for ry in summaries
 
@@ -352,17 +387,23 @@ function main(
                 ===============================================================#
 
             elseif (rx == pos_zero) & (ry == pos_zero)
+                case_0pp_count += 1
                 @assert only(s) == (pos_zero, pos_zero)
             elseif (rx == pos_zero) & (ry == neg_zero)
+                case_0pn_count += 1
                 @assert only(s) == (pos_zero, pos_zero)
             elseif (rx == neg_zero) & (ry == pos_zero)
+                case_0np_count += 1
                 @assert only(s) == (pos_zero, pos_zero)
             elseif (rx == neg_zero) & (ry == neg_zero)
+                case_0nn_count += 1
                 @assert only(s) == (neg_zero, pos_zero)
-            elseif (rx == pos_zero) | (rx == neg_zero)
-                @assert only(s) == (ry, pos_zero)
             elseif (ry == pos_zero) | (ry == neg_zero)
+                case_0x_count += 1
                 @assert only(s) == (rx, pos_zero)
+            elseif (rx == pos_zero) | (rx == neg_zero)
+                case_0y_count += 1
+                @assert only(s) == (ry, pos_zero)
 
                 #===============================================================
                     CASE 1: Both inputs are nonzero
@@ -370,8 +411,10 @@ function main(
                 ===============================================================#
 
             elseif ex > ey + p + 1
+                case_1x_count += 1
                 @assert only(s) == (rx, ry)
             elseif ex + p + 1 < ey
+                case_1y_count += 1
                 @assert only(s) == (ry, rx)
 
                 #===============================================================
@@ -380,15 +423,19 @@ function main(
                 ===============================================================#
 
             elseif (ex == ey + p + 1) & (sx == sy)
+                case_2xs_count += 1
                 @assert only(s) == (rx, ry)
             elseif (ex + p + 1 == ey) & (sx == sy)
+                case_2ys_count += 1
                 @assert only(s) == (ry, rx)
             elseif (ex == ey + p + 1) & (sx != sy)
+                case_2xd_count += 1
                 let t = [(rx, ry)]
                     push_range!(t, (sx, ex - 1), (!sy, ey-(p-1):ey-1))
                     @assert s == sort!(t)
                 end
             elseif (ex + p + 1 == ey) & (sx != sy)
+                case_2yd_count += 1
                 let t = [(ry, rx)]
                     push_range!(t, (sy, ey - 1), (!sx, ex-(p-1):ex-1))
                     @assert s == sort!(t)
@@ -400,16 +447,19 @@ function main(
                 ===============================================================#
 
             elseif (ex == ey + p) & (sx == sy)
+                case_3xs_count += 1
                 let t = [(rx, ry)]
                     push_range!(t, (sx, ex:ex+1), (!sy, ey-(p-1):ey))
                     @assert s == sort!(t)
                 end
             elseif (ex + p == ey) & (sx == sy)
+                case_3ys_count += 1
                 let t = [(ry, rx)]
                     push_range!(t, (sy, ey:ey+1), (!sx, ex-(p-1):ex))
                     @assert s == sort!(t)
                 end
             elseif (ex == ey + p) & (sx != sy)
+                case_3xd_count += 1
                 let t = [(rx, ry)]
                     push!(t, ((sx, ex - 1), pos_zero))
                     push_range!(t, (sx, ex - 1), (sy, ey-(p-1):ey-2))
@@ -418,6 +468,7 @@ function main(
                     @assert s == sort!(t)
                 end
             elseif (ex + p == ey) & (sx != sy)
+                case_3yd_count += 1
                 let t = [(ry, rx)]
                     push!(t, ((sy, ey - 1), pos_zero))
                     push_range!(t, (sy, ey - 1), (sx, ex-(p-1):ex-2))
@@ -432,9 +483,41 @@ function main(
                 ===============================================================#
 
             elseif (ex == ey + (p - 1)) & (sx == sy)
+                case_4xs_count += 1
+                let t = ShortPairSummary[]
+                    push_range!(t, (sx, ex:ex+1), pos_zero)
+                    push_range!(t, (sx, ex:ex+1), (false, ey-(p-1):ey-1))
+                    push_range!(t, (sx, ex:ex+1), (true, ey-(p-1):ey-1))
+                    @assert s == sort!(t)
+                end
             elseif (ex + (p - 1) == ey) & (sx == sy)
+                case_4ys_count += 1
+                let t = ShortPairSummary[]
+                    push_range!(t, (sy, ey:ey+1), pos_zero)
+                    push_range!(t, (sy, ey:ey+1), (false, ex-(p-1):ex-1))
+                    push_range!(t, (sy, ey:ey+1), (true, ex-(p-1):ex-1))
+                    @assert s == sort!(t)
+                end
             elseif (ex == ey + (p - 1)) & (sx != sy)
+                case_4xd_count += 1
+                let t = ShortPairSummary[]
+                    push_range!(t, (sx, ex-1:ex), pos_zero)
+                    push_range!(t, (sx, ex-1:ex-1), (false, ey-(p-1):ey-2))
+                    push_range!(t, (sx, ex-1:ex-1), (true, ey-(p-1):ey-2))
+                    push_range!(t, (sx, ex), (false, ey-(p-1):ey-1))
+                    push_range!(t, (sx, ex), (true, ey-(p-1):ey-1))
+                    @assert s == sort!(t)
+                end
             elseif (ex + (p - 1) == ey) & (sx != sy)
+                case_4yd_count += 1
+                let t = ShortPairSummary[]
+                    push_range!(t, (sy, ey-1:ey), pos_zero)
+                    push_range!(t, (sy, ey-1:ey-1), (false, ex-(p-1):ex-2))
+                    push_range!(t, (sy, ey-1:ey-1), (true, ex-(p-1):ex-2))
+                    push_range!(t, (sy, ey), (false, ex-(p-1):ex-1))
+                    push_range!(t, (sy, ey), (true, ex-(p-1):ex-1))
+                    @assert s == sort!(t)
+                end
 
                 #===============================================================
                     CASE 5: Both inputs are nonzero
@@ -442,9 +525,43 @@ function main(
                 ===============================================================#
 
             elseif (ex == ey + (p - 2)) & (sx == sy)
+                case_5xs_count += 1
+                let t = ShortPairSummary[]
+                    push_range!(t, (sx, ex:ex+1), pos_zero)
+                    push_range!(t, (sx, ex), (sy, ey-(p-1):ey-2))
+                    push_range!(t, (sx, ex+1:ex+1), (sy, ey-(p-1):ey-1))
+                    push_range!(t, (sx, ex:ex+1), (!sy, ey-(p-1):ey-2))
+                    @assert s == sort!(t)
+                end
             elseif (ex + (p - 2) == ey) & (sx == sy)
+                case_5ys_count += 1
+                let t = ShortPairSummary[]
+                    push_range!(t, (sy, ey:ey+1), pos_zero)
+                    push_range!(t, (sy, ey), (sx, ex-(p-1):ex-2))
+                    push_range!(t, (sy, ey+1:ey+1), (sx, ex-(p-1):ex-1))
+                    push_range!(t, (sy, ey:ey+1), (!sx, ex-(p-1):ex-2))
+                    @assert s == sort!(t)
+                end
             elseif (ex == ey + (p - 2)) & (sx != sy)
+                case_5xd_count += 1
+                let t = ShortPairSummary[]
+                    push_range!(t, (sx, ex-1:ex), pos_zero)
+                    push_range!(t, (sx, ex-1:ex-1), (false, ey-(p-1):ey-3))
+                    push_range!(t, (sx, ex-1:ex-1), (true, ey-(p-1):ey-3))
+                    push_range!(t, (sx, ex), (false, ey-(p-1):ey-2))
+                    push_range!(t, (sx, ex), (true, ey-(p-1):ey-2))
+                    @assert s == sort!(t)
+                end
             elseif (ex + (p - 2) == ey) & (sx != sy)
+                case_5yd_count += 1
+                let t = ShortPairSummary[]
+                    push_range!(t, (sy, ey-1:ey), pos_zero)
+                    push_range!(t, (sy, ey-1:ey-1), (false, ex-(p-1):ex-3))
+                    push_range!(t, (sy, ey-1:ey-1), (true, ex-(p-1):ex-3))
+                    push_range!(t, (sy, ey), (false, ex-(p-1):ex-2))
+                    push_range!(t, (sy, ey), (true, ex-(p-1):ex-2))
+                    @assert s == sort!(t)
+                end
 
                 #===============================================================
                     CASE 6: Both inputs are nonzero
@@ -452,6 +569,7 @@ function main(
                 ===============================================================#
 
             elseif (2 <= ex - ey <= p - 3) & (sx == sy)
+                case_6xs_count += 1
                 let t = ShortPairSummary[], k = ex - ey
                     push_range!(t, (sx, ex:ex+1), pos_zero)
                     push_range!(t, (sx, ex), (false, ey-(p-1):ey-(p-k)))
@@ -461,6 +579,7 @@ function main(
                     @assert s == sort!(t)
                 end
             elseif (2 <= ey - ex <= p - 3) & (sx == sy)
+                case_6ys_count += 1
                 let t = ShortPairSummary[], k = ey - ex
                     push_range!(t, (sy, ey:ey+1), pos_zero)
                     push_range!(t, (sy, ey), (false, ex-(p-1):ex-(p-k)))
@@ -470,7 +589,25 @@ function main(
                     @assert s == sort!(t)
                 end
             elseif (2 <= ex - ey <= p - 3) & (sx != sy)
+                case_6xd_count += 1
+                let t = ShortPairSummary[], k = ex - ey
+                    push_range!(t, (sx, ex-1:ex), pos_zero)
+                    push_range!(t, (sx, ex-1:ex-1), (false, ey-(p-1):ey-(p-(k-1))))
+                    push_range!(t, (sx, ex-1:ex-1), (true, ey-(p-1):ey-(p-(k-1))))
+                    push_range!(t, (sx, ex), (false, ey-(p-1):ey-(p-k)))
+                    push_range!(t, (sx, ex), (true, ey-(p-1):ey-(p-k)))
+                    @assert s == sort!(t)
+                end
             elseif (2 <= ey - ex <= p - 3) & (sx != sy)
+                case_6yd_count += 1
+                let t = ShortPairSummary[], k = ey - ex
+                    push_range!(t, (sy, ey-1:ey), pos_zero)
+                    push_range!(t, (sy, ey-1:ey-1), (false, ex-(p-1):ex-(p-(k-1))))
+                    push_range!(t, (sy, ey-1:ey-1), (true, ex-(p-1):ex-(p-(k-1))))
+                    push_range!(t, (sy, ey), (false, ex-(p-1):ex-(p-k)))
+                    push_range!(t, (sy, ey), (true, ex-(p-1):ex-(p-k)))
+                    @assert s == sort!(t)
+                end
 
                 #===============================================================
                     CASE 7: Both inputs are nonzero
@@ -478,6 +615,7 @@ function main(
                 ===============================================================#
 
             elseif (ex == ey + 1) & (sx == sy)
+                case_7xs_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sx, ex:ex+1), pos_zero)
                     push_range!(t, (sx, ex), (false, ey-(p-1):ey-(p-1)))
@@ -487,6 +625,7 @@ function main(
                     @assert s == sort!(t)
                 end
             elseif (ex + 1 == ey) & (sx == sy)
+                case_7ys_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sy, ey:ey+1), pos_zero)
                     push_range!(t, (sy, ey), (false, ex-(p-1):ex-(p-1)))
@@ -496,6 +635,7 @@ function main(
                     @assert s == sort!(t)
                 end
             elseif (ex == ey + 1) & (sx != sy)
+                case_7xd_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sx, ex-p:ex), pos_zero)
                     push_range!(t, (sx, ex), (false, ey-(p-1):ey-(p-1)))
@@ -503,6 +643,7 @@ function main(
                     @assert s == sort!(t)
                 end
             elseif (ex + 1 == ey) & (sx != sy)
+                case_7yd_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sy, ey-p:ey), pos_zero)
                     push_range!(t, (sy, ey), (false, ex-(p-1):ex-(p-1)))
@@ -516,6 +657,7 @@ function main(
                 ===============================================================#
 
             elseif (ex == ey) & (sx == sy)
+                case_8s_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sx, ex+1:ex+1), pos_zero)
                     push_range!(t, (sx, ex+1:ex+1), (false, ex-(p-1):ex-(p-1)))
@@ -523,6 +665,7 @@ function main(
                     @assert s == t
                 end
             elseif (ex == ey) & (sx != sy)
+                case_8d_count += 1
                 let t = [(pos_zero, pos_zero)]
                     push_range!(t, (false, ex-(p-1):ex-1), pos_zero)
                     push_range!(t, (true, ex-(p-1):ex-1), pos_zero)
@@ -530,13 +673,29 @@ function main(
                 end
 
             else
-                println((rx, ry), " : ", length(s))
+                @assert false
             end
         end
     end
+
+    @assert isone(case_0pp_count)
+    @assert isone(case_0pn_count)
+    @assert isone(case_0np_count)
+    @assert isone(case_0nn_count)
+
+    println("CASE 0: ", (case_0x_count, case_0y_count))
+    println("CASE 1: ", (case_1x_count, case_1y_count))
+    println("CASE 2: ", (case_2xs_count, case_2ys_count, case_2xd_count, case_2yd_count))
+    println("CASE 3: ", (case_3xs_count, case_3ys_count, case_3xd_count, case_3yd_count))
+    println("CASE 4: ", (case_4xs_count, case_4ys_count, case_4xd_count, case_4yd_count))
+    println("CASE 5: ", (case_5xs_count, case_5ys_count, case_5xd_count, case_5yd_count))
+    println("CASE 6: ", (case_6xs_count, case_6ys_count, case_6xd_count, case_6yd_count))
+    println("CASE 7: ", (case_7xs_count, case_7ys_count, case_7xd_count, case_7yd_count))
+    println("CASE 8: ", (case_8s_count, case_8d_count))
 end
 
 
+println("Float16:")
 main(
     Float16,
     FLOAT16_POSITIVE_ZERO_SHORT_SUMMARY,
@@ -544,8 +703,10 @@ main(
     FLOAT16_SHORT_SUMMARIES,
     FLOAT16_SHORT_TWO_SUM_SUMMARIES,
 )
+println()
 
 
+println("BFloat16:")
 main(
     BFloat16,
     BFLOAT16_POSITIVE_ZERO_SHORT_SUMMARY,
@@ -553,6 +714,7 @@ main(
     BFLOAT16_SHORT_SUMMARIES,
     BFLOAT16_SHORT_TWO_SUM_SUMMARIES,
 )
+println()
 
 
 #=
@@ -721,47 +883,6 @@ function main(
     println(unhandled_single[], " cases with a single summary.")
     println(unhandled_multiple[], " cases with multiple summaries.")
 end
-
-
-main(
-    Float16,
-    FLOAT16_POSITIVE_ZERO_SUMMARY,
-    FLOAT16_NEGATIVE_ZERO_SUMMARY,
-    FLOAT16_SUMMARIES,
-    FLOAT16_TWO_SUM_SUMMARIES,
-)
-
-
-# function reference_two_sum_summaries(
-#     ::Type{T},
-#     ::Type{U},
-#     sx::FloatSummary,
-#     sy::FloatSummary,
-# ) where {T,U}
-#     result = Set{PairSummary}()
-#     for i = typemin(U):typemax(U)
-#         x = reinterpret(T, i)
-#         if isnormal(x) & (summarize(x) == sx)
-#             for j = typemin(U):typemax(U)
-#                 y = reinterpret(T, j)
-#                 if isnormal(y) & (summarize(y) == sy)
-#                     s = x + y
-#                     if isnormal(s)
-#                         x_eff = s - y
-#                         y_eff = s - x_eff
-#                         x_err = x - x_eff
-#                         y_err = y - y_eff
-#                         e = x_err + y_err
-#                         if isnormal(e)
-#                             push!(result, (summarize(s), summarize(e)))
-#                         end
-#                     end
-#                 end
-#             end
-#         end
-#     end
-#     return result
-# end
 
 
 =#
