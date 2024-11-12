@@ -427,55 +427,99 @@ function main(
                 end
 
                 #===============================================================
-                    CASE N-1: Both inputs are nonzero
+                    CASE 4: Both inputs are nonzero
+                    and overlap by exactly 1 bit.
+                ===============================================================#
+
+            elseif (ex == ey + (p - 1)) & (sx == sy)
+            elseif (ex + (p - 1) == ey) & (sx == sy)
+            elseif (ex == ey + (p - 1)) & (sx != sy)
+            elseif (ex + (p - 1) == ey) & (sx != sy)
+
+                #===============================================================
+                    CASE 5: Both inputs are nonzero
+                    and overlap by exactly 2 bits.
+                ===============================================================#
+
+            elseif (ex == ey + (p - 2)) & (sx == sy)
+            elseif (ex + (p - 2) == ey) & (sx == sy)
+            elseif (ex == ey + (p - 2)) & (sx != sy)
+            elseif (ex + (p - 2) == ey) & (sx != sy)
+
+                #===============================================================
+                    CASE 6: Both inputs are nonzero
+                    and overlap by 3, 4, ..., p-2 bits.
+                ===============================================================#
+
+            elseif (2 <= ex - ey <= p - 3) & (sx == sy)
+                let t = ShortPairSummary[], k = ex - ey
+                    push_range!(t, (sx, ex:ex+1), pos_zero)
+                    push_range!(t, (sx, ex), (false, ey-(p-1):ey-(p-k)))
+                    push_range!(t, (sx, ex), (true, ey-(p-1):ey-(p-k)))
+                    push_range!(t, (sx, ex+1:ex+1), (false, ey-(p-1):ey-(p-(k+1))))
+                    push_range!(t, (sx, ex+1:ex+1), (true, ey-(p-1):ey-(p-(k+1))))
+                    @assert s == sort!(t)
+                end
+            elseif (2 <= ey - ex <= p - 3) & (sx == sy)
+                let t = ShortPairSummary[], k = ey - ex
+                    push_range!(t, (sy, ey:ey+1), pos_zero)
+                    push_range!(t, (sy, ey), (false, ex-(p-1):ex-(p-k)))
+                    push_range!(t, (sy, ey), (true, ex-(p-1):ex-(p-k)))
+                    push_range!(t, (sy, ey+1:ey+1), (false, ex-(p-1):ex-(p-(k+1))))
+                    push_range!(t, (sy, ey+1:ey+1), (true, ex-(p-1):ex-(p-(k+1))))
+                    @assert s == sort!(t)
+                end
+            elseif (2 <= ex - ey <= p - 3) & (sx != sy)
+            elseif (2 <= ey - ex <= p - 3) & (sx != sy)
+
+                #===============================================================
+                    CASE 7: Both inputs are nonzero
                     and their exponents differ by 1.
                 ===============================================================#
 
             elseif (ex == ey + 1) & (sx == sy)
                 let t = ShortPairSummary[]
                     push_range!(t, (sx, ex:ex+1), pos_zero)
-                    push_range!(t, (sx, ex), (sy, ey-(p-1):ey-(p-1)))
-                    push_range!(t, (sx, ex), (!sy, ey-(p-1):ey-(p-1)))
-                    push_range!(t, (sx, ex+1:ex+1), (sy, ey-(p-1):ey-(p-2)))
-                    push_range!(t, (sx, ex+1:ex+1), (!sy, ey-(p-1):ey-(p-2)))
+                    push_range!(t, (sx, ex), (false, ey-(p-1):ey-(p-1)))
+                    push_range!(t, (sx, ex), (true, ey-(p-1):ey-(p-1)))
+                    push_range!(t, (sx, ex+1:ex+1), (false, ey-(p-1):ey-(p-2)))
+                    push_range!(t, (sx, ex+1:ex+1), (true, ey-(p-1):ey-(p-2)))
                     @assert s == sort!(t)
                 end
             elseif (ex + 1 == ey) & (sx == sy)
                 let t = ShortPairSummary[]
                     push_range!(t, (sy, ey:ey+1), pos_zero)
-                    push_range!(t, (sy, ey), (sx, ex-(p-1):ex-(p-1)))
-                    push_range!(t, (sy, ey), (!sx, ex-(p-1):ex-(p-1)))
-                    push_range!(t, (sy, ey+1:ey+1), (sx, ex-(p-1):ex-(p-2)))
-                    push_range!(t, (sy, ey+1:ey+1), (!sx, ex-(p-1):ex-(p-2)))
+                    push_range!(t, (sy, ey), (false, ex-(p-1):ex-(p-1)))
+                    push_range!(t, (sy, ey), (true, ex-(p-1):ex-(p-1)))
+                    push_range!(t, (sy, ey+1:ey+1), (false, ex-(p-1):ex-(p-2)))
+                    push_range!(t, (sy, ey+1:ey+1), (true, ex-(p-1):ex-(p-2)))
                     @assert s == sort!(t)
                 end
             elseif (ex == ey + 1) & (sx != sy)
                 let t = ShortPairSummary[]
                     push_range!(t, (sx, ex-p:ex), pos_zero)
-                    push_range!(t, (sx, ex), (sy, ey-(p-1):ey-(p-1)))
-                    push_range!(t, (sx, ex), (!sy, ey-(p-1):ey-(p-1)))
+                    push_range!(t, (sx, ex), (false, ey-(p-1):ey-(p-1)))
+                    push_range!(t, (sx, ex), (true, ey-(p-1):ey-(p-1)))
                     @assert s == sort!(t)
                 end
             elseif (ex + 1 == ey) & (sx != sy)
                 let t = ShortPairSummary[]
                     push_range!(t, (sy, ey-p:ey), pos_zero)
-                    push_range!(t, (sy, ey), (sx, ex-(p-1):ex-(p-1)))
-                    push_range!(t, (sy, ey), (!sx, ex-(p-1):ex-(p-1)))
+                    push_range!(t, (sy, ey), (false, ex-(p-1):ex-(p-1)))
+                    push_range!(t, (sy, ey), (true, ex-(p-1):ex-(p-1)))
                     @assert s == sort!(t)
                 end
 
                 #===============================================================
-                    CASE N: Both inputs are nonzero
+                    CASE 8: Both inputs are nonzero
                     and have the same exponent.
                 ===============================================================#
 
             elseif (ex == ey) & (sx == sy)
                 let t = ShortPairSummary[]
-                    if ex < e_max
-                        push!(t, ((sx, ex + 1), pos_zero))
-                        push_range!(t, (sx, ex + 1), (false, ex-(p-1):ex-(p-1)))
-                        push_range!(t, (sx, ex + 1), (true, ex-(p-1):ex-(p-1)))
-                    end
+                    push_range!(t, (sx, ex+1:ex+1), pos_zero)
+                    push_range!(t, (sx, ex+1:ex+1), (false, ex-(p-1):ex-(p-1)))
+                    push_range!(t, (sx, ex+1:ex+1), (true, ex-(p-1):ex-(p-1)))
                     @assert s == t
                 end
             elseif (ex == ey) & (sx != sy)
