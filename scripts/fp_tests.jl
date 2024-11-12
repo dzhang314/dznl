@@ -103,20 +103,20 @@ function summary_to_string(
     (s, e, z, o, m, n)::FloatSummary,
 ) where {T}
 
-    _p = precision(T)
-    _e_max = exponent(floatmax(T))
-    _e_min = exponent(floatmin(T))
-    result = ['0' for _ = 1:(_e_max-_e_min+_p)]
+    p = precision(T)
+    e_max = exponent(floatmax(T))
+    e_min = exponent(floatmin(T))
+    result = ['0' for _ = 1:(e_max-e_min+p)]
 
-    if e >= _e_min
-        mantissa = ['?' for _ = 1:_p-1]
+    if e >= e_min
+        mantissa = ['?' for _ = 1:p-1]
 
         # z: number of leading zeros
         for i = 1:z
             @assert (mantissa[i] == '?') || (mantissa[i] == '0')
             mantissa[i] = '0'
         end
-        if z + 1 < _p
+        if z + 1 < p
             @assert (mantissa[z+1] == '?') || (mantissa[z+1] == '1')
             mantissa[z+1] = '1'
         end
@@ -126,7 +126,7 @@ function summary_to_string(
             @assert (mantissa[i] == '?') || (mantissa[i] == '1')
             mantissa[i] = '1'
         end
-        if o + 1 < _p
+        if o + 1 < p
             @assert (mantissa[o+1] == '?') || (mantissa[o+1] == '0')
             mantissa[o+1] = '0'
         end
@@ -136,7 +136,7 @@ function summary_to_string(
             @assert (mantissa[m] == '?') || (mantissa[m] == '0')
             mantissa[m] = '0'
         end
-        for i = m+1:_p-1
+        for i = m+1:p-1
             @assert (mantissa[i] == '?') || (mantissa[i] == '1')
             mantissa[i] = '1'
         end
@@ -146,13 +146,13 @@ function summary_to_string(
             @assert (mantissa[n] == '?') || (mantissa[n] == '1')
             mantissa[n] = '1'
         end
-        for i = n+1:_p-1
+        for i = n+1:p-1
             @assert (mantissa[i] == '?') || (mantissa[i] == '0')
             mantissa[i] = '0'
         end
 
-        result[_e_max-e+1] = '1'
-        result[_e_max-e+2:_e_max-e+_p] .= mantissa
+        result[e_max-e+1] = '1'
+        result[e_max-e+2:e_max-e+p] .= mantissa
     end
 
     return (s ? '-' : '+') * String(result)
@@ -262,6 +262,205 @@ lookup_summaries(
     rx::ShortFloatSummary,
     ry::ShortFloatSummary,
 ) = last.(view(s, searchsorted(s, ((rx, ry), (rx, ry)); by=first)))
+
+
+function main(
+    ::Type{T},
+    pos_zero::ShortFloatSummary,
+    neg_zero::ShortFloatSummary,
+    summaries::Vector{ShortFloatSummary},
+    two_sum_summaries::Vector{Tuple{ShortPairSummary,ShortPairSummary}},
+) where {T}
+
+    p = precision(T)
+    e_max = exponent(floatmax(T))
+    e_min = exponent(floatmin(T))
+
+    for rx in summaries
+        for ry in summaries
+
+            (sx, ex) = rx
+            (sy, ey) = ry
+            s = lookup_summaries(two_sum_summaries, rx, ry)
+
+            if false
+
+                #===============================================================
+                    CASE 0: One or both inputs are (positive or negative) zero.
+                ===============================================================#
+
+            elseif (rx == pos_zero) & (ry == pos_zero)
+                @assert only(s) == (pos_zero, pos_zero)
+            elseif (rx == pos_zero) & (ry == neg_zero)
+                @assert only(s) == (pos_zero, pos_zero)
+            elseif (rx == neg_zero) & (ry == pos_zero)
+                @assert only(s) == (pos_zero, pos_zero)
+            elseif (rx == neg_zero) & (ry == neg_zero)
+                @assert only(s) == (neg_zero, pos_zero)
+            elseif (rx == pos_zero) | (rx == neg_zero)
+                @assert only(s) == (ry, pos_zero)
+            elseif (ry == pos_zero) | (ry == neg_zero)
+                @assert only(s) == (rx, pos_zero)
+
+                #===============================================================
+                    CASE 1: Both inputs are nonzero
+                    and separated by at least 2 bits.
+                ===============================================================#
+
+            elseif ex > ey + p + 1
+                @assert only(s) == (rx, ry)
+            elseif ex + p + 1 < ey
+                @assert only(s) == (ry, rx)
+
+                #===============================================================
+                    CASE 2: Both inputs are nonzero
+                    and separated by exactly 1 bit.
+                ===============================================================#
+
+            elseif (ex == ey + p + 1) & (sx == sy)
+                @assert only(s) == (rx, ry)
+            elseif (ex + p + 1 == ey) & (sx == sy)
+                @assert only(s) == (ry, rx)
+            elseif (ex == ey + p + 1) & (sx != sy)
+                t = ShortPairSummary[]
+                for ee = max(e_min, ey - (p - 1)):(ey-1)
+                    ss, es, se = sx, ex - 1, sx
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                let
+                    ss, es, se, ee = sx, ex, sy, ey
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                @assert s == t
+            elseif (ex + p + 1 == ey) & (sx != sy)
+                t = ShortPairSummary[]
+                for ee = max(e_min, ex - (p - 1)):(ex-1)
+                    ss, es, se = sy, ey - 1, sy
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                let
+                    ss, es, se, ee = sy, ey, sx, ex
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                @assert s == t
+
+                #===============================================================
+                    CASE 3: Both inputs are nonzero
+                    and separated by exactly 0 bits.
+                ===============================================================#
+
+            elseif (ex == ey + p) & (sx == sy)
+                t = ShortPairSummary[]
+                for ee = max(e_min, ey - (p - 1)):ey
+                    ss, es, se = sx, ex, !sx
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                if ex < e_max
+                    for ee = max(e_min, ey - (p - 1)):ey
+                        ss, es, se = sx, ex + 1, !sx
+                        push!(t, ((ss, es), (se, ee)))
+                    end
+                end
+                let
+                    ss, es, se, ee = sx, ex, sy, ey
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                sort!(t)
+                @assert s == t
+            elseif (ex + p == ey) & (sx == sy)
+                t = ShortPairSummary[]
+                for ee = max(e_min, ex - (p - 1)):ex
+                    ss, es, se = sy, ey, !sy
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                if ey < e_max
+                    for ee = max(e_min, ex - (p - 1)):ex
+                        ss, es, se = sy, ey + 1, !sy
+                        push!(t, ((ss, es), (se, ee)))
+                    end
+                end
+                let
+                    ss, es, se, ee = sy, ey, sx, ex
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                sort!(t)
+                @assert s == t
+            elseif (ex == ey + p) & (sx != sy)
+                t = ShortPairSummary[]
+                let
+                    ss, es = sx, ex - 1
+                    push!(t, ((ss, es), pos_zero))
+                end
+                for ee = max(e_min, ey - (p - 1)):(ey-1)
+                    ss, es, se = sx, ex - 1, sx
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                for ee = max(e_min, ey - (p - 1)):(ey-2)
+                    ss, es, se = sx, ex - 1, sy
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                for ee = max(e_min, ey - (p - 1)):ey
+                    ss, es, se = sx, ex, sx
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                let
+                    ss, es, se, ee = sx, ex, sy, ey
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                sort!(t)
+                @assert s == t
+            elseif (ex + p == ey) & (sx != sy)
+                t = ShortPairSummary[]
+                let
+                    ss, es = sy, ey - 1
+                    push!(t, ((ss, es), pos_zero))
+                end
+                for ee = max(e_min, ex - (p - 1)):ex-1
+                    ss, es, se = sy, ey - 1, sy
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                for ee = max(e_min, ex - (p - 1)):ex-2
+                    ss, es, se = sy, ey - 1, sx
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                for ee = max(e_min, ex - (p - 1)):ex
+                    ss, es, se = sy, ey, sy
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                let
+                    ss, es, se, ee = sy, ey, sx, ex
+                    push!(t, ((ss, es), (se, ee)))
+                end
+                sort!(t)
+                @assert s == t
+
+            else
+                println((rx, ry), " : ", length(s))
+            end
+        end
+    end
+end
+
+
+main(
+    Float16,
+    FLOAT16_POSITIVE_ZERO_SHORT_SUMMARY,
+    FLOAT16_NEGATIVE_ZERO_SHORT_SUMMARY,
+    FLOAT16_SHORT_SUMMARIES,
+    FLOAT16_SHORT_TWO_SUM_SUMMARIES,
+)
+
+
+main(
+    BFloat16,
+    BFLOAT16_POSITIVE_ZERO_SHORT_SUMMARY,
+    BFLOAT16_NEGATIVE_ZERO_SHORT_SUMMARY,
+    BFLOAT16_SHORT_SUMMARIES,
+    BFLOAT16_SHORT_TWO_SUM_SUMMARIES,
+)
+
+
+#=
 
 
 function main(
@@ -468,3 +667,6 @@ main(
 #     end
 #     return result
 # end
+
+
+=#
