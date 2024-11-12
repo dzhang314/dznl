@@ -322,6 +322,28 @@ function (rp::RangePusher)(
 end
 
 
+function (rp::RangePusher)(
+    v::Vector{ShortPairSummary},
+    ss::Bool,
+    es_range::AbstractRange,
+    se_range::AbstractRange,
+    ee_range::AbstractRange,
+)
+    for es in es_range
+        if rp.e_min <= es <= rp.e_max
+            for se in se_range
+                for ee in ee_range
+                    if rp.e_min <= ee <= rp.e_max
+                        push!(v, ((ss, es), (se, ee)))
+                    end
+                end
+            end
+        end
+    end
+    return v
+end
+
+
 @inline (rp::RangePusher)(v, (ss, es), (se, ee)) = rp(v, ss, es, se, ee)
 
 
@@ -430,15 +452,17 @@ function main(
                 @assert only(s) == (ry, rx)
             elseif (ex == ey + p + 1) & (sx != sy)
                 case_2xd_count += 1
-                let t = [(rx, ry)]
-                    push_range!(t, (sx, ex - 1), (!sy, ey-(p-1):ey-1))
-                    @assert s == sort!(t)
+                let t = ShortPairSummary[]
+                    push_range!(t, (sx, ex-1:ex-1), (!sy, ey-(p-1):ey-1))
+                    push!(t, (rx, ry))
+                    @assert s == t
                 end
             elseif (ex + p + 1 == ey) & (sx != sy)
                 case_2yd_count += 1
-                let t = [(ry, rx)]
-                    push_range!(t, (sy, ey - 1), (!sx, ex-(p-1):ex-1))
-                    @assert s == sort!(t)
+                let t = ShortPairSummary[]
+                    push_range!(t, (sy, ey-1:ey-1), (!sx, ex-(p-1):ex-1))
+                    push!(t, (ry, rx))
+                    @assert s == t
                 end
 
                 #===============================================================
@@ -486,36 +510,30 @@ function main(
                 case_4xs_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sx, ex:ex+1), pos_zero)
-                    push_range!(t, (sx, ex:ex+1), (false, ey-(p-1):ey-1))
-                    push_range!(t, (sx, ex:ex+1), (true, ey-(p-1):ey-1))
+                    push_range!(t, (sx, ex:ex+1), (false:true, ey-(p-1):ey-1))
                     @assert s == sort!(t)
                 end
             elseif (ex + (p - 1) == ey) & (sx == sy)
                 case_4ys_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sy, ey:ey+1), pos_zero)
-                    push_range!(t, (sy, ey:ey+1), (false, ex-(p-1):ex-1))
-                    push_range!(t, (sy, ey:ey+1), (true, ex-(p-1):ex-1))
+                    push_range!(t, (sy, ey:ey+1), (false:true, ex-(p-1):ex-1))
                     @assert s == sort!(t)
                 end
             elseif (ex == ey + (p - 1)) & (sx != sy)
                 case_4xd_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sx, ex-1:ex), pos_zero)
-                    push_range!(t, (sx, ex-1:ex-1), (false, ey-(p-1):ey-2))
-                    push_range!(t, (sx, ex-1:ex-1), (true, ey-(p-1):ey-2))
-                    push_range!(t, (sx, ex), (false, ey-(p-1):ey-1))
-                    push_range!(t, (sx, ex), (true, ey-(p-1):ey-1))
+                    push_range!(t, (sx, ex-1:ex-1), (false:true, ey-(p-1):ey-2))
+                    push_range!(t, (sx, ex:ex), (false:true, ey-(p-1):ey-1))
                     @assert s == sort!(t)
                 end
             elseif (ex + (p - 1) == ey) & (sx != sy)
                 case_4yd_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sy, ey-1:ey), pos_zero)
-                    push_range!(t, (sy, ey-1:ey-1), (false, ex-(p-1):ex-2))
-                    push_range!(t, (sy, ey-1:ey-1), (true, ex-(p-1):ex-2))
-                    push_range!(t, (sy, ey), (false, ex-(p-1):ex-1))
-                    push_range!(t, (sy, ey), (true, ex-(p-1):ex-1))
+                    push_range!(t, (sy, ey-1:ey-1), (false:true, ex-(p-1):ex-2))
+                    push_range!(t, (sy, ey:ey), (false:true, ex-(p-1):ex-1))
                     @assert s == sort!(t)
                 end
 
@@ -546,20 +564,16 @@ function main(
                 case_5xd_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sx, ex-1:ex), pos_zero)
-                    push_range!(t, (sx, ex-1:ex-1), (false, ey-(p-1):ey-3))
-                    push_range!(t, (sx, ex-1:ex-1), (true, ey-(p-1):ey-3))
-                    push_range!(t, (sx, ex), (false, ey-(p-1):ey-2))
-                    push_range!(t, (sx, ex), (true, ey-(p-1):ey-2))
+                    push_range!(t, (sx, ex-1:ex-1), (false:true, ey-(p-1):ey-3))
+                    push_range!(t, (sx, ex:ex), (false:true, ey-(p-1):ey-2))
                     @assert s == sort!(t)
                 end
             elseif (ex + (p - 2) == ey) & (sx != sy)
                 case_5yd_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sy, ey-1:ey), pos_zero)
-                    push_range!(t, (sy, ey-1:ey-1), (false, ex-(p-1):ex-3))
-                    push_range!(t, (sy, ey-1:ey-1), (true, ex-(p-1):ex-3))
-                    push_range!(t, (sy, ey), (false, ex-(p-1):ex-2))
-                    push_range!(t, (sy, ey), (true, ex-(p-1):ex-2))
+                    push_range!(t, (sy, ey-1:ey-1), (false:true, ex-(p-1):ex-3))
+                    push_range!(t, (sy, ey:ey), (false:true, ex-(p-1):ex-2))
                     @assert s == sort!(t)
                 end
 
@@ -572,40 +586,32 @@ function main(
                 case_6xs_count += 1
                 let t = ShortPairSummary[], k = ex - ey
                     push_range!(t, (sx, ex:ex+1), pos_zero)
-                    push_range!(t, (sx, ex), (false, ey-(p-1):ey-(p-k)))
-                    push_range!(t, (sx, ex), (true, ey-(p-1):ey-(p-k)))
-                    push_range!(t, (sx, ex+1:ex+1), (false, ey-(p-1):ey-(p-(k+1))))
-                    push_range!(t, (sx, ex+1:ex+1), (true, ey-(p-1):ey-(p-(k+1))))
+                    push_range!(t, (sx, ex:ex), (false:true, ey-(p-1):ey-(p-k)))
+                    push_range!(t, (sx, ex+1:ex+1), (false:true, ey-(p-1):ey-(p-(k+1))))
                     @assert s == sort!(t)
                 end
             elseif (2 <= ey - ex <= p - 3) & (sx == sy)
                 case_6ys_count += 1
                 let t = ShortPairSummary[], k = ey - ex
                     push_range!(t, (sy, ey:ey+1), pos_zero)
-                    push_range!(t, (sy, ey), (false, ex-(p-1):ex-(p-k)))
-                    push_range!(t, (sy, ey), (true, ex-(p-1):ex-(p-k)))
-                    push_range!(t, (sy, ey+1:ey+1), (false, ex-(p-1):ex-(p-(k+1))))
-                    push_range!(t, (sy, ey+1:ey+1), (true, ex-(p-1):ex-(p-(k+1))))
+                    push_range!(t, (sy, ey:ey), (false:true, ex-(p-1):ex-(p-k)))
+                    push_range!(t, (sy, ey+1:ey+1), (false:true, ex-(p-1):ex-(p-(k+1))))
                     @assert s == sort!(t)
                 end
             elseif (2 <= ex - ey <= p - 3) & (sx != sy)
                 case_6xd_count += 1
                 let t = ShortPairSummary[], k = ex - ey
                     push_range!(t, (sx, ex-1:ex), pos_zero)
-                    push_range!(t, (sx, ex-1:ex-1), (false, ey-(p-1):ey-(p-(k-1))))
-                    push_range!(t, (sx, ex-1:ex-1), (true, ey-(p-1):ey-(p-(k-1))))
-                    push_range!(t, (sx, ex), (false, ey-(p-1):ey-(p-k)))
-                    push_range!(t, (sx, ex), (true, ey-(p-1):ey-(p-k)))
+                    push_range!(t, (sx, ex-1:ex-1), (false:true, ey-(p-1):ey-(p-(k-1))))
+                    push_range!(t, (sx, ex:ex), (false:true, ey-(p-1):ey-(p-k)))
                     @assert s == sort!(t)
                 end
             elseif (2 <= ey - ex <= p - 3) & (sx != sy)
                 case_6yd_count += 1
                 let t = ShortPairSummary[], k = ey - ex
                     push_range!(t, (sy, ey-1:ey), pos_zero)
-                    push_range!(t, (sy, ey-1:ey-1), (false, ex-(p-1):ex-(p-(k-1))))
-                    push_range!(t, (sy, ey-1:ey-1), (true, ex-(p-1):ex-(p-(k-1))))
-                    push_range!(t, (sy, ey), (false, ex-(p-1):ex-(p-k)))
-                    push_range!(t, (sy, ey), (true, ex-(p-1):ex-(p-k)))
+                    push_range!(t, (sy, ey-1:ey-1), (false:true, ex-(p-1):ex-(p-(k-1))))
+                    push_range!(t, (sy, ey:ey), (false:true, ex-(p-1):ex-(p-k)))
                     @assert s == sort!(t)
                 end
 
@@ -618,37 +624,31 @@ function main(
                 case_7xs_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sx, ex:ex+1), pos_zero)
-                    push_range!(t, (sx, ex), (false, ey-(p-1):ey-(p-1)))
-                    push_range!(t, (sx, ex), (true, ey-(p-1):ey-(p-1)))
-                    push_range!(t, (sx, ex+1:ex+1), (false, ey-(p-1):ey-(p-2)))
-                    push_range!(t, (sx, ex+1:ex+1), (true, ey-(p-1):ey-(p-2)))
+                    push_range!(t, (sx, ex:ex), (false:true, ey-(p-1):ey-(p-1)))
+                    push_range!(t, (sx, ex+1:ex+1), (false:true, ey-(p-1):ey-(p-2)))
                     @assert s == sort!(t)
                 end
             elseif (ex + 1 == ey) & (sx == sy)
                 case_7ys_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sy, ey:ey+1), pos_zero)
-                    push_range!(t, (sy, ey), (false, ex-(p-1):ex-(p-1)))
-                    push_range!(t, (sy, ey), (true, ex-(p-1):ex-(p-1)))
-                    push_range!(t, (sy, ey+1:ey+1), (false, ex-(p-1):ex-(p-2)))
-                    push_range!(t, (sy, ey+1:ey+1), (true, ex-(p-1):ex-(p-2)))
+                    push_range!(t, (sy, ey:ey), (false:true, ex-(p-1):ex-(p-1)))
+                    push_range!(t, (sy, ey+1:ey+1), (false:true, ex-(p-1):ex-(p-2)))
                     @assert s == sort!(t)
                 end
             elseif (ex == ey + 1) & (sx != sy)
                 case_7xd_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sx, ex-p:ex), pos_zero)
-                    push_range!(t, (sx, ex), (false, ey-(p-1):ey-(p-1)))
-                    push_range!(t, (sx, ex), (true, ey-(p-1):ey-(p-1)))
-                    @assert s == sort!(t)
+                    push_range!(t, (sx, ex:ex), (false:true, ey-(p-1):ey-(p-1)))
+                    @assert s == t
                 end
             elseif (ex + 1 == ey) & (sx != sy)
                 case_7yd_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sy, ey-p:ey), pos_zero)
-                    push_range!(t, (sy, ey), (false, ex-(p-1):ex-(p-1)))
-                    push_range!(t, (sy, ey), (true, ex-(p-1):ex-(p-1)))
-                    @assert s == sort!(t)
+                    push_range!(t, (sy, ey:ey), (false:true, ex-(p-1):ex-(p-1)))
+                    @assert s == t
                 end
 
                 #===============================================================
@@ -660,8 +660,7 @@ function main(
                 case_8s_count += 1
                 let t = ShortPairSummary[]
                     push_range!(t, (sx, ex+1:ex+1), pos_zero)
-                    push_range!(t, (sx, ex+1:ex+1), (false, ex-(p-1):ex-(p-1)))
-                    push_range!(t, (sx, ex+1:ex+1), (true, ex-(p-1):ex-(p-1)))
+                    push_range!(t, (sx, ex+1:ex+1), (false:true, ex-(p-1):ex-(p-1)))
                     @assert s == t
                 end
             elseif (ex == ey) & (sx != sy)
