@@ -440,7 +440,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1), (!sy, ey-(p-1):ey-(p-2)))
                     @assert s == sort!(t)
                 end
-            elseif (ex == ey + 1) & (sx == sy)
+            elseif (ex + 1 == ey) & (sx == sy)
                 let t = ShortPairSummary[]
                     push_range!(t, (sy, ey:ey+1), pos_zero)
                     push_range!(t, (sy, ey), (sx, ex-(p-1):ex-(p-1)))
