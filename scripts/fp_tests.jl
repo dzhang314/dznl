@@ -246,7 +246,7 @@ const BFLOAT16_SHORT_TWO_SUM_SUMMARIES = sort!(collect(Set(
     Tuple{ShortPairSummary,ShortPairSummary}}
 @assert length(BFLOAT16_SHORT_TWO_SUM_SUMMARIES) == 548_026
 @assert issorted(BFLOAT16_SHORT_TWO_SUM_SUMMARIES)
-println("Successfully loaded BFloat16TwoSumSummaries.jld2.")
+println("Successfully loaded BFloat16TwoSumSummaries.jld2.\n")
 flush(stdout)
 
 
@@ -683,15 +683,15 @@ function main(
     @assert isone(case_0np_count)
     @assert isone(case_0nn_count)
 
-    println("CASE 0: ", (case_0x_count, case_0y_count))
-    println("CASE 1: ", (case_1x_count, case_1y_count))
-    println("CASE 2: ", (case_2xs_count, case_2ys_count, case_2xd_count, case_2yd_count))
-    println("CASE 3: ", (case_3xs_count, case_3ys_count, case_3xd_count, case_3yd_count))
-    println("CASE 4: ", (case_4xs_count, case_4ys_count, case_4xd_count, case_4yd_count))
-    println("CASE 5: ", (case_5xs_count, case_5ys_count, case_5xd_count, case_5yd_count))
-    println("CASE 6: ", (case_6xs_count, case_6ys_count, case_6xd_count, case_6yd_count))
-    println("CASE 7: ", (case_7xs_count, case_7ys_count, case_7xd_count, case_7yd_count))
-    println("CASE 8: ", (case_8s_count, case_8d_count))
+    println("    Case 0: ", (case_0x_count, case_0y_count))
+    println("    Case 1: ", (case_1x_count, case_1y_count))
+    println("    Case 2: ", (case_2xs_count, case_2ys_count, case_2xd_count, case_2yd_count))
+    println("    Case 3: ", (case_3xs_count, case_3ys_count, case_3xd_count, case_3yd_count))
+    println("    Case 4: ", (case_4xs_count, case_4ys_count, case_4xd_count, case_4yd_count))
+    println("    Case 5: ", (case_5xs_count, case_5ys_count, case_5xd_count, case_5yd_count))
+    println("    Case 6: ", (case_6xs_count, case_6ys_count, case_6xd_count, case_6yd_count))
+    println("    Case 7: ", (case_7xs_count, case_7ys_count, case_7xd_count, case_7yd_count))
+    println("    Case 8: ", (case_8s_count, case_8d_count))
 end
 
 
