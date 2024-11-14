@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import random
 import subprocess
@@ -29,7 +31,19 @@ def num_leading_ones(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
     return result
 
 
-def last_nonzero_bit(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
+def final_zero_index(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
+    result = z3.BitVecVal(b.size(), result_width)
+    for i in range(b.size()):
+        ones = z3.BitVecVal(2 ** (i + 1) - 1, i + 1)
+        result = z3.If(
+            z3.Extract(i, 0, b) == ones,
+            z3.BitVecVal(b.size() - (i + 1), result_width),
+            result,
+        )
+    return result
+
+
+def final_one_index(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
     result = z3.BitVecVal(b.size(), result_width)
     for i in range(b.size()):
         zeros = z3.BitVecVal(0, i + 1)
@@ -175,10 +189,15 @@ o_y = num_leading_ones(y_mantissa, PROMOTED_EXPONENT_WIDTH)
 o_s = num_leading_ones(s_mantissa, PROMOTED_EXPONENT_WIDTH)
 o_e = num_leading_ones(e_mantissa, PROMOTED_EXPONENT_WIDTH)
 
-n_x = last_nonzero_bit(x_mantissa, PROMOTED_EXPONENT_WIDTH)
-n_y = last_nonzero_bit(y_mantissa, PROMOTED_EXPONENT_WIDTH)
-n_s = last_nonzero_bit(s_mantissa, PROMOTED_EXPONENT_WIDTH)
-n_e = last_nonzero_bit(e_mantissa, PROMOTED_EXPONENT_WIDTH)
+m_x = final_zero_index(x_mantissa, PROMOTED_EXPONENT_WIDTH)
+m_y = final_zero_index(y_mantissa, PROMOTED_EXPONENT_WIDTH)
+m_s = final_zero_index(s_mantissa, PROMOTED_EXPONENT_WIDTH)
+m_e = final_zero_index(e_mantissa, PROMOTED_EXPONENT_WIDTH)
+
+n_x = final_one_index(x_mantissa, PROMOTED_EXPONENT_WIDTH)
+n_y = final_one_index(y_mantissa, PROMOTED_EXPONENT_WIDTH)
+n_s = final_one_index(s_mantissa, PROMOTED_EXPONENT_WIDTH)
+n_e = final_one_index(e_mantissa, PROMOTED_EXPONENT_WIDTH)
 
 
 lemmas: dict[str, z3.BoolRef] = {}
