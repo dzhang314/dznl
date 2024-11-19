@@ -37,13 +37,13 @@ end
     MANTISSA_MASK = (ONE_U << MANTISSA_WIDTH) - ONE_U
     SHIFTED_MASK = MANTISSA_MASK << SIGN_EXPONENT_WIDTH
     k = reinterpret(U, x)
-    z = leading_zeros((k << SIGN_EXPONENT_WIDTH) | ~SHIFTED_MASK)
-    o = leading_ones((k << SIGN_EXPONENT_WIDTH) & SHIFTED_MASK)
-    m = trailing_ones(k & MANTISSA_MASK)
-    n = trailing_zeros(k | ~MANTISSA_MASK)
-    return (signbit(x), iszero(z), iszero(m),
+    lz = leading_zeros((k << SIGN_EXPONENT_WIDTH) | ~SHIFTED_MASK)
+    lo = leading_ones((k << SIGN_EXPONENT_WIDTH) & SHIFTED_MASK)
+    tz = trailing_zeros(k | ~MANTISSA_MASK)
+    to = trailing_ones(k & MANTISSA_MASK)
+    return (signbit(x), iszero(lz), iszero(tz),
         Int8(Int((k & EXPONENT_MASK) >> MANTISSA_WIDTH) - EXPONENT_BIAS),
-        Int8(max(z, o)), Int8(MANTISSA_WIDTH - max(m, n)))
+        Int8(max(lz, lo)), Int8(max(tz, to)))
 end
 
 
