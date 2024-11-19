@@ -181,17 +181,23 @@ def main(
     ############################################################################
 
     case_2xs: z3.BoolRef = z3.And(
-        ex == ey + (p + one), sx == sy, z3.Not(z3.fpIsZero(y))
+        ex == ey + (p + one),
+        sx == sy,
+        z3.Not(z3.fpIsZero(y)),  # cannot be omitted
     )
     lemmas["2XS"] = z3.Implies(case_2xs, z3.And(s == x, e == y))
 
     case_2ys: z3.BoolRef = z3.And(
-        ex + (p + one) == ey, sx == sy, z3.Not(z3.fpIsZero(x))
+        ex + (p + one) == ey,
+        sx == sy,
+        z3.Not(z3.fpIsZero(x)),  # cannot be omitted
     )
     lemmas["2YS"] = z3.Implies(case_2ys, z3.And(s == y, e == x))
 
     case_2xd: z3.BoolRef = z3.And(
-        ex == ey + (p + one), sx != sy, z3.Not(z3.fpIsZero(y))
+        ex == ey + (p + one),
+        sx != sy,
+        z3.Not(z3.fpIsZero(y)),  # cannot be omitted
     )
     lemmas["2XD"] = z3.Implies(
         case_2xd,
@@ -200,15 +206,17 @@ def main(
                 ss == sx,
                 es == ex - one,
                 se != sy,
-                ee >= ey - (p - one),
-                ee <= ey - one,
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - one,  # cannot be strengthened
             ),
             z3.And(s == x, e == y),
         ),
     )
 
     case_2yd: z3.BoolRef = z3.And(
-        ex + (p + one) == ey, sx != sy, z3.Not(z3.fpIsZero(x))
+        ex + (p + one) == ey,
+        sx != sy,
+        z3.Not(z3.fpIsZero(x)),  # cannot be omitted
     )
     lemmas["2YD"] = z3.Implies(
         case_2yd,
@@ -217,8 +225,8 @@ def main(
                 ss == sy,
                 es == ey - one,
                 se != sx,
-                ee >= ex - (p - one),
-                ee <= ex - one,
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - one,  # cannot be strengthened
             ),
             z3.And(s == y, e == x),
         ),
@@ -226,39 +234,39 @@ def main(
 
     ############################################################################
 
-    case_3xs: z3.BoolRef = z3.And(ex == ey + p, sx == sy, z3.Not(z3.fpIsZero(y)))
+    case_3xs: z3.BoolRef = z3.And(ex == ey + p, sx == sy)
     lemmas["3XS"] = z3.Implies(
         case_3xs,
         z3.Or(
             z3.And(s == x, e == y),
             z3.And(
                 ss == sx,
-                es >= ex,
-                es <= ex + one,
+                es >= ex,  # cannot be strengthened
+                es <= ex + one,  # cannot be strengthened
                 se != sy,
-                ee >= ey - (p - one),
-                ee <= ey,
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey,  # cannot be strengthened
             ),
         ),
     )
 
-    case_3ys: z3.BoolRef = z3.And(ex + p == ey, sx == sy, z3.Not(z3.fpIsZero(x)))
+    case_3ys: z3.BoolRef = z3.And(ex + p == ey, sx == sy)
     lemmas["3YS"] = z3.Implies(
         case_3ys,
         z3.Or(
             z3.And(s == y, e == x),
             z3.And(
                 ss == sy,
-                es >= ey,
-                es <= ey + one,
+                es >= ey,  # cannot be strengthened
+                es <= ey + one,  # cannot be strengthened
                 se != sx,
-                ee >= ex - (p - one),
-                ee <= ex,
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex,  # cannot be strengthened
             ),
         ),
     )
 
-    case_3xd: z3.BoolRef = z3.And(ex == ey + p, sx != sy, z3.Not(z3.fpIsZero(y)))
+    case_3xd: z3.BoolRef = z3.And(ex == ey + p, sx != sy)
     lemmas["3XD"] = z3.Implies(
         case_3xd,
         z3.Or(
@@ -272,27 +280,27 @@ def main(
                 ss == sx,
                 es == ex - one,
                 se == sy,
-                ee >= ey - (p - one),
-                ee <= ey - two,
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - two,  # cannot be strengthened
             ),
             z3.And(
                 ss == sx,
                 es == ex - one,
                 se != sy,
-                ee >= ey - (p - one),
-                ee <= ey - one,
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - one,  # cannot be strengthened
             ),
             z3.And(
                 ss == sx,
                 es == ex,
                 se != sy,
-                ee >= ey - (p - one),
-                ee <= ey,
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey,  # cannot be strengthened
             ),
         ),
     )
 
-    case_3yd: z3.BoolRef = z3.And(ex + p == ey, sx != sy, z3.Not(z3.fpIsZero(x)))
+    case_3yd: z3.BoolRef = z3.And(ex + p == ey, sx != sy)
     lemmas["3YD"] = z3.Implies(
         case_3yd,
         z3.Or(
@@ -306,252 +314,236 @@ def main(
                 ss == sy,
                 es == ey - one,
                 se == sx,
-                ee >= ex - (p - one),
-                ee <= ex - two,
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - two,  # cannot be strengthened
             ),
             z3.And(
                 ss == sy,
                 es == ey - one,
                 se != sx,
-                ee >= ex - (p - one),
-                ee <= ex - one,
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - one,  # cannot be strengthened
             ),
             z3.And(
                 ss == sy,
                 es == ey,
                 se != sx,
-                ee >= ex - (p - one),
-                ee <= ex,
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex,  # cannot be strengthened
             ),
         ),
     )
 
     ############################################################################
 
-    case_4xs: z3.BoolRef = z3.And(
-        ex == ey + (p - one), sx == sy, z3.Not(z3.fpIsZero(y))
-    )
+    case_4xs: z3.BoolRef = z3.And(ex == ey + (p - one), sx == sy)
     lemmas["4XS"] = z3.Implies(
         case_4xs,
         z3.Or(
             z3.And(
                 ss == sx,
-                es >= ex,
-                es <= ex + one,
+                es >= ex,  # cannot be strengthened
+                es <= ex + one,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
                 ss == sx,
-                es >= ex,
-                es <= ex + one,
-                ee >= ey - (p - one),
-                ee <= ey - one,
+                es >= ex,  # cannot be strengthened
+                es <= ex + one,  # cannot be strengthened
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - one,  # cannot be strengthened
             ),
         ),
     )
 
-    case_4ys: z3.BoolRef = z3.And(
-        ex + (p - one) == ey, sx == sy, z3.Not(z3.fpIsZero(x))
-    )
+    case_4ys: z3.BoolRef = z3.And(ex + (p - one) == ey, sx == sy)
     lemmas["4YS"] = z3.Implies(
         case_4ys,
         z3.Or(
             z3.And(
                 ss == sy,
-                es >= ey,
-                es <= ey + one,
+                es >= ey,  # cannot be strengthened
+                es <= ey + one,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
                 ss == sy,
-                es >= ey,
-                es <= ey + one,
-                ee >= ex - (p - one),
-                ee <= ex - one,
+                es >= ey,  # cannot be strengthened
+                es <= ey + one,  # cannot be strengthened
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - one,  # cannot be strengthened
             ),
         ),
     )
 
-    case_4xd: z3.BoolRef = z3.And(
-        ex == ey + (p - one), sx != sy, z3.Not(z3.fpIsZero(y))
-    )
+    case_4xd: z3.BoolRef = z3.And(ex == ey + (p - one), sx != sy)
     lemmas["4XD"] = z3.Implies(
         case_4xd,
         z3.Or(
             z3.And(
                 ss == sx,
-                es >= ex - one,
-                es <= ex,
+                es >= ex - one,  # cannot be strengthened
+                es <= ex,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
                 ss == sx,
                 es == ex - one,
-                ee >= ey - (p - one),
-                ee <= ey - two,
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - two,  # cannot be strengthened
             ),
             z3.And(
                 ss == sx,
                 es == ex,
-                ee >= ey - (p - one),
-                ee <= ey - one,
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - one,  # cannot be strengthened
             ),
         ),
     )
 
-    case_4yd: z3.BoolRef = z3.And(
-        ex + (p - one) == ey, sx != sy, z3.Not(z3.fpIsZero(x))
-    )
+    case_4yd: z3.BoolRef = z3.And(ex + (p - one) == ey, sx != sy)
     lemmas["4YD"] = z3.Implies(
         case_4yd,
         z3.Or(
             z3.And(
                 ss == sy,
-                es >= ey - one,
-                es <= ey,
+                es >= ey - one,  # cannot be strengthened
+                es <= ey,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
                 ss == sy,
                 es == ey - one,
-                ee >= ex - (p - one),
-                ee <= ex - two,
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - two,  # cannot be strengthened
             ),
             z3.And(
                 ss == sy,
                 es == ey,
-                ee >= ex - (p - one),
-                ee <= ex - one,
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - one,  # cannot be strengthened
             ),
         ),
     )
 
     ############################################################################
 
-    case_5xs: z3.BoolRef = z3.And(
-        ex == ey + (p - two), sx == sy, z3.Not(z3.fpIsZero(y))
-    )
+    case_5xs: z3.BoolRef = z3.And(ex == ey + (p - two), sx == sy)
     lemmas["5XS"] = z3.Implies(
         case_5xs,
         z3.Or(
             z3.And(
                 ss == sx,
-                es >= ex,
-                es <= ex + one,
+                es >= ex,  # cannot be strengthened
+                es <= ex + one,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
                 ss == sx,
                 es == ex,
                 se == sy,
-                ee >= ey - (p - one),
-                ee <= ey - two,
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - two,  # cannot be strengthened
             ),
             z3.And(
                 ss == sx,
                 es == ex + one,
                 se == sy,
-                ee >= ey - (p - one),
-                ee <= ey - one,
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - one,  # cannot be strengthened
             ),
             z3.And(
                 ss == sx,
-                es >= ex,
-                es <= ex + one,
+                es >= ex,  # cannot be strengthened
+                es <= ex + one,  # cannot be strengthened
                 se != sy,
-                ee >= ey - (p - one),
-                ee <= ey - two,
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - two,  # cannot be strengthened
             ),
         ),
     )
 
-    case_5ys: z3.BoolRef = z3.And(
-        ex + (p - two) == ey, sx == sy, z3.Not(z3.fpIsZero(x))
-    )
+    case_5ys: z3.BoolRef = z3.And(ex + (p - two) == ey, sx == sy)
     lemmas["5YS"] = z3.Implies(
         case_5ys,
         z3.Or(
             z3.And(
                 ss == sy,
-                es >= ey,
-                es <= ey + one,
+                es >= ey,  # cannot be strengthened
+                es <= ey + one,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
                 ss == sy,
                 es == ey,
                 se == sx,
-                ee >= ex - (p - one),
-                ee <= ex - two,
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - two,  # cannot be strengthened
             ),
             z3.And(
                 ss == sy,
                 es == ey + one,
                 se == sx,
-                ee >= ex - (p - one),
-                ee <= ex - one,
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - one,  # cannot be strengthened
             ),
             z3.And(
                 ss == sy,
-                es >= ey,
-                es <= ey + one,
+                es >= ey,  # cannot be strengthened
+                es <= ey + one,  # cannot be strengthened
                 se != sx,
-                ee >= ex - (p - one),
-                ee <= ex - two,
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - two,  # cannot be strengthened
             ),
         ),
     )
 
-    case_5xd: z3.BoolRef = z3.And(
-        ex == ey + (p - two), sx != sy, z3.Not(z3.fpIsZero(y))
-    )
+    case_5xd: z3.BoolRef = z3.And(ex == ey + (p - two), sx != sy)
     lemmas["5XD"] = z3.Implies(
         case_5xd,
         z3.Or(
             z3.And(
                 ss == sx,
-                es >= ex - one,
-                es <= ex,
+                es >= ex - one,  # cannot be strengthened
+                es <= ex,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
                 ss == sx,
                 es == ex - one,
-                ee >= ey - (p - one),
-                ee <= ey - three,
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - three,  # cannot be strengthened
             ),
             z3.And(
                 ss == sx,
                 es == ex,
-                ee >= ey - (p - one),
-                ee <= ey - two,
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - two,  # cannot be strengthened
             ),
         ),
     )
 
-    case_5yd: z3.BoolRef = z3.And(
-        ex + (p - two) == ey, sx != sy, z3.Not(z3.fpIsZero(x))
-    )
+    case_5yd: z3.BoolRef = z3.And(ex + (p - two) == ey, sx != sy)
     lemmas["5YD"] = z3.Implies(
         case_5yd,
         z3.Or(
             z3.And(
                 ss == sy,
-                es >= ey - one,
-                es <= ey,
+                es >= ey - one,  # cannot be strengthened
+                es <= ey,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
                 ss == sy,
                 es == ey - one,
-                ee >= ex - (p - one),
-                ee <= ex - three,
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - three,  # cannot be strengthened
             ),
             z3.And(
                 ss == sy,
                 es == ey,
-                ee >= ex - (p - one),
-                ee <= ex - two,
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - two,  # cannot be strengthened
             ),
         ),
     )
@@ -564,21 +556,21 @@ def main(
         z3.Or(
             z3.And(
                 ss == sx,
-                es >= ex,
-                es <= ex + one,
+                es >= ex,  # cannot be strengthened
+                es <= ex + one,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
                 ss == sx,
                 es == ex,
-                ee >= ey - (p - one),
-                ee <= ey - (p - (ex - ey)),
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - (p - (ex - ey)),  # cannot be strengthened
             ),
             z3.And(
                 ss == sx,
                 es == ex + one,
-                ee >= ey - (p - one),
-                ee <= ey - (p - ((ex - ey) + one)),
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - (p - ((ex - ey) + one)),  # cannot be strengthened
             ),
         ),
     )
@@ -589,21 +581,21 @@ def main(
         z3.Or(
             z3.And(
                 ss == sy,
-                es >= ey,
-                es <= ey + one,
+                es >= ey,  # cannot be strengthened
+                es <= ey + one,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
                 ss == sy,
                 es == ey,
-                ee >= ex - (p - one),
-                ee <= ex - (p - (ey - ex)),
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - (p - (ey - ex)),  # cannot be strengthened
             ),
             z3.And(
                 ss == sy,
                 es == ey + one,
-                ee >= ex - (p - one),
-                ee <= ex - (p - ((ey - ex) + one)),
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - (p - ((ey - ex) + one)),  # cannot be strengthened
             ),
         ),
     )
@@ -614,21 +606,21 @@ def main(
         z3.Or(
             z3.And(
                 ss == sx,
-                es >= ex - one,
-                es <= ex,
+                es >= ex - one,  # cannot be strengthened
+                es <= ex,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
                 ss == sx,
                 es == ex - one,
-                ee >= ey - (p - one),
-                ee <= ey - (p - ((ex - ey) - one)),
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - (p - ((ex - ey) - one)),  # cannot be strengthened
             ),
             z3.And(
                 ss == sx,
                 es == ex,
-                ee >= ey - (p - one),
-                ee <= ey - (p - (ex - ey)),
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - (p - (ex - ey)),  # cannot be strengthened
             ),
         ),
     )
@@ -639,21 +631,21 @@ def main(
         z3.Or(
             z3.And(
                 ss == sy,
-                es >= ey - one,
-                es <= ey,
+                es >= ey - one,  # cannot be strengthened
+                es <= ey,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
                 ss == sy,
                 es == ey - one,
-                ee >= ex - (p - one),
-                ee <= ex - (p - ((ey - ex) - one)),
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - (p - ((ey - ex) - one)),  # cannot be strengthened
             ),
             z3.And(
                 ss == sy,
                 es == ey,
-                ee >= ex - (p - one),
-                ee <= ex - (p - (ey - ex)),
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - (p - (ey - ex)),  # cannot be strengthened
             ),
         ),
     )
@@ -666,8 +658,8 @@ def main(
         z3.Or(
             z3.And(
                 ss == sx,
-                es >= ex,
-                es <= ex + one,
+                es >= ex,  # cannot be strengthened
+                es <= ex + one,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
@@ -678,8 +670,8 @@ def main(
             z3.And(
                 ss == sx,
                 es == ex + one,
-                ee >= ey - (p - one),
-                ee <= ey - (p - two),
+                ee >= ey - (p - one),  # cannot be strengthened
+                ee <= ey - (p - two),  # cannot be strengthened
             ),
         ),
     )
@@ -690,8 +682,8 @@ def main(
         z3.Or(
             z3.And(
                 ss == sy,
-                es >= ey,
-                es <= ey + one,
+                es >= ey,  # cannot be strengthened
+                es <= ey + one,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
@@ -702,8 +694,8 @@ def main(
             z3.And(
                 ss == sy,
                 es == ey + one,
-                ee >= ex - (p - one),
-                ee <= ex - (p - two),
+                ee >= ex - (p - one),  # cannot be strengthened
+                ee <= ex - (p - two),  # cannot be strengthened
             ),
         ),
     )
@@ -714,8 +706,8 @@ def main(
         z3.Or(
             z3.And(
                 ss == sx,
-                es >= ex - p,
-                es <= ex,
+                es >= ex - p,  # cannot be strengthened
+                es <= ex,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
@@ -732,8 +724,8 @@ def main(
         z3.Or(
             z3.And(
                 ss == sy,
-                es >= ey - p,
-                es <= ey,
+                es >= ey - p,  # cannot be strengthened
+                es <= ey,  # cannot be strengthened
                 is_pos_zero(e),
             ),
             z3.And(
@@ -747,7 +739,10 @@ def main(
     ############################################################################
 
     case_8s: z3.BoolRef = z3.And(
-        ex == ey, sx == sy, z3.Not(z3.fpIsZero(x)), z3.Not(z3.fpIsZero(y))
+        ex == ey,
+        sx == sy,
+        z3.Not(z3.fpIsZero(x)),  # cannot be omitted
+        z3.Not(z3.fpIsZero(y)),  # cannot be omitted
     )
     lemmas["8S"] = z3.Implies(
         case_8s,
@@ -765,9 +760,7 @@ def main(
         ),
     )
 
-    case_8d: z3.BoolRef = z3.And(
-        ex == ey, sx != sy, z3.Not(z3.fpIsZero(x)), z3.Not(z3.fpIsZero(y))
-    )
+    case_8d: z3.BoolRef = z3.And(ex == ey, sx != sy)
     lemmas["8D"] = z3.Implies(
         case_8d,
         z3.Or(
@@ -776,8 +769,8 @@ def main(
                 is_pos_zero(e),
             ),
             z3.And(
-                es >= ex - (p - one),
-                es <= ex - one,
+                es >= ex - (p - one),  # cannot be strengthened
+                es <= ex - one,  # cannot be strengthened
                 is_pos_zero(e),
             ),
         ),
