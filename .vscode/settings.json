@@ -5,11 +5,14 @@
         "FPRM",
         "isnormal",
         "joldes",
-        "LBEE",
-        "LBES",
+        "nlbe",
+        "nlbs",
+        "nlbx",
+        "nlby",
         "nnzb",
-        "sexpr",
-        "UBEE",
-        "UBES"
+        "ntbe",
+        "ntbs",
+        "ntbx",
+        "ntby"
     ]
 }

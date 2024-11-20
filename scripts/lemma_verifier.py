@@ -1,15 +1,22 @@
 #!/usr/bin/env python3
 
+import operator
 import os
 import random
 import subprocess
 import time
 import z3
 
-from fp_lemmas import two_sum_lemmas
-from operator import eq
+from fp_lemmas import (
+    count_leading_zeros,
+    count_leading_ones,
+    count_trailing_zeros,
+    count_trailing_ones,
+    two_sum_lemmas,
+)
 
 
+ONE: z3.BitVecNumRef = z3.BitVecVal(1, 1)
 RNE: z3.FPRMRef = z3.RoundNearestTiesToEven()
 
 
@@ -136,6 +143,17 @@ def main(
     y_err: z3.FPRef = z3.fpSub(RNE, y, y_prime)
     solver.add(e == z3.fpAdd(RNE, x_err, y_err))
 
+    max_idx: int = mantissa_width - 1
+    x_leading_bit: z3.BoolRef = z3.Extract(max_idx, max_idx, x_mantissa) == ONE
+    y_leading_bit: z3.BoolRef = z3.Extract(max_idx, max_idx, y_mantissa) == ONE
+    s_leading_bit: z3.BoolRef = z3.Extract(max_idx, max_idx, s_mantissa) == ONE
+    e_leading_bit: z3.BoolRef = z3.Extract(max_idx, max_idx, e_mantissa) == ONE
+
+    x_trailing_bit: z3.BoolRef = z3.Extract(0, 0, x_mantissa) == ONE
+    y_trailing_bit: z3.BoolRef = z3.Extract(0, 0, y_mantissa) == ONE
+    s_trailing_bit: z3.BoolRef = z3.Extract(0, 0, s_mantissa) == ONE
+    e_trailing_bit: z3.BoolRef = z3.Extract(0, 0, e_mantissa) == ONE
+
     lemmas: dict[str, z3.BoolRef] = two_sum_lemmas(
         x,
         y,
@@ -145,14 +163,62 @@ def main(
         y_sign_bit,
         s_sign_bit,
         e_sign_bit,
+        x_leading_bit,
+        y_leading_bit,
+        s_leading_bit,
+        e_leading_bit,
+        x_trailing_bit,
+        y_trailing_bit,
+        s_trailing_bit,
+        e_trailing_bit,
         z3.Concat(exponent_padding, x_exponent) - exponent_bias,
         z3.Concat(exponent_padding, y_exponent) - exponent_bias,
         z3.Concat(exponent_padding, s_exponent) - exponent_bias,
         z3.Concat(exponent_padding, e_exponent) - exponent_bias,
+        z3.If(
+            x_leading_bit,
+            count_leading_ones(x_mantissa, promoted_exponent_width),
+            count_leading_zeros(x_mantissa, promoted_exponent_width),
+        ),
+        z3.If(
+            y_leading_bit,
+            count_leading_ones(y_mantissa, promoted_exponent_width),
+            count_leading_zeros(y_mantissa, promoted_exponent_width),
+        ),
+        z3.If(
+            s_leading_bit,
+            count_leading_ones(s_mantissa, promoted_exponent_width),
+            count_leading_zeros(s_mantissa, promoted_exponent_width),
+        ),
+        z3.If(
+            e_leading_bit,
+            count_leading_ones(e_mantissa, promoted_exponent_width),
+            count_leading_zeros(e_mantissa, promoted_exponent_width),
+        ),
+        z3.If(
+            x_trailing_bit,
+            count_trailing_ones(x_mantissa, promoted_exponent_width),
+            count_trailing_zeros(x_mantissa, promoted_exponent_width),
+        ),
+        z3.If(
+            y_trailing_bit,
+            count_trailing_ones(y_mantissa, promoted_exponent_width),
+            count_trailing_zeros(y_mantissa, promoted_exponent_width),
+        ),
+        z3.If(
+            s_trailing_bit,
+            count_trailing_ones(s_mantissa, promoted_exponent_width),
+            count_trailing_zeros(s_mantissa, promoted_exponent_width),
+        ),
+        z3.If(
+            e_trailing_bit,
+            count_trailing_ones(e_mantissa, promoted_exponent_width),
+            count_trailing_zeros(e_mantissa, promoted_exponent_width),
+        ),
         z3.fpIsZero,
         z3.fpIsPositive,
         z3.fpIsNegative,
-        eq,
+        operator.eq,
         z3.BitVecVal(precision, promoted_exponent_width),
         z3.BitVecVal(1, promoted_exponent_width),
         z3.BitVecVal(2, promoted_exponent_width),

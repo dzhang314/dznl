@@ -2,7 +2,7 @@ import typing
 import z3
 
 
-def num_leading_zeros(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
+def count_leading_zeros(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
     result: z3.BitVecRef = z3.BitVecVal(0, result_width)
     for i in range(1, b.size() + 1):
         substr: z3.BitVecRef = z3.Extract(b.size() - 1, b.size() - i, b)
@@ -11,7 +11,7 @@ def num_leading_zeros(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
     return result
 
 
-def num_leading_ones(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
+def count_leading_ones(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
     result: z3.BitVecRef = z3.BitVecVal(0, result_width)
     for i in range(1, b.size() + 1):
         substr: z3.BitVecRef = z3.Extract(b.size() - 1, b.size() - i, b)
@@ -20,7 +20,7 @@ def num_leading_ones(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
     return result
 
 
-def num_trailing_zeros(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
+def count_trailing_zeros(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
     result: z3.BitVecRef = z3.BitVecVal(0, result_width)
     for i in range(1, b.size() + 1):
         substr: z3.BitVecRef = z3.Extract(i - 1, 0, b)
@@ -29,7 +29,7 @@ def num_trailing_zeros(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
     return result
 
 
-def num_trailing_ones(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
+def count_trailing_ones(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
     result: z3.BitVecRef = z3.BitVecVal(0, result_width)
     for i in range(1, b.size() + 1):
         substr: z3.BitVecRef = z3.Extract(i - 1, 0, b)
@@ -52,10 +52,26 @@ def two_sum_lemmas(
     sy: BoolVar,
     ss: BoolVar,
     se: BoolVar,
+    lbx: z3.BoolRef,
+    lby: z3.BoolRef,
+    lbs: z3.BoolRef,
+    lbe: z3.BoolRef,
+    tbx: z3.BoolRef,
+    tby: z3.BoolRef,
+    tbs: z3.BoolRef,
+    tbe: z3.BoolRef,
     ex: IntVar,
     ey: IntVar,
     es: IntVar,
     ee: IntVar,
+    nlbx: IntVar,
+    nlby: IntVar,
+    nlbs: IntVar,
+    nlbe: IntVar,
+    ntbx: IntVar,
+    ntby: IntVar,
+    ntbs: IntVar,
+    ntbe: IntVar,
     is_zero: typing.Callable[[FloatVar], z3.BoolRef],
     is_positive: typing.Callable[[FloatVar], z3.BoolRef],
     is_negative: typing.Callable[[FloatVar], z3.BoolRef],
@@ -82,6 +98,44 @@ def two_sum_lemmas(
     s_equals_y: z3.BoolRef = is_equal(s, y)
     e_equals_x: z3.BoolRef = is_equal(e, x)
     e_equals_y: z3.BoolRef = is_equal(e, y)
+
+    ############################################################################
+
+    result["TwoSum-AXD"] = z3.Implies(
+        z3.And(
+            sx != sy,
+            z3.Not(lbx),
+            nlbx + one < p,  # cannot be weakened
+            ex > ey + nlbx + one,  # cannot be weakened
+        ),
+        es == ex,
+    )
+    result["TwoSum-AYD"] = z3.Implies(
+        z3.And(
+            sx != sy,
+            z3.Not(lby),
+            nlby + one < p,  # cannot be weakened
+            ex + nlby + one < ey,  # cannot be weakened
+        ),
+        es == ey,
+    )
+
+    result["TwoSum-BXD"] = z3.Implies(
+        z3.And(
+            sx != sy,
+            lbx,
+            ex > ey + one,  # cannot be weakened
+        ),
+        es == ex,
+    )
+    result["TwoSum-BYD"] = z3.Implies(
+        z3.And(
+            sx != sy,
+            lby,
+            ex + one < ey,  # cannot be weakened
+        ),
+        es == ey,
+    )
 
     ############################################################################
 

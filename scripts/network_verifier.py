@@ -131,10 +131,10 @@ def two_sum(
     Create two new FPVariables that represent the floating-point sum and error
     computed by the TwoSum algorithm applied to two existing FPVariables.
     """
-    assert x.precision == y.precision
-    assert x.zero_exponent == y.zero_exponent
     p: int = x.precision
+    assert p == y.precision
     zx: int = x.zero_exponent
+    assert zx == y.zero_exponent
     s = FPVariable(solver, sum_name, precision=p, zero_exponent=zx)
     e = FPVariable(solver, err_name, precision=p, zero_exponent=zx)
 
@@ -147,10 +147,26 @@ def two_sum(
         y.sign_bit,
         s.sign_bit,
         e.sign_bit,
+        x.leading_bit,
+        y.leading_bit,
+        s.leading_bit,
+        e.leading_bit,
+        x.trailing_bit,
+        y.trailing_bit,
+        s.trailing_bit,
+        e.trailing_bit,
         x.exponent,
         y.exponent,
         s.exponent,
         e.exponent,
+        x.num_leading_bits,
+        y.num_leading_bits,
+        s.num_leading_bits,
+        e.num_leading_bits,
+        x.num_trailing_bits,
+        y.num_trailing_bits,
+        s.num_trailing_bits,
+        e.num_trailing_bits,
         lambda v: v.is_zero,
         lambda v: z3.Not(v.sign_bit),
         lambda v: v.sign_bit,
@@ -340,7 +356,7 @@ def verify_zhang_addition() -> None:
     ]
 
     prove(solver, a4.is_ulp_nonoverlapping(b4), "Zhang Addition", variables)
-    prove(solver, c3.is_smaller_than(a4, 102), "Zhang Addition", variables)
+    prove(solver, c3.is_smaller_than(a4, 103), "Zhang Addition", variables)
     prove(solver, d2.is_smaller_than(a4, 103), "Zhang Addition", variables)
 
 
