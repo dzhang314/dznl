@@ -308,8 +308,8 @@ def verify_joldes_2017_algorithm_6() -> None:
     ]
 
     prove(solver, a5.is_ulp_nonoverlapping(b5), "Joldes 2017 Algorithm 6", variables)
-    prove(solver, c2.is_smaller_than(a5, 0), "Joldes 2017 Algorithm 6", variables)
-    prove(solver, d4.is_smaller_than(a5, 0), "Joldes 2017 Algorithm 6", variables)
+    prove(solver, c2.is_smaller_than(a5, 101), "Joldes 2017 Algorithm 6", variables)
+    prove(solver, d4.is_smaller_than(a5, 104), "Joldes 2017 Algorithm 6", variables)
 
 
 def verify_zhang_addition() -> None:
@@ -340,8 +340,8 @@ def verify_zhang_addition() -> None:
     ]
 
     prove(solver, a4.is_ulp_nonoverlapping(b4), "Zhang Addition", variables)
-    prove(solver, c3.is_smaller_than(a4, 0), "Zhang Addition", variables)
-    prove(solver, d2.is_smaller_than(a4, 0), "Zhang Addition", variables)
+    prove(solver, c3.is_smaller_than(a4, 102), "Zhang Addition", variables)
+    prove(solver, d2.is_smaller_than(a4, 103), "Zhang Addition", variables)
 
 
 if __name__ == "__main__":
