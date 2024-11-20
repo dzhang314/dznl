@@ -678,16 +678,8 @@ def two_sum_lemmas(
     result["TwoSum-8S"] = z3.Implies(
         case_8s,
         z3.Or(
-            z3.And(
-                ss == sx,
-                es == ex + one,
-                e_pos_zero,
-            ),
-            z3.And(
-                ss == sx,
-                es == ex + one,
-                ee == ex - (p - one),
-            ),
+            z3.And(ss == sx, es == ex + one, e_pos_zero),
+            z3.And(ss == sx, es == ex + one, ee == ex - (p - one)),
         ),
     )
 
@@ -695,10 +687,7 @@ def two_sum_lemmas(
     result["TwoSum-8D"] = z3.Implies(
         case_8d,
         z3.Or(
-            z3.And(
-                e_pos_zero,
-                e_pos_zero,
-            ),
+            z3.And(s_pos_zero, e_pos_zero),
             z3.And(
                 es >= ex - (p - one),  # cannot be strengthened
                 es <= ex - one,  # cannot be strengthened
