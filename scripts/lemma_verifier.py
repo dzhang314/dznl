@@ -28,6 +28,49 @@ def is_neg_zero(x: z3.FPRef) -> z3.BoolRef:
     return z3.And(z3.fpIsZero(x), z3.fpIsNegative(x))
 
 
+def detect_smt_solvers() -> list[str]:
+    result: list[str] = []
+
+    try:
+        v: str = subprocess.check_output(["bitwuzla", "--version"], text=True)
+        print("Found Bitwuzla version:", v.strip())
+        result.append("bitwuzla")
+    except FileNotFoundError:
+        print("Bitwuzla not found in current PATH.")
+
+    try:
+        v: str = subprocess.check_output(["cvc5", "--version"], text=True)
+        print("Found CVC5 version:")
+        for line in v.split("\n"):
+            if not line:
+                break
+            print("    ", line)
+        result.append("cvc5")
+    except FileNotFoundError:
+        print("CVC5 not found in current PATH.")
+
+    try:
+        v: str = subprocess.check_output(["mathsat", "-version"], text=True)
+        print("Found MathSAT version:", v.strip())
+        result.append("mathsat")
+    except FileNotFoundError:
+        print("MathSAT not found in current PATH.")
+
+    try:
+        v: str = subprocess.check_output(["z3", "--version"], text=True)
+        print("Found Z3 version:", v.strip())
+        result.append("z3")
+    except FileNotFoundError:
+        print("Z3 not found in current PATH.")
+
+    print()
+    return result
+
+
+SMT_SOLVERS: list[str] = detect_smt_solvers()
+SOLVER_LEN: int = max(map(len, SMT_SOLVERS))
+
+
 def prove(solver: z3.Solver, name: str, claim: z3.BoolRef) -> bool:
 
     # Write current solver state and claim to SMT-LIB2 file.
@@ -41,19 +84,18 @@ def prove(solver: z3.Solver, name: str, claim: z3.BoolRef) -> bool:
     solver.pop()
 
     # Invoke external solvers to prove or refute the claim.
-    external_solvers: list[str] = ["bitwuzla", "cvc5", "mathsat", "z3"]
-    random.shuffle(external_solvers)
+    random.shuffle(SMT_SOLVERS)
     external_processes: list[tuple[str, int, subprocess.Popen[str]]] = []
-    for external_solver in external_solvers:
+    for smt_solver in SMT_SOLVERS:
         start: int = time.perf_counter_ns()
         process = subprocess.Popen(
-            [external_solver, filename], stdout=subprocess.PIPE, text=True
+            [smt_solver, filename], stdout=subprocess.PIPE, text=True
         )
-        external_processes.append((external_solver, start, process))
+        external_processes.append((smt_solver, start, process))
 
     # Wait for the first solver to finish and check its result.
     while True:
-        for external_solver, start, process in external_processes:
+        for smt_solver, start, process in external_processes:
             if process.poll() is not None:
                 stop: int = time.perf_counter_ns()
                 elapsed: float = (stop - start) / 1.0e9
@@ -64,8 +106,7 @@ def prove(solver: z3.Solver, name: str, claim: z3.BoolRef) -> bool:
                 assert stderr is None
                 for _, _, other_process in external_processes:
                     other_process.kill()
-                solver_len: int = max(map(len, external_solvers))
-                solver_name: str = external_solver.rjust(solver_len)
+                solver_name: str = smt_solver.rjust(SOLVER_LEN)
                 if stdout == "unsat\n":
                     print(f"{solver_name} proved {name} in {elapsed} seconds.")
                     return True
@@ -74,7 +115,7 @@ def prove(solver: z3.Solver, name: str, claim: z3.BoolRef) -> bool:
                     return False
                 else:
                     print(
-                        f"When attempting to prove {name}, {external_solver}",
+                        f"When attempting to prove {name}, {smt_solver}",
                         f"returned {stdout} in {elapsed} seconds.",
                     )
                     assert False
