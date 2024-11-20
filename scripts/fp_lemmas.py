@@ -99,6 +99,13 @@ def two_sum_lemmas(
     e_equals_x: z3.BoolRef = is_equal(e, x)
     e_equals_y: z3.BoolRef = is_equal(e, y)
 
+    x_pow_two: z3.BoolRef = z3.And(
+        z3.Not(lbx), z3.Not(tbx), nlbx == p - one, ntbx == p - one
+    )
+    y_pow_two: z3.BoolRef = z3.And(
+        z3.Not(lby), z3.Not(tby), nlby == p - one, ntby == p - one
+    )
+
     ############################################################################
 
     result["TwoSum-AXD"] = z3.Implies(
@@ -108,7 +115,11 @@ def two_sum_lemmas(
             nlbx + one < p,  # cannot be weakened
             ex > ey + nlbx + one,  # cannot be weakened
         ),
-        es == ex,
+        z3.And(
+            es == ex,
+            z3.Not(lbs),
+            nlbs >= nlbx,  # cannot be strengthened
+        ),
     )
     result["TwoSum-AYD"] = z3.Implies(
         z3.And(
@@ -117,9 +128,29 @@ def two_sum_lemmas(
             nlby + one < p,  # cannot be weakened
             ex + nlby + one < ey,  # cannot be weakened
         ),
-        es == ey,
+        z3.And(
+            es == ey,
+            z3.Not(lbs),
+            nlbs >= nlby,  # cannot be strengthened
+        ),
     )
 
+    result["TwoSum-BXS"] = z3.Implies(
+        z3.And(
+            sx == sy,
+            z3.Not(lbx),
+            ex > ey + one,  # cannot be weakened
+        ),
+        es == ex,
+    )
+    result["TwoSum-BYS"] = z3.Implies(
+        z3.And(
+            sx == sy,
+            z3.Not(lby),
+            ex + one < ey,  # cannot be weakened
+        ),
+        es == ey,
+    )
     result["TwoSum-BXD"] = z3.Implies(
         z3.And(
             sx != sy,
@@ -135,6 +166,68 @@ def two_sum_lemmas(
             ex + one < ey,  # cannot be weakened
         ),
         es == ey,
+    )
+
+    result["TwoSum-CXD"] = z3.Implies(
+        z3.And(
+            sx != sy,
+            z3.Not(lbx),
+            nlbx + one < p,  # cannot be weakened
+            ex == ey + nlbx + one,
+        ),
+        z3.Or(
+            es == ex,
+            z3.And(
+                es == ex - one,
+                lbs,
+                nlbs >= nlbx,  # cannot be strengthened
+            ),
+        ),
+    )
+    result["TwoSum-CYD"] = z3.Implies(
+        z3.And(
+            sx != sy,
+            z3.Not(lby),
+            nlby + one < p,  # cannot be weakened
+            ex + nlby + one == ey,
+        ),
+        z3.Or(
+            es == ey,
+            z3.And(
+                es == ey - one,
+                lbs,
+                nlbs >= nlby,  # cannot be strengthened
+            ),
+        ),
+    )
+
+    result["TwoSum-DXD"] = z3.Implies(
+        z3.And(
+            sx != sy,
+            z3.Not(lbx),
+            nlbx + one < p,  # cannot be weakened
+            ex == ey + nlbx + one,
+            y_pow_two,
+        ),
+        z3.And(
+            es == ex,
+            z3.Not(lbs),
+            nlbs >= nlbx,  # cannot be strengthened
+        ),
+    )
+    result["TwoSum-DYD"] = z3.Implies(
+        z3.And(
+            sx != sy,
+            z3.Not(lby),
+            nlby + one < p,  # cannot be weakened
+            ex + nlby + one == ey,
+            x_pow_two,
+        ),
+        z3.And(
+            es == ey,
+            z3.Not(lbs),
+            nlbs >= nlby,  # cannot be strengthened
+        ),
     )
 
     ############################################################################
