@@ -169,54 +169,6 @@ if __name__ == "__main__":
 
 
 """
-def num_leading_zeroes(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
-    result = z3.BitVecVal(0, result_width)
-    for i in range(b.size()):
-        zeros = z3.BitVecVal(0, i + 1)
-        result = z3.If(
-            z3.Extract(b.size() - 1, b.size() - (i + 1), b) == zeros,
-            z3.BitVecVal(i + 1, result_width),
-            result,
-        )
-    return result
-
-
-def num_leading_ones(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
-    result = z3.BitVecVal(0, result_width)
-    for i in range(b.size()):
-        ones = z3.BitVecVal(2 ** (i + 1) - 1, i + 1)
-        result = z3.If(
-            z3.Extract(b.size() - 1, b.size() - (i + 1), b) == ones,
-            z3.BitVecVal(i + 1, result_width),
-            result,
-        )
-    return result
-
-
-def final_zero_index(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
-    result = z3.BitVecVal(b.size(), result_width)
-    for i in range(b.size()):
-        ones = z3.BitVecVal(2 ** (i + 1) - 1, i + 1)
-        result = z3.If(
-            z3.Extract(i, 0, b) == ones,
-            z3.BitVecVal(b.size() - (i + 1), result_width),
-            result,
-        )
-    return result
-
-
-def final_one_index(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
-    result = z3.BitVecVal(b.size(), result_width)
-    for i in range(b.size()):
-        zeros = z3.BitVecVal(0, i + 1)
-        result = z3.If(
-            z3.Extract(i, 0, b) == zeros,
-            z3.BitVecVal(b.size() - (i + 1), result_width),
-            result,
-        )
-    return result
-
-
 lemmas["G-LBZ"] = z_x >= ZERO_BV
 lemmas["G-UBZ"] = z_x < PRECISION_BV
 lemmas["G-LBO"] = o_x >= ZERO_BV
