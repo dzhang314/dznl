@@ -6,10 +6,6 @@ import z3
 from fp_lemmas import two_sum_lemmas
 
 
-DEFAULT_PRECISION: int = 53
-DEFAULT_ZERO_EXPONENT: int = -1
-
-
 class FPVariable(object):
 
     def __init__(
@@ -17,8 +13,8 @@ class FPVariable(object):
         solver: z3.Solver,
         name: str,
         *,
-        precision: int = DEFAULT_PRECISION,
-        zero_exponent: int = DEFAULT_ZERO_EXPONENT,
+        precision: int,
+        zero_exponent: int,
     ) -> None:
         self.name: str = name
         self.precision: int = precision
@@ -180,8 +176,6 @@ def two_sum(
     for claim in lemmas.values():
         solver.add(claim)
 
-    solver.add(s.is_ulp_nonoverlapping(e))  # TODO: add to fp_lemmas.py
-
     return (s, e)
 
 
@@ -273,12 +267,12 @@ def prove(
         print_model(counterexample, variables)
 
 
-def verify_joldes_2017_algorithm_4() -> None:
+def verify_joldes_2017_algorithm_4(p: int) -> None:
     solver: z3.Solver = z3.SolverFor("QF_LIA")
 
-    a0 = FPVariable(solver, "a0")
-    b0 = FPVariable(solver, "b0")
-    c0 = FPVariable(solver, "c0")
+    a0 = FPVariable(solver, "a0", precision=p, zero_exponent=-1)
+    b0 = FPVariable(solver, "b0", precision=p, zero_exponent=-1)
+    c0 = FPVariable(solver, "c0", precision=p, zero_exponent=-1)
 
     solver.add(a0.is_ulp_nonoverlapping(c0))
 
@@ -293,16 +287,16 @@ def verify_joldes_2017_algorithm_4() -> None:
     ]
 
     prove(solver, a3.is_ulp_nonoverlapping(b3), "A4N", variables)
-    prove(solver, c2.is_smaller_than(a3, 2 * DEFAULT_PRECISION - 3), "A4C", variables)
+    prove(solver, c2.is_smaller_than(a3, 2 * p - 3), "A4C", variables)
 
 
-def verify_joldes_2017_algorithm_6() -> None:
+def verify_joldes_2017_algorithm_6(p: int) -> None:
     solver: z3.Solver = z3.SolverFor("QF_LIA")
 
-    a0 = FPVariable(solver, "a0")
-    b0 = FPVariable(solver, "b0")
-    c0 = FPVariable(solver, "c0")
-    d0 = FPVariable(solver, "d0")
+    a0 = FPVariable(solver, "a0", precision=p, zero_exponent=-1)
+    b0 = FPVariable(solver, "b0", precision=p, zero_exponent=-1)
+    c0 = FPVariable(solver, "c0", precision=p, zero_exponent=-1)
+    d0 = FPVariable(solver, "d0", precision=p, zero_exponent=-1)
 
     solver.add(a0.is_ulp_nonoverlapping(c0))
     solver.add(b0.is_ulp_nonoverlapping(d0))
@@ -324,17 +318,17 @@ def verify_joldes_2017_algorithm_6() -> None:
     ]
 
     prove(solver, a5.is_ulp_nonoverlapping(b5), "A6N", variables)
-    prove(solver, c2.is_smaller_than(a5, 2 * DEFAULT_PRECISION - 4), "A6C", variables)
-    prove(solver, d4.is_smaller_than(a5, 2 * DEFAULT_PRECISION - 2), "A6D", variables)
+    prove(solver, c2.is_smaller_than(a5, 2 * p - 3), "A6C", variables)
+    prove(solver, d4.is_smaller_than(a5, 2 * p - 2), "A6D", variables)
 
 
-def verify_zhang_addition() -> None:
+def verify_zhang_addition(p: int) -> None:
     solver: z3.Solver = z3.SolverFor("QF_LIA")
 
-    a0 = FPVariable(solver, "a0")
-    b0 = FPVariable(solver, "b0")
-    c0 = FPVariable(solver, "c0")
-    d0 = FPVariable(solver, "d0")
+    a0 = FPVariable(solver, "a0", precision=p, zero_exponent=-1)
+    b0 = FPVariable(solver, "b0", precision=p, zero_exponent=-1)
+    c0 = FPVariable(solver, "c0", precision=p, zero_exponent=-1)
+    d0 = FPVariable(solver, "d0", precision=p, zero_exponent=-1)
 
     solver.add(a0.is_ulp_nonoverlapping(c0))
     solver.add(b0.is_ulp_nonoverlapping(d0))
@@ -356,11 +350,17 @@ def verify_zhang_addition() -> None:
     ]
 
     prove(solver, a4.is_ulp_nonoverlapping(b4), "ZAN", variables)
-    prove(solver, c3.is_smaller_than(a4, 2 * DEFAULT_PRECISION - 3), "ZAC", variables)
-    prove(solver, d2.is_smaller_than(a4, 2 * DEFAULT_PRECISION - 2), "ZAD", variables)
+    prove(solver, c3.is_smaller_than(a4, 2 * p - 1), "ZAC", variables)
+    prove(solver, d2.is_smaller_than(a4, 2 * p - 1), "ZAD", variables)
 
 
 if __name__ == "__main__":
-    verify_joldes_2017_algorithm_4()
-    verify_joldes_2017_algorithm_6()
-    verify_zhang_addition()
+    verify_joldes_2017_algorithm_4(10)
+    verify_joldes_2017_algorithm_6(10)
+    verify_zhang_addition(10)
+    verify_joldes_2017_algorithm_4(24)
+    verify_joldes_2017_algorithm_6(24)
+    verify_zhang_addition(24)
+    verify_joldes_2017_algorithm_4(53)
+    verify_joldes_2017_algorithm_6(53)
+    verify_zhang_addition(53)
