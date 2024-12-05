@@ -2,8 +2,6 @@
 
 import operator
 import os
-import random
-import subprocess
 import time
 import z3
 
@@ -14,122 +12,21 @@ from fp_lemmas import (
     count_trailing_ones,
     two_sum_lemmas,
 )
+from smt_utils import SMT_SOLVERS, SMTJob, create_smt_job
 
 
 ONE: z3.BitVecNumRef = z3.BitVecVal(1, 1)
 RNE: z3.FPRMRef = z3.RoundNearestTiesToEven()
 
 
-def is_pos_zero(x: z3.FPRef) -> z3.BoolRef:
-    return z3.And(z3.fpIsZero(x), z3.fpIsPositive(x))
-
-
-def is_neg_zero(x: z3.FPRef) -> z3.BoolRef:
-    return z3.And(z3.fpIsZero(x), z3.fpIsNegative(x))
-
-
-def detect_smt_solvers() -> list[str]:
-    result: list[str] = []
-
-    try:
-        v: str = subprocess.check_output(["bitwuzla", "--version"], text=True)
-        print("Found Bitwuzla version:", v.strip())
-        result.append("bitwuzla")
-    except FileNotFoundError:
-        print("Bitwuzla not found in current PATH.")
-
-    try:
-        v: str = subprocess.check_output(["cvc5", "--version"], text=True)
-        print("Found CVC5 version:")
-        for line in v.split("\n"):
-            if not line:
-                break
-            print("    ", line)
-        result.append("cvc5")
-    except FileNotFoundError:
-        print("CVC5 not found in current PATH.")
-
-    try:
-        v: str = subprocess.check_output(["mathsat", "-version"], text=True)
-        print("Found MathSAT version:", v.strip())
-        result.append("mathsat")
-    except FileNotFoundError:
-        print("MathSAT not found in current PATH.")
-
-    try:
-        v: str = subprocess.check_output(["z3", "--version"], text=True)
-        print("Found Z3 version:", v.strip())
-        result.append("z3")
-    except FileNotFoundError:
-        print("Z3 not found in current PATH.")
-
-    print()
-    return result
-
-
-SMT_SOLVERS: list[str] = detect_smt_solvers()
-SOLVER_LEN: int = max(map(len, SMT_SOLVERS))
-
-
-def prove(solver: z3.Solver, name: str, claim: z3.BoolRef) -> bool:
-
-    # Write current solver state and claim to SMT-LIB2 file.
-    solver.push()
-    solver.add(z3.Not(claim))
-    os.makedirs("smt2", exist_ok=True)
-    filename: str = os.path.join("smt2", name + ".smt2")
-    with open(filename, "w") as f:
-        f.write("(set-logic QF_BVFP)\n")
-        f.write(solver.to_smt2())
-    solver.pop()
-
-    # Invoke external solvers to prove or refute the claim.
-    random.shuffle(SMT_SOLVERS)
-    external_processes: list[tuple[str, int, subprocess.Popen[str]]] = []
-    for smt_solver in SMT_SOLVERS:
-        start: int = time.perf_counter_ns()
-        process = subprocess.Popen(
-            [smt_solver, filename], stdout=subprocess.PIPE, text=True
-        )
-        external_processes.append((smt_solver, start, process))
-
-    # Wait for the first solver to finish and check its result.
-    while True:
-        for smt_solver, start, process in external_processes:
-            if process.poll() is not None:
-                stop: int = time.perf_counter_ns()
-                elapsed: float = (stop - start) / 1.0e9
-                assert process.returncode == 0
-                stdout: str
-                stderr: str
-                stdout, stderr = process.communicate()
-                assert stderr is None
-                for _, _, other_process in external_processes:
-                    other_process.kill()
-                solver_name: str = smt_solver.rjust(SOLVER_LEN)
-                if stdout == "unsat\n":
-                    print(f"{solver_name} proved {name} in {elapsed} seconds.")
-                    return True
-                elif stdout == "sat\n":
-                    print(f"{solver_name} refuted {name} in {elapsed} seconds.")
-                    return False
-                else:
-                    print(
-                        f"When attempting to prove {name}, {smt_solver}",
-                        f"returned {stdout} in {elapsed} seconds.",
-                    )
-                    assert False
-        # Sleep for a short time to avoid busy waiting. (Even the fastest SMT
-        # solvers take a few milliseconds, so 0.1ms is a reasonable interval.)
-        time.sleep(0.0001)
-
-
-def main(
+def create_two_sum_jobs(
     exponent_width: int,
     promoted_exponent_width: int,
     precision: int,
+    *,
+    prefix: str = "",
     suffix: str = "",
-) -> None:
+) -> list[SMTJob]:
 
     mantissa_width: int = precision - 1
     exponent_padding: z3.BitVecNumRef = z3.BitVecVal(
@@ -266,47 +163,76 @@ def main(
         z3.BitVecVal(3, promoted_exponent_width),
     )
 
-    for name, lemma in lemmas.items():
-        assert prove(solver, name + suffix, lemma)
+    return [
+        create_smt_job(solver, "QF_BVFP", prefix + name + suffix, lemma)
+        for name, lemma in lemmas.items()
+    ]
+
+
+def main() -> None:
+
+    f32_jobs: list[SMTJob] = create_two_sum_jobs(8, 16, 24, suffix="-F32")
+    f64_jobs: list[SMTJob] = create_two_sum_jobs(11, 16, 53, suffix="-F64")
+    remaining_jobs: list[SMTJob] = f32_jobs + f64_jobs
+
+    cpu_count: int | None = os.cpu_count()
+    job_count: int = 1 if cpu_count is None else cpu_count // len(SMT_SOLVERS)
+    running_jobs: list[SMTJob] = []
+
+    solver_len: int = max(map(len, SMT_SOLVERS))
+    name_len: int = max(len(job.filename) for job in remaining_jobs)
+
+    while remaining_jobs or running_jobs:
+
+        # Start new jobs until all job slots are filled.
+        while remaining_jobs and (len(running_jobs) < job_count):
+            next_job: SMTJob = remaining_jobs.pop(0)
+            next_job.start()
+            running_jobs.append(next_job)
+
+        # Check status of all running jobs.
+        finished_jobs: list[SMTJob] = []
+        for job in running_jobs:
+            if job.poll():
+                assert job.result is not None
+                finished_jobs.append(job)
+
+                # Print results of finished jobs.
+                assert len(job.processes) == 1
+                if job.result[1] == z3.unsat:
+                    print(
+                        job.processes.popitem()[0].rjust(solver_len),
+                        "proved",
+                        job.filename.ljust(name_len),
+                        "in",
+                        job.result[0],
+                        "seconds.",
+                    )
+                else:
+                    print(
+                        job.processes.popitem()[0].rjust(solver_len),
+                        "failed to prove",
+                        job.filename.ljust(name_len),
+                        "in",
+                        job.result[0],
+                        "seconds.",
+                    )
+                    assert False
+
+        # Vacate slots of finished jobs.
+        for job in finished_jobs:
+            running_jobs.remove(job)
+
+        # Sleep for a short time to avoid busy waiting. (Even the fastest SMT
+        # solvers take a few milliseconds, so 0.1ms is a reasonable interval.)
+        time.sleep(0.0001)
 
 
 if __name__ == "__main__":
-    main(8, 16, 24, "-F32")
-    main(11, 16, 53, "-F64")
+    main()
 
 
 """
-lemmas["G-LBZ"] = z_x >= ZERO_BV
-lemmas["G-UBZ"] = z_x < PRECISION_BV
-lemmas["G-LBO"] = o_x >= ZERO_BV
-lemmas["G-UBO"] = o_x < PRECISION_BV
-lemmas["G-LBN"] = n_x >= ZERO_BV
-lemmas["G-UBN"] = n_x < PRECISION_BV
-lemmas["G-RZO"] = z3.Xor(z_x == ZERO_BV, o_x == ZERO_BV)
-lemmas["G-RZN-G"] = z3.Implies(z_x < PRECISION_MINUS_ONE_BV, z_x < n_x)
-lemmas["G-RZN-S"] = z3.Implies(z_x == PRECISION_MINUS_ONE_BV, n_x == ZERO_BV)
-lemmas["G-RON"] = o_x <= n_x
-
-lemmas["G-LBES"] = z3.Or(
-    z3.fpIsZero(s),
-    e_s - n_s >= e_x - n_x,
-    e_s - n_s >= e_y - n_y,
-)
-
-lemmas["G-UBES"] = z3.Or(e_s <= e_x + ONE_BV, e_s <= e_y + ONE_BV)
-
-lemmas["G-LBEE"] = z3.Or(
-    z3.fpIsZero(e),
-    e_e - n_e >= e_x - n_x,
-    e_e - n_e >= e_y - n_y,
-)
-
-lemmas["G-UBEE"] = z3.Or(
-    z3.fpIsZero(e),
-    e_e < e_s - PRECISION_BV,
-    z3.And(e_e == e_s - PRECISION_BV, n_e == ZERO_BV),
-)
-
 lemmas["GA-NO-S"] = z3.Implies(
     z3.And(
         e_x - (z_x + ONE_BV) > e_y,
