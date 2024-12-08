@@ -13,6 +13,8 @@
         "ntbe",
         "ntbs",
         "ntbx",
-        "ntby"
+        "ntby",
+        "renorm",
+        "sexpr"
     ]
 }
