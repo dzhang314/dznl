@@ -15,15 +15,6 @@ namespace dznl {
 #endif // DZNL_RESTRICT
 
 
-#ifndef DZNL_CONST
-#ifdef DZNL_REMOVE_CONST
-#define DZNL_CONST
-#else
-#define DZNL_CONST const
-#endif // DZNL_REMOVE_CONST
-#endif // DZNL_CONST
-
-
 #ifndef DZNL_HAS_BUILTIN
 #ifdef __has_builtin
 #define DZNL_HAS_BUILTIN(x) __has_builtin(x)
