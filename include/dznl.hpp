@@ -20,4 +20,6 @@
 #include "Macros.hpp"
 #include "NumericTypes.hpp"
 #include "NumericConstants.hpp"
+#include "Tuple.hpp"
+#include "MultiFloat.hpp"
 // clang-format on
