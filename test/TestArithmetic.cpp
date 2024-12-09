@@ -1,15 +1,19 @@
-#include "NumericFunctions.hpp"
+#include <cstdlib>
+
+#include <boost/multiprecision/cpp_bin_float.hpp>
+
+#include "NumericConstants.hpp"
 #include "NumericTypes.hpp"
 
 
 template <typename T>
-constexpr bool test_signed_zero_one_two() {
+constexpr bool test_signed() {
 
-    constexpr T zero = dznl::zero<T>();
-    constexpr T one = dznl::one<T>();
-    constexpr T two = one + one;
-    constexpr T neg_one = -one;
-    constexpr T neg_two = -two;
+    const T zero = dznl::zero<T>();
+    const T one = dznl::one<T>();
+    const T two = one + one;
+    const T neg_one = -one;
+    const T neg_two = -two;
 
     bool result = true;
 
@@ -97,7 +101,7 @@ constexpr bool test_signed_zero_one_two() {
 
 
 template <typename T>
-constexpr bool test_unsigned_zero_one_two() {
+constexpr bool test_unsigned() {
 
     constexpr T zero = dznl::zero<T>();
     constexpr T one = dznl::one<T>();
@@ -139,15 +143,27 @@ constexpr bool test_unsigned_zero_one_two() {
 
 
 int main() {
-    static_assert(test_signed_zero_one_two<dznl::i8>());
-    static_assert(test_signed_zero_one_two<dznl::i16>());
-    static_assert(test_signed_zero_one_two<dznl::i32>());
-    static_assert(test_signed_zero_one_two<dznl::i64>());
-    static_assert(test_unsigned_zero_one_two<dznl::u8>());
-    static_assert(test_unsigned_zero_one_two<dznl::u16>());
-    static_assert(test_unsigned_zero_one_two<dznl::u32>());
-    static_assert(test_unsigned_zero_one_two<dznl::u64>());
-    static_assert(test_signed_zero_one_two<dznl::f32>());
-    static_assert(test_signed_zero_one_two<dznl::f64>());
-    return 0;
+
+    static_assert(test_signed<dznl::i8>());
+    static_assert(test_signed<dznl::i16>());
+    static_assert(test_signed<dznl::i32>());
+    static_assert(test_signed<dznl::i64>());
+    static_assert(test_unsigned<dznl::u8>());
+    static_assert(test_unsigned<dznl::u16>());
+    static_assert(test_unsigned<dznl::u32>());
+    static_assert(test_unsigned<dznl::u64>());
+    static_assert(test_signed<dznl::f32>());
+    static_assert(test_signed<dznl::f64>());
+
+    using namespace boost::multiprecision;
+
+    if (!test_signed<cpp_bin_float_single>()) { return EXIT_FAILURE; }
+    if (!test_signed<cpp_bin_float_double>()) { return EXIT_FAILURE; }
+    if (!test_signed<cpp_bin_float_double_extended>()) { return EXIT_FAILURE; }
+    if (!test_signed<cpp_bin_float_quad>()) { return EXIT_FAILURE; }
+    if (!test_signed<cpp_bin_float_oct>()) { return EXIT_FAILURE; }
+    if (!test_signed<cpp_bin_float_50>()) { return EXIT_FAILURE; }
+    if (!test_signed<cpp_bin_float_100>()) { return EXIT_FAILURE; }
+
+    return EXIT_SUCCESS;
 }

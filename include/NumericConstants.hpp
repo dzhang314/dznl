@@ -1,31 +1,52 @@
-#ifndef DZNL_NUMERIC_FUNCTIONS_HPP_INCLUDED
-#define DZNL_NUMERIC_FUNCTIONS_HPP_INCLUDED
+#ifndef DZNL_NUMERIC_CONSTANTS_HPP_INCLUDED
+#define DZNL_NUMERIC_CONSTANTS_HPP_INCLUDED
+
+#ifdef DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
+#include <boost/multiprecision/number.hpp>
+#endif // DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
+
+#ifdef BOOST_MP_NUMBER_HPP
+#define DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
+#endif // BOOST_MP_NUMBER_HPP
 
 namespace dznl {
 
 
-namespace internal {
-
-
 template <typename T>
-[[deprecated("WARNING: You are using the default placeholder implementation of"
-             " dznl::zero<T>(). Please provide a template specialization of"
-             " dznl::zero<T>() optimized for this type T.")]] constexpr T
-zero_default_impl() noexcept {
-    return static_cast<T>(0);
-}
+struct constants {
+
+    [[deprecated("WARNING: You are using the default placeholder implementation"
+                 " of dznl::zero<T>(). Please specialize dznl::constants<T> for"
+                 " for this specific type T.")]]
+    static constexpr T zero() noexcept {
+        return static_cast<T>(0);
+    }
+
+    [[deprecated("WARNING: You are using the default placeholder implementation"
+                 " of dznl::one<T>(). Please specialize dznl::constants<T> for"
+                 " for this specific type T.")]]
+    static constexpr T one() noexcept {
+        return static_cast<T>(1);
+    }
+
+}; // struct constants<T>
 
 
-template <typename T>
-[[deprecated("WARNING: You are using the default placeholder implementation of"
-             " dznl::one<T>(). Please provide a template specialization of"
-             " dznl::one<T>() optimized for this type T.")]] constexpr T
-one_default_impl() noexcept {
-    return static_cast<T>(1);
-}
+#ifdef DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
 
+template <typename B, ::boost::multiprecision::expression_template_option ET>
+struct constants<::boost::multiprecision::number<B, ET>> {
 
-} // namespace internal
+    static constexpr ::boost::multiprecision::number<B, ET> zero() noexcept {
+        return 0;
+    }
+
+    static constexpr ::boost::multiprecision::number<B, ET> one() noexcept {
+        return 1;
+    }
+};
+
+#endif // DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
 
 
 /**
@@ -34,7 +55,7 @@ one_default_impl() noexcept {
  */
 template <typename T>
 constexpr T zero() noexcept {
-    return internal::zero_default_impl<T>();
+    return constants<T>::zero();
 }
 
 
@@ -44,7 +65,7 @@ constexpr T zero() noexcept {
  */
 template <typename T>
 constexpr T one() noexcept {
-    return internal::one_default_impl<T>();
+    return constants<T>::one();
 }
 
 
@@ -94,4 +115,4 @@ DZNL_DEFINE_NUMERIC_CONSTANT(__uint128_t, one, 1ULL)
 
 } // namespace dznl
 
-#endif // DZNL_NUMERIC_FUNCTIONS_HPP_INCLUDED
+#endif // DZNL_NUMERIC_CONSTANTS_HPP_INCLUDED
