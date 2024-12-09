@@ -5,10 +5,6 @@
 #include <boost/multiprecision/number.hpp>
 #endif // DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
 
-#ifdef BOOST_MP_NUMBER_HPP
-#define DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
-#endif // BOOST_MP_NUMBER_HPP
-
 namespace dznl {
 
 
@@ -32,20 +28,41 @@ struct constants {
 }; // struct constants<T>
 
 
+#ifdef DZNL_REQUEST_D32
+template <>
+struct constants<d32> {
+    static constexpr d32 zero() noexcept { return 0; }
+    static constexpr d32 one() noexcept { return 1; }
+}; // struct constants<d32>
+#endif // DZNL_REQUEST_D32
+
+
+#ifdef DZNL_REQUEST_D64
+template <>
+struct constants<d64> {
+    static constexpr d64 zero() noexcept { return 0; }
+    static constexpr d64 one() noexcept { return 1; }
+}; // struct constants<d64>
+#endif // DZNL_REQUEST_D64
+
+
+#ifdef DZNL_REQUEST_D128
+template <>
+struct constants<d128> {
+    static constexpr d128 zero() noexcept { return 0; }
+    static constexpr d128 one() noexcept { return 1; }
+}; // struct constants<d128>
+#endif // DZNL_REQUEST_D128
+
+
 #ifdef DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
-
-template <typename B, ::boost::multiprecision::expression_template_option ET>
-struct constants<::boost::multiprecision::number<B, ET>> {
-
-    static constexpr ::boost::multiprecision::number<B, ET> zero() noexcept {
-        return 0;
-    }
-
-    static constexpr ::boost::multiprecision::number<B, ET> one() noexcept {
-        return 1;
-    }
+// clang-format off
+template <typename Backend, ::boost::multiprecision::expression_template_option ExpressionTemplates>
+struct constants<::boost::multiprecision::number<Backend, ExpressionTemplates>> {
+    static constexpr ::boost::multiprecision::number<Backend, ExpressionTemplates> zero() noexcept { return 0; }
+    static constexpr ::boost::multiprecision::number<Backend, ExpressionTemplates> one() noexcept { return 1; }
 };
-
+// clang-format on
 #endif // DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
 
 

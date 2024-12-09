@@ -2,8 +2,11 @@
 
 #include <boost/multiprecision/cpp_bin_float.hpp>
 
-#include "NumericConstants.hpp"
-#include "NumericTypes.hpp"
+#define DZNL_REQUEST_128_BIT_INTEGERS
+#if defined(__GNUC__) && !defined(__clang__)
+#define DZNL_REQUEST_DECIMAL_FLOATS
+#endif // defined(__GNUC__) && !defined(__clang__)
+#include "dznl.hpp"
 
 
 template <typename T>
@@ -148,12 +151,20 @@ int main() {
     static_assert(test_signed<dznl::i16>());
     static_assert(test_signed<dznl::i32>());
     static_assert(test_signed<dznl::i64>());
+    static_assert(test_signed<dznl::i128>());
     static_assert(test_unsigned<dznl::u8>());
     static_assert(test_unsigned<dznl::u16>());
     static_assert(test_unsigned<dznl::u32>());
     static_assert(test_unsigned<dznl::u64>());
+    static_assert(test_unsigned<dznl::u128>());
     static_assert(test_signed<dznl::f32>());
     static_assert(test_signed<dznl::f64>());
+
+#if defined(__GNUC__) && !defined(__clang__)
+    static_assert(test_signed<dznl::d32>());
+    static_assert(test_signed<dznl::d64>());
+    static_assert(test_signed<dznl::d128>());
+#endif // defined(__GNUC__) && !defined(__clang__)
 
     using namespace boost::multiprecision;
 
