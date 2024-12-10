@@ -1,6 +1,7 @@
 #include <cstdlib>
 
 #include <boost/multiprecision/cpp_bin_float.hpp>
+#include <boost/multiprecision/cpp_dec_float.hpp>
 
 #define DZNL_REQUEST_128_BIT_INTEGERS
 #if defined(__GNUC__) && !defined(__clang__)
@@ -175,6 +176,8 @@ int main() {
     if (!test_signed<cpp_bin_float_oct>()) { return EXIT_FAILURE; }
     if (!test_signed<cpp_bin_float_50>()) { return EXIT_FAILURE; }
     if (!test_signed<cpp_bin_float_100>()) { return EXIT_FAILURE; }
+    if (!test_signed<cpp_dec_float_50>()) { return EXIT_FAILURE; }
+    if (!test_signed<cpp_dec_float_100>()) { return EXIT_FAILURE; }
 
     return EXIT_SUCCESS;
 }
