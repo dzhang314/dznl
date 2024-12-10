@@ -1,6 +1,7 @@
 #ifndef DZNL_MULTI_FLOAT_HPP_INCLUDED
 #define DZNL_MULTI_FLOAT_HPP_INCLUDED
 
+#include "Macros.hpp"
 #include "NumericConstants.hpp"
 #include "Tuple.hpp"
 
@@ -8,7 +9,7 @@ namespace dznl {
 
 
 template <typename T>
-constexpr Tuple<T, T> two_sum(const T &x, const T &y) {
+DZNL_FORCE_INLINE constexpr Tuple<T, T> two_sum(const T &x, const T &y) {
     const T sum = x + y;
     const T x_prime = sum - y;
     const T y_prime = sum - x_prime;
@@ -20,8 +21,9 @@ constexpr Tuple<T, T> two_sum(const T &x, const T &y) {
 
 
 template <typename T>
-constexpr Tuple<T, T> two_prod(const T &x, const T &y) {
+DZNL_FORCE_INLINE constexpr Tuple<T, T> two_prod(const T &x, const T &y) {
     const T prod = x * y;
+    // TODO: free-function fma
     const T err = __builtin_fma(x, y, -prod);
     return {prod, err};
 }
@@ -44,7 +46,7 @@ struct MultiFloat {
         return result;
     }
 
-    constexpr void top_down_renorm_pass() noexcept {
+    DZNL_FORCE_INLINE constexpr void top_down_renorm_pass() noexcept {
         for (int i = 1; i < N; ++i) {
             const auto [sum, err] = two_sum(limbs[i - 1], limbs[i]);
             limbs[i - 1] = sum;
@@ -52,7 +54,7 @@ struct MultiFloat {
         }
     }
 
-    constexpr void bottom_up_renorm_pass() noexcept {
+    DZNL_FORCE_INLINE constexpr void bottom_up_renorm_pass() noexcept {
         for (int i = N; i > 1; --i) {
             const auto [sum, err] = two_sum(limbs[i - 2], limbs[i - 1]);
             limbs[i - 2] = sum;
@@ -60,7 +62,8 @@ struct MultiFloat {
         }
     }
 
-    constexpr void top_down_renorm_pass(MultiFloat &dst) const noexcept {
+    DZNL_FORCE_INLINE constexpr void top_down_renorm_pass(MultiFloat &dst
+    ) const noexcept {
         if constexpr (N > 0) {
             T carry = limbs[0];
             for (int i = 1; i < N; ++i) {
@@ -72,7 +75,8 @@ struct MultiFloat {
         }
     }
 
-    constexpr void bottom_up_renorm_pass(MultiFloat &dst) const noexcept {
+    DZNL_FORCE_INLINE constexpr void bottom_up_renorm_pass(MultiFloat &dst
+    ) const noexcept {
         if constexpr (N > 0) {
             T carry = limbs[N - 1];
             for (int i = N; i > 1; --i) {
@@ -130,7 +134,7 @@ struct MultiFloat {
 namespace internal {
 
 
-template <typename T, int L, int M, int N>
+template <int L, typename T, int M, int N>
 constexpr MultiFloat<T, L>
 multifloat_add(const MultiFloat<T, M> &lhs, const MultiFloat<T, N> &rhs) {
     MultiFloat<T, M + N> temp;
@@ -141,7 +145,7 @@ multifloat_add(const MultiFloat<T, M> &lhs, const MultiFloat<T, N> &rhs) {
 }
 
 
-template <typename T, int L, int M, int N>
+template <int L, typename T, int M, int N>
 constexpr MultiFloat<T, L>
 multifloat_sub(const MultiFloat<T, M> &lhs, const MultiFloat<T, N> &rhs) {
     MultiFloat<T, M + N> temp;
@@ -152,7 +156,7 @@ multifloat_sub(const MultiFloat<T, M> &lhs, const MultiFloat<T, N> &rhs) {
 }
 
 
-template <typename T, int L, int M, int N>
+template <int L, typename T, int M, int N>
 constexpr MultiFloat<T, L>
 multifloat_mul(const MultiFloat<T, M> &lhs, const MultiFloat<T, N> &rhs) {
     MultiFloat<T, 2 * M * N> temp;

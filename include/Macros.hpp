@@ -15,6 +15,17 @@ namespace dznl {
 #endif // DZNL_RESTRICT
 
 
+#ifndef DZNL_FORCE_INLINE
+#ifdef __GNUC__
+#define DZNL_FORCE_INLINE __attribute__((always_inline))
+#elif defined(_MSC_VER)
+#define DZNL_FORCE_INLINE __forceinline
+#else
+#define DZNL_FORCE_INLINE
+#endif
+#endif // DZNL_FORCE_INLINE
+
+
 #ifndef DZNL_HAS_BUILTIN
 #ifdef __has_builtin
 #define DZNL_HAS_BUILTIN(x) __has_builtin(x)
