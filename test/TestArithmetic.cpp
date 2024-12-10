@@ -7,7 +7,7 @@
 #if defined(__GNUC__) && !defined(__clang__)
 #define DZNL_REQUEST_DECIMAL_FLOATS
 #endif // defined(__GNUC__) && !defined(__clang__)
-#include "dznl.hpp"
+#include <dznl/dznl.hpp>
 
 
 template <typename T>
