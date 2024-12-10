@@ -3,6 +3,7 @@
 #include <boost/multiprecision/cpp_bin_float.hpp>
 
 #if defined(__GNUC__) && !defined(__clang__)
+#define DZNL_REQUEST_128_BIT_FLOATS
 #define DZNL_REQUEST_DECIMAL_FLOATS
 #endif // defined(__GNUC__) && !defined(__clang__)
 #include <dznl/dznl.hpp>
@@ -15,6 +16,8 @@ int main() {
     static_assert(dznl::compute_precision<dznl::f64>() == 53);
 
 #if defined(__GNUC__) && !defined(__clang__)
+    static_assert(dznl::compute_radix<dznl::f128>() == 2);
+    static_assert(dznl::compute_precision<dznl::f128>() == 113);
     static_assert(dznl::compute_radix<dznl::d32>() == 10);
     static_assert(dznl::compute_precision<dznl::d32>() == 7);
     static_assert(dznl::compute_radix<dznl::d64>() == 10);

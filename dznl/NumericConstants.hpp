@@ -28,6 +28,15 @@ struct constants {
 }; // struct constants<T>
 
 
+#ifdef DZNL_REQUEST_F128
+template <>
+struct constants<f128> {
+    static constexpr f128 zero() noexcept { return 0; }
+    static constexpr f128 one() noexcept { return 1; }
+}; // struct constants<f128>
+#endif // DZNL_REQUEST_F128
+
+
 #ifdef DZNL_REQUEST_D32
 template <>
 struct constants<d32> {

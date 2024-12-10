@@ -5,6 +5,7 @@
 
 #define DZNL_REQUEST_128_BIT_INTEGERS
 #if defined(__GNUC__) && !defined(__clang__)
+#define DZNL_REQUEST_128_BIT_FLOATS
 #define DZNL_REQUEST_DECIMAL_FLOATS
 #endif // defined(__GNUC__) && !defined(__clang__)
 #include <dznl/dznl.hpp>
@@ -162,6 +163,7 @@ int main() {
     static_assert(test_signed<dznl::f64>());
 
 #if defined(__GNUC__) && !defined(__clang__)
+    static_assert(test_signed<dznl::f128>());
     static_assert(test_signed<dznl::d32>());
     static_assert(test_signed<dznl::d64>());
     static_assert(test_signed<dznl::d128>());

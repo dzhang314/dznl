@@ -30,12 +30,19 @@ static_assert(sizeof(f64) == 8);
 
 #ifdef DZNL_REQUEST_I128
 using i128 = __int128_t;
+static_assert(sizeof(i128) == 16);
 #endif // DZNL_REQUEST_I128
 
 
 #ifdef DZNL_REQUEST_U128
 using u128 = __uint128_t;
+static_assert(sizeof(u128) == 16);
 #endif // DZNL_REQUEST_U128
+
+
+#ifdef DZNL_REQUEST_F128
+using f128 = __float128;
+#endif // DZNL_REQUEST_F128
 
 
 #ifdef DZNL_REQUEST_D32
@@ -43,6 +50,7 @@ using u128 = __uint128_t;
 #error "decimal floating-point support requires GCC"
 #endif // defined(__clang__) || !defined(__GNUC__)
 using d32 = float [[gnu::mode(SD)]];
+static_assert(sizeof(d32) == 4);
 #endif // DZNL_REQUEST_D32
 
 
@@ -51,6 +59,7 @@ using d32 = float [[gnu::mode(SD)]];
 #error "decimal floating-point support requires GCC"
 #endif // defined(__clang__) || !defined(__GNUC__)
 using d64 = float [[gnu::mode(DD)]];
+static_assert(sizeof(d64) == 8);
 #endif // DZNL_REQUEST_D64
 
 
@@ -59,6 +68,7 @@ using d64 = float [[gnu::mode(DD)]];
 #error "decimal floating-point support requires GCC"
 #endif // defined(__clang__) || !defined(__GNUC__)
 using d128 = float [[gnu::mode(TD)]];
+static_assert(sizeof(d128) == 16);
 #endif // DZNL_REQUEST_D128
 
 
