@@ -35,6 +35,11 @@ namespace dznl {
 #endif // DZNL_HAS_BUILTIN
 
 
+#ifndef DZNL_CHAR_BIT
+#define DZNL_CHAR_BIT 8
+#endif // DZNL_CHAR_BIT
+
+
 #define DZNL_LOOP_OVER_FUNDAMENTAL_INTEGER_TYPES                               \
     DZNL_LOOP_BODY(signed char)                                                \
     DZNL_LOOP_BODY(unsigned char)                                              \
