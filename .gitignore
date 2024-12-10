@@ -1,4 +1,5 @@
 /bin
+/docs
 /scripts/__pycache__
 /scripts/smt2
 /scripts/Float16ShortTwoSumSummaries.jld2
