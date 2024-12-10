@@ -28,53 +28,6 @@ struct constants {
 }; // struct constants<T>
 
 
-#ifdef DZNL_REQUEST_F128
-template <>
-struct constants<f128> {
-    static constexpr f128 zero() noexcept { return 0; }
-    static constexpr f128 one() noexcept { return 1; }
-}; // struct constants<f128>
-#endif // DZNL_REQUEST_F128
-
-
-#ifdef DZNL_REQUEST_D32
-template <>
-struct constants<d32> {
-    static constexpr d32 zero() noexcept { return 0; }
-    static constexpr d32 one() noexcept { return 1; }
-}; // struct constants<d32>
-#endif // DZNL_REQUEST_D32
-
-
-#ifdef DZNL_REQUEST_D64
-template <>
-struct constants<d64> {
-    static constexpr d64 zero() noexcept { return 0; }
-    static constexpr d64 one() noexcept { return 1; }
-}; // struct constants<d64>
-#endif // DZNL_REQUEST_D64
-
-
-#ifdef DZNL_REQUEST_D128
-template <>
-struct constants<d128> {
-    static constexpr d128 zero() noexcept { return 0; }
-    static constexpr d128 one() noexcept { return 1; }
-}; // struct constants<d128>
-#endif // DZNL_REQUEST_D128
-
-
-#ifdef DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
-// clang-format off
-template <typename Backend, ::boost::multiprecision::expression_template_option ExpressionTemplates>
-struct constants<::boost::multiprecision::number<Backend, ExpressionTemplates>> {
-    static constexpr ::boost::multiprecision::number<Backend, ExpressionTemplates> zero() noexcept { return 0; }
-    static constexpr ::boost::multiprecision::number<Backend, ExpressionTemplates> one() noexcept { return 1; }
-};
-// clang-format on
-#endif // DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
-
-
 /**
  * @brief Construct and return an additive identity element
  *        of a numeric type `T`.
@@ -95,48 +48,60 @@ constexpr T one() noexcept {
 }
 
 
-#define DZNL_DEFINE_NUMERIC_CONSTANT(TYPE, NAME, VALUE)                        \
+#define DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(TYPE, ZERO, ONE)                \
     template <>                                                                \
-    constexpr TYPE NAME<TYPE>() noexcept {                                     \
-        return VALUE;                                                          \
+    struct constants<TYPE> {                                                   \
+        static constexpr TYPE zero() noexcept { return ZERO; }                 \
+        static constexpr TYPE one() noexcept { return ONE; }                   \
     }
 
-DZNL_DEFINE_NUMERIC_CONSTANT(signed char, zero, '\0')
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned char, zero, '\0')
-DZNL_DEFINE_NUMERIC_CONSTANT(signed short, zero, 0)
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned short, zero, 0U)
-DZNL_DEFINE_NUMERIC_CONSTANT(signed int, zero, 0)
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned int, zero, 0U)
-DZNL_DEFINE_NUMERIC_CONSTANT(signed long, zero, 0L)
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long, zero, 0UL)
-DZNL_DEFINE_NUMERIC_CONSTANT(signed long long, zero, 0LL)
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long long, zero, 0ULL)
-DZNL_DEFINE_NUMERIC_CONSTANT(float, zero, 0.0F)
-DZNL_DEFINE_NUMERIC_CONSTANT(double, zero, 0.0)
-DZNL_DEFINE_NUMERIC_CONSTANT(long double, zero, 0.0L)
-
-DZNL_DEFINE_NUMERIC_CONSTANT(signed char, one, '\1')
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned char, one, '\1')
-DZNL_DEFINE_NUMERIC_CONSTANT(signed short, one, 1)
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned short, one, 1U)
-DZNL_DEFINE_NUMERIC_CONSTANT(signed int, one, 1)
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned int, one, 1U)
-DZNL_DEFINE_NUMERIC_CONSTANT(signed long, one, 1L)
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long, one, 1UL)
-DZNL_DEFINE_NUMERIC_CONSTANT(signed long long, one, 1LL)
-DZNL_DEFINE_NUMERIC_CONSTANT(unsigned long long, one, 1ULL)
-DZNL_DEFINE_NUMERIC_CONSTANT(float, one, 1.0F)
-DZNL_DEFINE_NUMERIC_CONSTANT(double, one, 1.0)
-DZNL_DEFINE_NUMERIC_CONSTANT(long double, one, 1.0L)
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(signed char, '\0', '\1');
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(unsigned char, '\0', '\1');
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(signed short, 0, 1);
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(unsigned short, 0U, 1U);
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(signed int, 0, 1);
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(unsigned int, 0U, 1U);
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(signed long, 0L, 1L);
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(unsigned long, 0UL, 1UL);
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(signed long long, 0LL, 1LL);
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(unsigned long long, 0ULL, 1ULL);
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(float, 0.0F, 1.0F);
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(double, 0.0, 1.0);
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(long double, 0.0L, 1.0L);
 
 #ifdef __SIZEOF_INT128__
-DZNL_DEFINE_NUMERIC_CONSTANT(__int128_t, zero, 0LL)
-DZNL_DEFINE_NUMERIC_CONSTANT(__uint128_t, zero, 0ULL)
-DZNL_DEFINE_NUMERIC_CONSTANT(__int128_t, one, 1LL)
-DZNL_DEFINE_NUMERIC_CONSTANT(__uint128_t, one, 1ULL)
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(__int128_t, 0LL, 1LL);
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(__uint128_t, 0ULL, 1ULL);
 #endif // __SIZEOF_INT128__
 
-#undef DZNL_DEFINE_NUMERIC_CONSTANT
+#ifdef DZNL_REQUEST_F128
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(f128, 0, 1);
+#endif // DZNL_REQUEST_F128
+
+#ifdef DZNL_REQUEST_D32
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(d32, 0, 1);
+#endif // DZNL_REQUEST_D32
+
+#ifdef DZNL_REQUEST_D64
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(d64, 0, 1);
+#endif // DZNL_REQUEST_D64
+
+#ifdef DZNL_REQUEST_D128
+DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS(d128, 0, 1);
+#endif // DZNL_REQUEST_D128
+
+#undef DZNL_INTERNAL_DEFINE_NUMERIC_CONSTANTS
+
+
+#ifdef DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
+// clang-format off
+template <typename Backend, ::boost::multiprecision::expression_template_option ExpressionTemplates>
+struct constants<::boost::multiprecision::number<Backend, ExpressionTemplates>> {
+    static constexpr ::boost::multiprecision::number<Backend, ExpressionTemplates> zero() noexcept { return 0; }
+    static constexpr ::boost::multiprecision::number<Backend, ExpressionTemplates> one() noexcept { return 1; }
+};
+// clang-format on
+#endif // DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
 
 
 } // namespace dznl
