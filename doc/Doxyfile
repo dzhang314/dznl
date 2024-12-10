@@ -6,10 +6,17 @@ HIDE_UNDOC_CLASSES = YES
 WARN_NO_PARAMDOC = YES
 WARN_IF_UNDOC_ENUM_VAL = YES
 
-INPUT = "include"
-RECURSIVE = YES
+GENERATE_TREEVIEW = YES
+DISABLE_INDEX = NO
+FULL_SIDEBAR = NO
+HTML_EXTRA_STYLESHEET = doxygen-awesome-css/doxygen-awesome.css \
+                        doxygen-awesome-css/doxygen-awesome-sidebar-only.css
+HTML_COLORSTYLE = LIGHT
 
-OUTPUT_DIRECTORY = "docs"
+INPUT = "pages" "../include"
+RECURSIVE = NO
+FULL_PATH_NAMES = NO
+USE_MDFILE_AS_MAINPAGE = pages/MainPage.md
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. This
 # could be handy for archiving the generated documentation or if some version
@@ -81,41 +88,6 @@ ALWAYS_DETAILED_SEC    = NO
 # The default value is: NO.
 
 INLINE_INHERITED_MEMB  = NO
-
-# If the FULL_PATH_NAMES tag is set to YES, Doxygen will prepend the full path
-# before files name in the file list and in the header files. If set to NO the
-# shortest path that makes the file name unique will be used
-# The default value is: YES.
-
-FULL_PATH_NAMES        = YES
-
-# The STRIP_FROM_PATH tag can be used to strip a user-defined part of the path.
-# Stripping is only done if one of the specified strings matches the left-hand
-# part of the path. The tag can be used to show relative paths in the file list.
-# If left blank the directory from which Doxygen is run is used as the path to
-# strip.
-#
-# Note that you can specify absolute paths here, but also relative paths, which
-# will be relative from the directory where Doxygen is started.
-# This tag requires that the tag FULL_PATH_NAMES is set to YES.
-
-STRIP_FROM_PATH        =
-
-# The STRIP_FROM_INC_PATH tag can be used to strip a user-defined part of the
-# path mentioned in the documentation of a class, which tells the reader which
-# header file to include in order to use a class. If left blank only the name of
-# the header file containing the class definition is used. Otherwise one should
-# specify the list of include paths that are normally passed to the compiler
-# using the -I flag.
-
-STRIP_FROM_INC_PATH    =
-
-# If the SHORT_NAMES tag is set to YES, Doxygen will generate much shorter (but
-# less readable) file names. This can be useful is your file systems doesn't
-# support long names like on DOS, Mac, or CD-ROM.
-# The default value is: NO.
-
-SHORT_NAMES            = NO
 
 # If the JAVADOC_AUTOBRIEF tag is set to YES then Doxygen will interpret the
 # first line (until the first dot) of a Javadoc-style comment as the brief
@@ -604,13 +576,6 @@ FILTER_SOURCE_FILES    = NO
 
 FILTER_SOURCE_PATTERNS =
 
-# If the USE_MDFILE_AS_MAINPAGE tag refers to the name of a markdown file that
-# is part of the input, its contents will be placed on the main page
-# (index.html). This can be useful if you have a project on for instance GitHub
-# and want to reuse the introduction page also for the Doxygen output.
-
-USE_MDFILE_AS_MAINPAGE =
-
 #---------------------------------------------------------------------------
 # Configuration options related to source browsing
 #---------------------------------------------------------------------------
@@ -722,119 +687,6 @@ IGNORE_PREFIX          =
 # Configuration options related to the HTML output
 #---------------------------------------------------------------------------
 
-# The HTML_HEADER tag can be used to specify a user-defined HTML header file for
-# each generated HTML page. If the tag is left blank Doxygen will generate a
-# standard header.
-#
-# To get valid HTML the header file that includes any scripts and style sheets
-# that Doxygen needs, which is dependent on the configuration options used (e.g.
-# the setting GENERATE_TREEVIEW). It is highly recommended to start with a
-# default header using
-# doxygen -w html new_header.html new_footer.html new_stylesheet.css
-# YourConfigFile
-# and then modify the file new_header.html. See also section "Doxygen usage"
-# for information on how to generate the default header that Doxygen normally
-# uses.
-# Note: The header is subject to change so you typically have to regenerate the
-# default header when upgrading to a newer version of Doxygen. For a description
-# of the possible markers and block names see the documentation.
-# This tag requires that the tag GENERATE_HTML is set to YES.
-
-HTML_HEADER            =
-
-# The HTML_FOOTER tag can be used to specify a user-defined HTML footer for each
-# generated HTML page. If the tag is left blank Doxygen will generate a standard
-# footer. See HTML_HEADER for more information on how to generate a default
-# footer and what special commands can be used inside the footer. See also
-# section "Doxygen usage" for information on how to generate the default footer
-# that Doxygen normally uses.
-# This tag requires that the tag GENERATE_HTML is set to YES.
-
-HTML_FOOTER            =
-
-# The HTML_STYLESHEET tag can be used to specify a user-defined cascading style
-# sheet that is used by each HTML page. It can be used to fine-tune the look of
-# the HTML output. If left blank Doxygen will generate a default style sheet.
-# See also section "Doxygen usage" for information on how to generate the style
-# sheet that Doxygen normally uses.
-# Note: It is recommended to use HTML_EXTRA_STYLESHEET instead of this tag, as
-# it is more robust and this tag (HTML_STYLESHEET) will in the future become
-# obsolete.
-# This tag requires that the tag GENERATE_HTML is set to YES.
-
-HTML_STYLESHEET        =
-
-# The HTML_EXTRA_STYLESHEET tag can be used to specify additional user-defined
-# cascading style sheets that are included after the standard style sheets
-# created by Doxygen. Using this option one can overrule certain style aspects.
-# This is preferred over using HTML_STYLESHEET since it does not replace the
-# standard style sheet and is therefore more robust against future updates.
-# Doxygen will copy the style sheet files to the output directory.
-# Note: The order of the extra style sheet files is of importance (e.g. the last
-# style sheet in the list overrules the setting of the previous ones in the
-# list).
-# Note: Since the styling of scrollbars can currently not be overruled in
-# Webkit/Chromium, the styling will be left out of the default doxygen.css if
-# one or more extra stylesheets have been specified. So if scrollbar
-# customization is desired it has to be added explicitly. For an example see the
-# documentation.
-# This tag requires that the tag GENERATE_HTML is set to YES.
-
-HTML_EXTRA_STYLESHEET  =
-
-# The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
-# other source files which should be copied to the HTML output directory. Note
-# that these files will be copied to the base HTML output directory. Use the
-# $relpath^ marker in the HTML_HEADER and/or HTML_FOOTER files to load these
-# files. In the HTML_STYLESHEET file, use the file name only. Also note that the
-# files will be copied as-is; there are no commands or markers available.
-# This tag requires that the tag GENERATE_HTML is set to YES.
-
-HTML_EXTRA_FILES       =
-
-# The HTML_COLORSTYLE tag can be used to specify if the generated HTML output
-# should be rendered with a dark or light theme.
-# Possible values are: LIGHT always generates light mode output, DARK always
-# generates dark mode output, AUTO_LIGHT automatically sets the mode according
-# to the user preference, uses light mode if no preference is set (the default),
-# AUTO_DARK automatically sets the mode according to the user preference, uses
-# dark mode if no preference is set and TOGGLE allows a user to switch between
-# light and dark mode via a button.
-# The default value is: AUTO_LIGHT.
-# This tag requires that the tag GENERATE_HTML is set to YES.
-
-HTML_COLORSTYLE        = AUTO_LIGHT
-
-# The HTML_COLORSTYLE_HUE tag controls the color of the HTML output. Doxygen
-# will adjust the colors in the style sheet and background images according to
-# this color. Hue is specified as an angle on a color-wheel, see
-# https://en.wikipedia.org/wiki/Hue for more information. For instance the value
-# 0 represents red, 60 is yellow, 120 is green, 180 is cyan, 240 is blue, 300
-# purple, and 360 is red again.
-# Minimum value: 0, maximum value: 359, default value: 220.
-# This tag requires that the tag GENERATE_HTML is set to YES.
-
-HTML_COLORSTYLE_HUE    = 220
-
-# The HTML_COLORSTYLE_SAT tag controls the purity (or saturation) of the colors
-# in the HTML output. For a value of 0 the output will use gray-scales only. A
-# value of 255 will produce the most vivid colors.
-# Minimum value: 0, maximum value: 255, default value: 100.
-# This tag requires that the tag GENERATE_HTML is set to YES.
-
-HTML_COLORSTYLE_SAT    = 100
-
-# The HTML_COLORSTYLE_GAMMA tag controls the gamma correction applied to the
-# luminance component of the colors in the HTML output. Values below 100
-# gradually make the output lighter, whereas values above 100 make the output
-# darker. The value divided by 100 is the actual gamma applied, so 80 represents
-# a gamma of 0.8, The value 220 represents a gamma of 2.2, and 100 does not
-# change the gamma.
-# Minimum value: 40, maximum value: 240, default value: 80.
-# This tag requires that the tag GENERATE_HTML is set to YES.
-
-HTML_COLORSTYLE_GAMMA  = 80
-
 # If the HTML_DYNAMIC_MENUS tag is set to YES then the generated HTML
 # documentation will contain a main index with vertical navigation menus that
 # are dynamically created via JavaScript. If disabled, the navigation index will
@@ -893,46 +745,6 @@ HTML_PROJECT_COOKIE    =
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
 HTML_INDEX_NUM_ENTRIES = 100
-
-# If you want full control over the layout of the generated HTML pages it might
-# be necessary to disable the index and replace it with your own. The
-# DISABLE_INDEX tag can be used to turn on/off the condensed index (tabs) at top
-# of each HTML page. A value of NO enables the index and the value YES disables
-# it. Since the tabs in the index contain the same information as the navigation
-# tree, you can set this option to YES if you also set GENERATE_TREEVIEW to YES.
-# The default value is: NO.
-# This tag requires that the tag GENERATE_HTML is set to YES.
-
-DISABLE_INDEX          = NO
-
-# The GENERATE_TREEVIEW tag is used to specify whether a tree-like index
-# structure should be generated to display hierarchical information. If the tag
-# value is set to YES, a side panel will be generated containing a tree-like
-# index structure (just like the one that is generated for HTML Help). For this
-# to work a browser that supports JavaScript, DHTML, CSS and frames is required
-# (i.e. any modern browser). Windows users are probably better off using the
-# HTML help feature. Via custom style sheets (see HTML_EXTRA_STYLESHEET) one can
-# further fine tune the look of the index (see "Fine-tuning the output"). As an
-# example, the default style sheet generated by Doxygen has an example that
-# shows how to put an image at the root of the tree instead of the PROJECT_NAME.
-# Since the tree basically has the same information as the tab index, you could
-# consider setting DISABLE_INDEX to YES when enabling this option.
-# The default value is: NO.
-# This tag requires that the tag GENERATE_HTML is set to YES.
-
-GENERATE_TREEVIEW      = NO
-
-# When both GENERATE_TREEVIEW and DISABLE_INDEX are set to YES, then the
-# FULL_SIDEBAR option determines if the side bar is limited to only the treeview
-# area (value NO) or if it should extend to the full height of the window (value
-# YES). Setting this to YES gives a layout similar to
-# https://docs.readthedocs.io with more room for contents, but less room for the
-# project logo, title, and description. If either GENERATE_TREEVIEW or
-# DISABLE_INDEX is set to NO, this option has no effect.
-# The default value is: NO.
-# This tag requires that the tag GENERATE_HTML is set to YES.
-
-FULL_SIDEBAR           = NO
 
 # The ENUM_VALUES_PER_LINE tag can be used to set the number of enum values that
 # Doxygen will group on one line in the generated HTML documentation.

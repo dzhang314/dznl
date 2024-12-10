@@ -3,9 +3,8 @@
 **`dznl`** is a header-only C++17 math library that provides high-performance implementations of:
 
 - numerical calculus and linear algebra
-- high-precision floating-point arithmetic
-- numerical differentiation and integration
 - nonlinear root-finding and optimization
+- high-precision floating-point arithmetic
 
 
 
