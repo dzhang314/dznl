@@ -3,8 +3,8 @@
 #include <boost/multiprecision/cpp_bin_float.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 
-#define DZNL_REQUEST_16_BIT_FLOATS
 #define DZNL_REQUEST_128_BIT_INTEGERS
+#define DZNL_REQUEST_16_BIT_FLOATS
 #if defined(__GNUC__) && !defined(__clang__)
 #define DZNL_REQUEST_128_BIT_FLOATS
 #define DZNL_REQUEST_DECIMAL_FLOATS
@@ -22,6 +22,24 @@ constexpr bool test_signed() {
     const T neg_two = -two;
 
     bool result = true;
+
+    result &= !dznl::is_zero(neg_two);
+    result &= !dznl::is_zero(neg_one);
+    result &= dznl::is_zero(zero);
+    result &= !dznl::is_zero(one);
+    result &= !dznl::is_zero(two);
+
+    result &= !dznl::is_one(neg_two);
+    result &= !dznl::is_one(neg_one);
+    result &= !dznl::is_one(zero);
+    result &= dznl::is_one(one);
+    result &= !dznl::is_one(two);
+
+    result &= dznl::sign_bit(neg_two);
+    result &= dznl::sign_bit(neg_one);
+    result &= !dznl::sign_bit(zero);
+    result &= !dznl::sign_bit(one);
+    result &= !dznl::sign_bit(two);
 
     result &= (neg_two + zero == neg_two);
     result &= (neg_two + one == neg_one);
@@ -114,6 +132,18 @@ constexpr bool test_unsigned() {
     constexpr T two = one + one;
 
     bool result = true;
+
+    result &= dznl::is_zero(zero);
+    result &= !dznl::is_zero(one);
+    result &= !dznl::is_zero(two);
+
+    result &= !dznl::is_one(zero);
+    result &= dznl::is_one(one);
+    result &= !dznl::is_one(two);
+
+    result &= !dznl::sign_bit(zero);
+    result &= !dznl::sign_bit(one);
+    result &= !dznl::sign_bit(two);
 
     result &= (zero + zero == zero);
     result &= (zero + one == one);

@@ -31,6 +31,7 @@
 #include "Macros.hpp"
 #include "NumericTypes.hpp"
 #include "NumericConstants.hpp"
+#include "NumericFunctions.hpp"
 #include "FloatingPoint.hpp"
 #include "Tuple.hpp"
 #include "MultiFloat.hpp"
