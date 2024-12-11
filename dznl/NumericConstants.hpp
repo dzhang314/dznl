@@ -1,6 +1,8 @@
 #ifndef DZNL_NUMERIC_CONSTANTS_HPP_INCLUDED
 #define DZNL_NUMERIC_CONSTANTS_HPP_INCLUDED
 
+#include "NumericTypes.hpp"
+
 #ifdef DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
 #include <boost/multiprecision/number.hpp>
 #endif // DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP

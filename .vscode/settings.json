@@ -2,9 +2,12 @@
     "cSpell.words": [
         "BFLOAT",
         "BVFP",
+        "DDZNL",
         "dznl",
         "FPRM",
         "isnormal",
+        "isystem",
+        "IWYU",
         "joldes",
         "multiprecision",
         "nlbe",
@@ -18,6 +21,9 @@
         "ntby",
         "renorm",
         "sexpr",
+        "Werror",
+        "Weverything",
+        "Wextra",
         "Zhang"
     ]
 }

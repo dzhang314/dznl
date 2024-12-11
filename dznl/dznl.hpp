@@ -27,12 +27,13 @@
 #endif // BOOST_MP_NUMBER_HPP
 
 
-// clang-format off
+// IWYU pragma: begin_exports
+#include "FloatingPoint.hpp"
 #include "Macros.hpp"
-#include "NumericTypes.hpp"
+#include "Memory.hpp"
+#include "MultiFloat.hpp"
 #include "NumericConstants.hpp"
 #include "NumericFunctions.hpp"
-#include "FloatingPoint.hpp"
+#include "NumericTypes.hpp"
 #include "Tuple.hpp"
-#include "MultiFloat.hpp"
-// clang-format on
+// IWYU pragma: end_exports

@@ -2,6 +2,10 @@
 
 set -euxo pipefail
 
+for f in dznl/*.hpp; do
+    include-what-you-use -I dznl -DDZNL_REQUEST_F16 $f
+done
+
 compile_and_run_gcc() {
     /opt/homebrew/bin/g++-14 -std=c++17 \
         -O3 -march=native \
@@ -15,6 +19,7 @@ compile_and_run_clang() {
     /opt/homebrew/opt/llvm/bin/clang++ -std=c++17 \
         -O3 -march=native \
         -Weverything -Werror \
+        -Wno-padded \
         -Wno-float-equal \
         -Wno-c++98-compat \
         -Wno-c++98-compat-pedantic \
@@ -27,6 +32,7 @@ compile_and_run_apple_clang() {
     clang++ -std=c++17 \
         -O3 -march=native \
         -Weverything -Werror \
+        -Wno-padded \
         -Wno-float-equal \
         -Wno-c++98-compat \
         -Wno-c++98-compat-pedantic \
