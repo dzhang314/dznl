@@ -20,12 +20,20 @@ constexpr int compute_radix() {
     // It suffices to consider powers of two, because for any radix r >= 2,
     // a power of two always lies between r^k and r^(k + 1) for any power k.
     FLOAT_T x = ONE;
-    while ((x + ONE) - x == ONE) { x += x; }
+    while (true) {
+        const FLOAT_T y = x + ONE;
+        const FLOAT_T z = y - x;
+        if (!(z == ONE)) { break; }
+        x += x;
+    }
 
     // Step 2: Determine ulp(x). This is the radix.
     FLOAT_T radix = ONE;
     int result = 1;
-    while (!((x + radix) - x == radix)) {
+    while (true) {
+        const FLOAT_T y = x + radix;
+        const FLOAT_T z = y - x;
+        if (z == radix) { break; }
         radix += ONE;
         ++result;
     }
@@ -45,7 +53,10 @@ constexpr int compute_precision() {
     // Step 2: Find the first power k such that ulp(r^k) > 1.
     FLOAT_T power = ONE;
     int result = 0;
-    while ((power + ONE) - power == ONE) {
+    while (true) {
+        const FLOAT_T y = power + ONE;
+        const FLOAT_T z = y - power;
+        if (!(z == ONE)) { break; }
         power *= float_radix;
         ++result;
     }

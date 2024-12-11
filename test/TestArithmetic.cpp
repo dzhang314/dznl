@@ -3,6 +3,7 @@
 #include <boost/multiprecision/cpp_bin_float.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 
+#define DZNL_REQUEST_16_BIT_FLOATS
 #define DZNL_REQUEST_128_BIT_INTEGERS
 #if defined(__GNUC__) && !defined(__clang__)
 #define DZNL_REQUEST_128_BIT_FLOATS
@@ -159,6 +160,8 @@ int main() {
     static_assert(test_unsigned<dznl::u32>());
     static_assert(test_unsigned<dznl::u64>());
     static_assert(test_unsigned<dznl::u128>());
+    static_assert(test_signed<dznl::f16>());
+    static_assert(test_signed<dznl::bf16>());
     static_assert(test_signed<dznl::f32>());
     static_assert(test_signed<dznl::f64>());
 

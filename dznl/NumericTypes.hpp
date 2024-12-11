@@ -40,8 +40,21 @@ static_assert(sizeof(u128) == 16);
 #endif // DZNL_REQUEST_U128
 
 
+#ifdef DZNL_REQUEST_F16
+using f16 = _Float16;
+static_assert(sizeof(f16) == 2);
+#endif // DZNL_REQUEST_F16
+
+
+#ifdef DZNL_REQUEST_BF16
+using bf16 = __bf16;
+static_assert(sizeof(bf16) == 2);
+#endif // DZNL_REQUEST_BF16
+
+
 #ifdef DZNL_REQUEST_F128
-using f128 = __float128;
+using f128 = _Float128;
+static_assert(sizeof(f128) == 16);
 #endif // DZNL_REQUEST_F128
 
 

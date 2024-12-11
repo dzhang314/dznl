@@ -2,6 +2,7 @@
 
 #include <boost/multiprecision/cpp_bin_float.hpp>
 
+#define DZNL_REQUEST_16_BIT_FLOATS
 #if defined(__GNUC__) && !defined(__clang__)
 #define DZNL_REQUEST_128_BIT_FLOATS
 #define DZNL_REQUEST_DECIMAL_FLOATS
@@ -10,6 +11,10 @@
 
 int main() {
 
+    static_assert(dznl::compute_radix<dznl::f16>() == 2);
+    static_assert(dznl::compute_precision<dznl::f16>() == 11);
+    static_assert(dznl::compute_radix<dznl::bf16>() == 2);
+    static_assert(dznl::compute_precision<dznl::bf16>() == 8);
     static_assert(dznl::compute_radix<dznl::f32>() == 2);
     static_assert(dznl::compute_precision<dznl::f32>() == 24);
     static_assert(dznl::compute_radix<dznl::f64>() == 2);
