@@ -251,21 +251,71 @@ ieee_binary_float_to_string(const FLOAT_T &x, bool include_plus_sign = false) {
     digit_stream << mantissa_mp;
     const std::string digits = digit_stream.str();
 
-    std::ostringstream result;
+    std::ostringstream result_scientific;
+    std::ostringstream result_fixed;
     if (sign) {
-        result << "-";
+        result_scientific << "-";
+        result_fixed << "-";
     } else if (include_plus_sign) {
-        result << "+";
+        result_scientific << "+";
+        result_fixed << "+";
     }
 
     if (digits.size() <= 1) {
-        result << digits << ".0e" << exponent_mp;
+        result_scientific << digits << ".0e" << exponent_mp;
     } else {
-        result << digits.substr(0, 1) << "." << digits.substr(1) << "e"
-               << (exponent_mp + (digits.size() - 1));
+        result_scientific << digits.substr(0, 1) << "." << digits.substr(1)
+                          << "e" << (exponent_mp + (digits.size() - 1));
     }
-    return result.str();
+
+    if (exponent_mp >= 0) {
+        // All digits lie to the left of the decimal point.
+        const std::string::size_type zero_count =
+            static_cast<std::string::size_type>(exponent_mp);
+        result_fixed << digits << std::string(zero_count, '0') << ".0";
+    } else if (-exponent_mp >= digits.size()) {
+        // All digits lie to the right of the decimal point.
+        const std::string::size_type zero_count =
+            static_cast<std::string::size_type>(-(exponent_mp + digits.size()));
+        result_fixed << "0." << std::string(zero_count, '0') << digits;
+    } else {
+        // Digits lie on both sides of the decimal point.
+        const std::string::size_type break_point =
+            static_cast<std::string::size_type>(digits.size() + exponent_mp);
+        result_fixed << digits.substr(0, break_point) << '.'
+                     << digits.substr(break_point);
+    }
+
+    const std::string sci_str = result_scientific.str();
+    const std::string fix_str = result_fixed.str();
+    return (sci_str.size() < fix_str.size()) ? sci_str : fix_str;
 }
+
+std::string to_string(const f32 &x, bool include_plus_sign = false) {
+    return ieee_binary_float_to_string<i32, u32>(x, include_plus_sign);
+}
+
+std::string to_string(const f64 &x, bool include_plus_sign = false) {
+    return ieee_binary_float_to_string<i64, u64>(x, include_plus_sign);
+}
+
+#ifdef DZNL_REQUEST_F16
+std::string to_string(const f16 &x, bool include_plus_sign = false) {
+    return ieee_binary_float_to_string<i16, u16>(x, include_plus_sign);
+}
+#endif // DZNL_REQUEST_F16
+
+#ifdef DZNL_REQUEST_BF16
+std::string to_string(const bf16 &x, bool include_plus_sign = false) {
+    return ieee_binary_float_to_string<i16, u16>(x, include_plus_sign);
+}
+#endif // DZNL_REQUEST_BF16
+
+#ifdef DZNL_REQUEST_F128
+std::string to_string(const f128 &x, bool include_plus_sign = false) {
+    return ieee_binary_float_to_string<i128, u128>(x, include_plus_sign);
+}
+#endif // DZNL_REQUEST_F128
 
 #endif // DZNL_REQUEST_FLOAT_TO_STRING
 

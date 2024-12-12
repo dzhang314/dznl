@@ -29,12 +29,18 @@ static_assert(sizeof(f64) == 8);
 
 
 #ifdef DZNL_REQUEST_I128
+#ifndef __SIZEOF_INT128__
+#error "128-bit integers are not supported on this platform"
+#endif // __SIZEOF_INT128__
 using i128 = __int128_t;
 static_assert(sizeof(i128) == 16);
 #endif // DZNL_REQUEST_I128
 
 
 #ifdef DZNL_REQUEST_U128
+#ifndef __SIZEOF_INT128__
+#error "128-bit integers are not supported on this platform"
+#endif // __SIZEOF_INT128__
 using u128 = __uint128_t;
 static_assert(sizeof(u128) == 16);
 #endif // DZNL_REQUEST_U128
