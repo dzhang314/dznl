@@ -35,3 +35,6 @@ compile_and_run_clang test/TestArithmetic.cpp bin/TestArithmeticClang
 
 compile_and_run_gcc test/TestFloatingPoint.cpp bin/TestFloatingPointGCC
 compile_and_run_clang test/TestFloatingPoint.cpp bin/TestFloatingPointClang
+
+compile_and_run_gcc test/TestFloatToString.cpp bin/TestFloatToStringGCC
+compile_and_run_clang test/TestFloatToString.cpp bin/TestFloatToStringClang

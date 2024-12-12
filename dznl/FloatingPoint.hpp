@@ -291,28 +291,28 @@ ieee_binary_float_to_string(const FLOAT_T &x, bool include_plus_sign = false) {
     return (sci_str.size() < fix_str.size()) ? sci_str : fix_str;
 }
 
-std::string to_string(const f32 &x, bool include_plus_sign = false) {
+inline std::string to_string(const f32 &x, bool include_plus_sign = false) {
     return ieee_binary_float_to_string<i32, u32>(x, include_plus_sign);
 }
 
-std::string to_string(const f64 &x, bool include_plus_sign = false) {
+inline std::string to_string(const f64 &x, bool include_plus_sign = false) {
     return ieee_binary_float_to_string<i64, u64>(x, include_plus_sign);
 }
 
 #ifdef DZNL_REQUEST_F16
-std::string to_string(const f16 &x, bool include_plus_sign = false) {
+inline std::string to_string(const f16 &x, bool include_plus_sign = false) {
     return ieee_binary_float_to_string<i16, u16>(x, include_plus_sign);
 }
 #endif // DZNL_REQUEST_F16
 
 #ifdef DZNL_REQUEST_BF16
-std::string to_string(const bf16 &x, bool include_plus_sign = false) {
+inline std::string to_string(const bf16 &x, bool include_plus_sign = false) {
     return ieee_binary_float_to_string<i16, u16>(x, include_plus_sign);
 }
 #endif // DZNL_REQUEST_BF16
 
 #ifdef DZNL_REQUEST_F128
-std::string to_string(const f128 &x, bool include_plus_sign = false) {
+inline std::string to_string(const f128 &x, bool include_plus_sign = false) {
     return ieee_binary_float_to_string<i128, u128>(x, include_plus_sign);
 }
 #endif // DZNL_REQUEST_F128
