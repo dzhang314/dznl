@@ -4,7 +4,7 @@
 #include "Macros.hpp"
 #include "Memory.hpp"
 #include "NumericConstants.hpp"
-#include "NumericFunctions.hpp"
+#include "NumericFunctions.hpp" // IWYU pragma: keep
 #include "Tuple.hpp"
 
 #ifdef DZNL_REQUEST_FLOAT_TO_STRING
