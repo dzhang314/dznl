@@ -14,15 +14,15 @@ template <typename T>
 struct constants {
 
     [[deprecated("WARNING: You are using the default placeholder implementation"
-                 " of dznl::zero<T>(). Please specialize dznl::constants<T> for"
-                 " for this specific type T.")]]
+                 " of dznl::zero<T>(). Please provide a template specialization"
+                 " of dznl::constants<T> for this specific type T.")]]
     static constexpr T zero() noexcept {
         return static_cast<T>(0);
     }
 
     [[deprecated("WARNING: You are using the default placeholder implementation"
-                 " of dznl::one<T>(). Please specialize dznl::constants<T> for"
-                 " for this specific type T.")]]
+                 " of dznl::one<T>(). Please provide a template specialization"
+                 " of dznl::constants<T> for this specific type T.")]]
     static constexpr T one() noexcept {
         return static_cast<T>(1);
     }
