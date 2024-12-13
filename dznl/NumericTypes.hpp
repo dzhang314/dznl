@@ -53,41 +53,53 @@ static_assert(sizeof(f16) == 2);
 
 
 #ifdef DZNL_REQUEST_BF16
+#if (defined(__GNUC__) && (!defined(__clang__)) && __GNUC__ < 13) ||           \
+    (defined(__clang__) && __clang_major__ < 16)
+#error "bfloat16 support requires GCC 13, Clang 16, or later"
+#else
 using bf16 = __bf16;
 static_assert(sizeof(bf16) == 2);
+#endif
 #endif // DZNL_REQUEST_BF16
 
 
 #ifdef DZNL_REQUEST_F128
-using f128 = _Float128;
+#if defined(__clang__) || !defined(__GNUC__)
+#error "128-bit floating-point support requires GCC"
+#else
+using f128 = __float128;
 static_assert(sizeof(f128) == 16);
+#endif
 #endif // DZNL_REQUEST_F128
 
 
 #ifdef DZNL_REQUEST_D32
 #if defined(__clang__) || !defined(__GNUC__)
 #error "decimal floating-point support requires GCC"
-#endif // defined(__clang__) || !defined(__GNUC__)
+#else
 using d32 = float [[gnu::mode(SD)]];
 static_assert(sizeof(d32) == 4);
+#endif
 #endif // DZNL_REQUEST_D32
 
 
 #ifdef DZNL_REQUEST_D64
 #if defined(__clang__) || !defined(__GNUC__)
 #error "decimal floating-point support requires GCC"
-#endif // defined(__clang__) || !defined(__GNUC__)
+#else
 using d64 = float [[gnu::mode(DD)]];
 static_assert(sizeof(d64) == 8);
+#endif
 #endif // DZNL_REQUEST_D64
 
 
 #ifdef DZNL_REQUEST_D128
 #if defined(__clang__) || !defined(__GNUC__)
 #error "decimal floating-point support requires GCC"
-#endif // defined(__clang__) || !defined(__GNUC__)
+#else
 using d128 = float [[gnu::mode(TD)]];
 static_assert(sizeof(d128) == 16);
+#endif
 #endif // DZNL_REQUEST_D128
 
 
