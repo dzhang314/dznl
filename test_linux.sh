@@ -8,7 +8,6 @@ done
 
 compile_and_run_gcc() {
     g++ -std=c++17 \
-        -O3 -march=native \
         -Wall -Wextra -pedantic -Werror \
         -I . \
         "$1" -o "$2"
@@ -17,7 +16,6 @@ compile_and_run_gcc() {
 
 compile_and_run_clang() {
     clang++ -std=c++17 \
-        -O3 -march=native \
         -Weverything -Werror \
         -Wno-padded \
         -Wno-float-equal \
