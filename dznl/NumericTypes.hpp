@@ -53,9 +53,10 @@ static_assert(sizeof(f16) == 2);
 
 
 #ifdef DZNL_REQUEST_BF16
-#if (defined(__GNUC__) && (!defined(__clang__)) && __GNUC__ < 13) ||           \
-    (defined(__clang__) && __clang_major__ < 16)
-#error "bfloat16 support requires GCC 13, Clang 16, or later"
+#if (defined(__GNUC__) && (!defined(__clang__)) && (__GNUC__ < 13)) ||         \
+    (defined(__clang__) && (!defined(__apple_build_version__)) &&              \
+     (__clang_major__ < 17))
+#error "bfloat16 support requires GCC 13, Clang 17, or later"
 #else
 using bf16 = __bf16;
 static_assert(sizeof(bf16) == 2);
