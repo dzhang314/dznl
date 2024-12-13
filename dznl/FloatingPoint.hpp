@@ -104,9 +104,9 @@ Tuple<bool, UNSIGNED_T, UNSIGNED_T> split_ieee_binary_float(const FLOAT_T &x) {
 
 #ifdef DZNL_REQUEST_FLOAT_TO_STRING
 
-inline std::string binary_float_to_string(
-    boost::multiprecision::cpp_int exponent,
-    boost::multiprecision::cpp_int mantissa,
+inline ::std::string binary_float_to_string(
+    ::boost::multiprecision::cpp_int exponent,
+    ::boost::multiprecision::cpp_int mantissa,
     bool lies_on_boundary
 ) {
 
@@ -115,9 +115,9 @@ inline std::string binary_float_to_string(
 
     --exponent;
     mantissa <<= 1;
-    boost::multiprecision::cpp_int lower_bound = mantissa;
+    ::boost::multiprecision::cpp_int lower_bound = mantissa;
     --lower_bound;
-    boost::multiprecision::cpp_int upper_bound = mantissa;
+    ::boost::multiprecision::cpp_int upper_bound = mantissa;
     ++upper_bound;
 
     // Step 2: Tighten the lower bound if the input number
@@ -134,7 +134,7 @@ inline std::string binary_float_to_string(
     // Step 3: Convert exponent and mantissae from base 2 to base 10.
 
     if (exponent < 0) {
-        for (boost::multiprecision::cpp_int i = exponent; i < 0; ++i) {
+        for (::boost::multiprecision::cpp_int i = exponent; i < 0; ++i) {
             mantissa *= 5;
             lower_bound *= 5;
             upper_bound *= 5;
@@ -154,25 +154,25 @@ inline std::string binary_float_to_string(
     bool mantissa_exact = true;
     bool lower_exact = true;
     --upper_bound;
-    boost::multiprecision::cpp_int next_digit = 0;
+    ::boost::multiprecision::cpp_int next_digit = 0;
 
     while (true) {
 
-        const boost::multiprecision::cpp_int lower_quotient = lower_bound / 10;
-        const boost::multiprecision::cpp_int upper_quotient = upper_bound / 10;
-        if (!(lower_quotient < upper_quotient)) { break; }
+        const ::boost::multiprecision::cpp_int lower_quot = lower_bound / 10;
+        const ::boost::multiprecision::cpp_int upper_quot = upper_bound / 10;
+        if (!(lower_quot < upper_quot)) { break; }
 
-        const boost::multiprecision::cpp_int lower_remainder = lower_bound % 10;
-        const boost::multiprecision::cpp_int mantissa_remainder = mantissa % 10;
+        const ::boost::multiprecision::cpp_int lower_rem = lower_bound % 10;
+        const ::boost::multiprecision::cpp_int mantissa_rem = mantissa % 10;
 
         ++exponent;
         mantissa /= 10;
-        lower_bound = lower_quotient;
-        upper_bound = upper_quotient;
+        lower_bound = lower_quot;
+        upper_bound = upper_quot;
 
         mantissa_exact &= (next_digit == 0);
-        lower_exact &= (lower_remainder == 0);
-        next_digit = mantissa_remainder;
+        lower_exact &= (lower_rem == 0);
+        next_digit = mantissa_rem;
     }
 
     // Step 5: Adjust the final digit of the mantissa for correct rounding.
@@ -191,9 +191,9 @@ inline std::string binary_float_to_string(
     // taking the shorter between fixed-point and scientific notation.
 
     if (mantissa == 0) { return "0.0"; }
-    const std::string digits = mantissa.str();
+    const ::std::string digits = mantissa.str();
 
-    std::ostringstream result_scientific;
+    ::std::ostringstream result_scientific;
     if (digits.size() <= 1) {
         result_scientific << digits << ".0e" << exponent;
     } else {
@@ -201,32 +201,32 @@ inline std::string binary_float_to_string(
                           << 'e' << (exponent + digits.size() - 1);
     }
 
-    std::ostringstream result_fixed;
+    ::std::ostringstream result_fixed;
     if (exponent >= 0) {
         // All digits lie to the left of the decimal point.
-        const std::string::size_type zero_count =
-            static_cast<std::string::size_type>(exponent);
-        result_fixed << digits << std::string(zero_count, '0') << ".0";
+        const ::std::string::size_type zero_count =
+            static_cast<::std::string::size_type>(exponent);
+        result_fixed << digits << ::std::string(zero_count, '0') << ".0";
     } else if (-exponent >= digits.size()) {
         // All digits lie to the right of the decimal point.
-        const std::string::size_type zero_count =
-            static_cast<std::string::size_type>(-(exponent + digits.size()));
-        result_fixed << "0." << std::string(zero_count, '0') << digits;
+        const ::std::string::size_type zero_count =
+            static_cast<::std::string::size_type>(-(exponent + digits.size()));
+        result_fixed << "0." << ::std::string(zero_count, '0') << digits;
     } else {
         // Digits lie on both sides of the decimal point.
-        const std::string::size_type break_point =
-            static_cast<std::string::size_type>(digits.size() + exponent);
+        const ::std::string::size_type break_point =
+            static_cast<::std::string::size_type>(digits.size() + exponent);
         result_fixed << digits.substr(0, break_point) << '.'
                      << digits.substr(break_point);
     }
 
-    const std::string sci_str = result_scientific.str();
-    const std::string fix_str = result_fixed.str();
+    const ::std::string sci_str = result_scientific.str();
+    const ::std::string fix_str = result_fixed.str();
     return (sci_str.size() < fix_str.size()) ? sci_str : fix_str;
 }
 
 template <typename SIGNED_T, typename UNSIGNED_T, typename FLOAT_T>
-std::string
+::std::string
 ieee_binary_float_to_string(const FLOAT_T &x, bool include_plus_sign = false) {
 
     static_assert(sizeof(SIGNED_T) == sizeof(FLOAT_T));
@@ -271,37 +271,89 @@ ieee_binary_float_to_string(const FLOAT_T &x, bool include_plus_sign = false) {
     const UNSIGNED_T mantissa =
         is_subnormal ? raw_mantissa : (IMPLICIT_BIT | raw_mantissa);
 
-    return (sign ? "-" : (include_plus_sign ? "+" : "")) +
-           binary_float_to_string(
-               exponent, mantissa, raw_mantissa_zero && !is_one(raw_exponent)
-           );
+    return (
+        (sign ? "-" : (include_plus_sign ? "+" : "")) +
+        binary_float_to_string(
+            exponent, mantissa, raw_mantissa_zero && !is_one(raw_exponent)
+        )
+    );
 }
 
-inline std::string to_string(const f32 &x, bool include_plus_sign = false) {
+inline ::std::string to_string(const f32 &x, bool include_plus_sign = false) {
     return ieee_binary_float_to_string<i32, u32>(x, include_plus_sign);
 }
 
-inline std::string to_string(const f64 &x, bool include_plus_sign = false) {
+inline ::std::string to_string(const f64 &x, bool include_plus_sign = false) {
     return ieee_binary_float_to_string<i64, u64>(x, include_plus_sign);
 }
 
 #ifdef DZNL_REQUEST_F16
-inline std::string to_string(const f16 &x, bool include_plus_sign = false) {
+inline ::std::string to_string(const f16 &x, bool include_plus_sign = false) {
     return ieee_binary_float_to_string<i16, u16>(x, include_plus_sign);
 }
 #endif // DZNL_REQUEST_F16
 
 #ifdef DZNL_REQUEST_BF16
-inline std::string to_string(const bf16 &x, bool include_plus_sign = false) {
+inline ::std::string to_string(const bf16 &x, bool include_plus_sign = false) {
     return ieee_binary_float_to_string<i16, u16>(x, include_plus_sign);
 }
 #endif // DZNL_REQUEST_BF16
 
 #ifdef DZNL_REQUEST_F128
-inline std::string to_string(const f128 &x, bool include_plus_sign = false) {
+inline ::std::string to_string(const f128 &x, bool include_plus_sign = false) {
     return ieee_binary_float_to_string<i128, u128>(x, include_plus_sign);
 }
 #endif // DZNL_REQUEST_F128
+
+#ifdef DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
+template <
+    unsigned Digits,
+    ::boost::multiprecision::backends::digit_base_type DigitBase,
+    typename Allocator,
+    typename Exponent,
+    Exponent MinExponent,
+    Exponent MaxExponent,
+    ::boost::multiprecision::expression_template_option ExpressionTemplates>
+::std::string to_string(
+    const ::boost::multiprecision::number<
+        ::boost::multiprecision::cpp_bin_float<
+            Digits,
+            DigitBase,
+            Allocator,
+            Exponent,
+            MinExponent,
+            MaxExponent>,
+        ExpressionTemplates> &x,
+    bool include_plus_sign = false
+) {
+    const auto &backend = x.backend();
+    const bool sign = backend.sign();
+    const auto &exponent = backend.exponent();
+
+    if (exponent == backend.exponent_nan) {
+        return "NaN";
+    } else if (exponent == backend.exponent_infinity) {
+        return sign ? "-Inf" : (include_plus_sign ? "+Inf" : "Inf");
+    } else if (exponent == backend.exponent_zero) {
+        return sign ? "-0.0" : (include_plus_sign ? "+0.0" : "0.0");
+    }
+
+    ::boost::multiprecision::cpp_int adjusted_exponent = exponent;
+    adjusted_exponent -= backend.bit_count;
+    ++adjusted_exponent;
+
+    const ::boost::multiprecision::cpp_int mantissa(backend.bits());
+    ::boost::multiprecision::cpp_int boundary = 1;
+    boundary <<= backend.bit_count;
+
+    return (
+        (sign ? "-" : (include_plus_sign ? "+" : "")) +
+        binary_float_to_string(
+            adjusted_exponent, mantissa, mantissa == boundary
+        )
+    );
+}
+#endif // DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
 
 #endif // DZNL_REQUEST_FLOAT_TO_STRING
 
