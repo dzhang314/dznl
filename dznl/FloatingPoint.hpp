@@ -104,13 +104,130 @@ Tuple<bool, UNSIGNED_T, UNSIGNED_T> split_ieee_binary_float(const FLOAT_T &x) {
 
 #ifdef DZNL_REQUEST_FLOAT_TO_STRING
 
+inline std::string binary_float_to_string(
+    boost::multiprecision::cpp_int exponent,
+    boost::multiprecision::cpp_int mantissa,
+    bool lies_on_boundary
+) {
+
+    // Step 1: Compute immediate predecessor and successor mantissae
+    // to determine the interval of information-preserving outputs.
+
+    --exponent;
+    mantissa <<= 1;
+    boost::multiprecision::cpp_int lower_bound = mantissa;
+    --lower_bound;
+    boost::multiprecision::cpp_int upper_bound = mantissa;
+    ++upper_bound;
+
+    // Step 2: Tighten the lower bound if the input number
+    // lies on a boundary between two exponent regimes.
+
+    if (lies_on_boundary) {
+        --exponent;
+        mantissa <<= 1;
+        lower_bound <<= 1;
+        ++lower_bound;
+        upper_bound <<= 1;
+    }
+
+    // Step 3: Convert exponent and mantissae from base 2 to base 10.
+
+    if (exponent < 0) {
+        for (boost::multiprecision::cpp_int i = exponent; i < 0; ++i) {
+            mantissa *= 5;
+            lower_bound *= 5;
+            upper_bound *= 5;
+        }
+    } else {
+        while (exponent > 0) {
+            --exponent;
+            mantissa <<= 1;
+            lower_bound <<= 1;
+            upper_bound <<= 1;
+        }
+    }
+
+    // Step 4: Trim unnecessary digits from the mantissae, using the interval
+    // bounds to determine the shortest information-preserving representation.
+
+    bool mantissa_exact = true;
+    bool lower_exact = true;
+    --upper_bound;
+    boost::multiprecision::cpp_int next_digit = 0;
+
+    while (true) {
+
+        const boost::multiprecision::cpp_int lower_quotient = lower_bound / 10;
+        const boost::multiprecision::cpp_int upper_quotient = upper_bound / 10;
+        if (!(lower_quotient < upper_quotient)) { break; }
+
+        const boost::multiprecision::cpp_int lower_remainder = lower_bound % 10;
+        const boost::multiprecision::cpp_int mantissa_remainder = mantissa % 10;
+
+        ++exponent;
+        mantissa /= 10;
+        lower_bound = lower_quotient;
+        upper_bound = upper_quotient;
+
+        mantissa_exact &= (next_digit == 0);
+        lower_exact &= (lower_remainder == 0);
+        next_digit = mantissa_remainder;
+    }
+
+    // Step 5: Adjust the final digit of the mantissa for correct rounding.
+
+    if (mantissa < upper_bound) {
+        if (next_digit > 5) {
+            ++mantissa;
+        } else if ((next_digit == 5) && ((mantissa & 1) || !mantissa_exact)) {
+            ++mantissa;
+        } else if ((mantissa == lower_bound) && !lower_exact) {
+            ++mantissa;
+        }
+    }
+
+    // Step 6: Convert the base-10 exponent and mantissa to a string,
+    // taking the shorter between fixed-point and scientific notation.
+
+    if (mantissa == 0) { return "0.0"; }
+    const std::string digits = mantissa.str();
+
+    std::ostringstream result_scientific;
+    if (digits.size() <= 1) {
+        result_scientific << digits << ".0e" << exponent;
+    } else {
+        result_scientific << digits.substr(0, 1) << '.' << digits.substr(1)
+                          << 'e' << (exponent + digits.size() - 1);
+    }
+
+    std::ostringstream result_fixed;
+    if (exponent >= 0) {
+        // All digits lie to the left of the decimal point.
+        const std::string::size_type zero_count =
+            static_cast<std::string::size_type>(exponent);
+        result_fixed << digits << std::string(zero_count, '0') << ".0";
+    } else if (-exponent >= digits.size()) {
+        // All digits lie to the right of the decimal point.
+        const std::string::size_type zero_count =
+            static_cast<std::string::size_type>(-(exponent + digits.size()));
+        result_fixed << "0." << std::string(zero_count, '0') << digits;
+    } else {
+        // Digits lie on both sides of the decimal point.
+        const std::string::size_type break_point =
+            static_cast<std::string::size_type>(digits.size() + exponent);
+        result_fixed << digits.substr(0, break_point) << '.'
+                     << digits.substr(break_point);
+    }
+
+    const std::string sci_str = result_scientific.str();
+    const std::string fix_str = result_fixed.str();
+    return (sci_str.size() < fix_str.size()) ? sci_str : fix_str;
+}
+
 template <typename SIGNED_T, typename UNSIGNED_T, typename FLOAT_T>
 std::string
 ieee_binary_float_to_string(const FLOAT_T &x, bool include_plus_sign = false) {
-
-    // Step 0: Compute the bit width of the provided floating-point type
-    // and the size of its exponent and mantissa fields. This can be done
-    // at compile-time using clever constexpr algorithms.
 
     static_assert(sizeof(SIGNED_T) == sizeof(FLOAT_T));
     static_assert(sizeof(UNSIGNED_T) == sizeof(FLOAT_T));
@@ -133,15 +250,8 @@ ieee_binary_float_to_string(const FLOAT_T &x, bool include_plus_sign = false) {
         (SIGNED_ONE << (EXPONENT_WIDTH - UNSIGNED_ONE)) - SIGNED_ONE;
     constexpr UNSIGNED_T IMPLICIT_BIT = UNSIGNED_ONE << MANTISSA_WIDTH;
 
-    // Step 1: Split the provided floating-point number
-    // into its raw sign, exponent, and mantissa fields.
-
     const auto [sign, raw_exponent, raw_mantissa] =
         split_ieee_binary_float<UNSIGNED_T>(x);
-
-    // Step 2: Handle special values, including NaN, positive
-    // and negative infinity, and positive and negative zero.
-
     const bool is_subnormal = is_zero(raw_exponent);
     const bool raw_mantissa_zero = is_zero(raw_mantissa);
 
@@ -155,140 +265,16 @@ ieee_binary_float_to_string(const FLOAT_T &x, bool include_plus_sign = false) {
         return sign ? "-0.0" : (include_plus_sign ? "+0.0" : "0.0");
     }
 
-    // Step 3: Decode the true exponent and mantissa from their raw binary
-    // values, applying IEEE 754 exponent bias and subnormal number rules.
-
     const SIGNED_T exponent =
         (is_subnormal ? SIGNED_ONE : static_cast<SIGNED_T>(raw_exponent)) -
         (EXPONENT_BIAS + static_cast<SIGNED_T>(MANTISSA_WIDTH));
     const UNSIGNED_T mantissa =
         is_subnormal ? raw_mantissa : (IMPLICIT_BIT | raw_mantissa);
 
-    boost::multiprecision::cpp_int exponent_mp = exponent;
-    boost::multiprecision::cpp_int mantissa_mp = mantissa;
-
-    // Step 4: Compute mantissae of immediate predecessor and successor
-    // to determine the interval of information-preserving outputs.
-
-    --exponent_mp;
-    mantissa_mp <<= 1;
-    boost::multiprecision::cpp_int mantissa_lo = mantissa_mp;
-    boost::multiprecision::cpp_int mantissa_hi = mantissa_mp;
-    --mantissa_lo;
-    ++mantissa_hi;
-
-    // Tighten the lower bound if the input number
-    // lies on a boundary between two exponent regimes.
-
-    if (raw_mantissa_zero && !is_one(raw_exponent)) {
-        --exponent_mp;
-        mantissa_lo <<= 1;
-        mantissa_mp <<= 1;
-        mantissa_hi <<= 1;
-        ++mantissa_lo;
-    }
-
-    // Step 5: Use exact arbitrary-width integer arithmetic to
-    // convert the exponent and mantissae from base 2 to base 10.
-
-    if (exponent_mp < 0) {
-        for (boost::multiprecision::cpp_int i = exponent_mp; i < 0; ++i) {
-            mantissa_lo *= 5;
-            mantissa_mp *= 5;
-            mantissa_hi *= 5;
-        }
-    } else {
-        while (exponent_mp > 0) {
-            mantissa_lo <<= 1;
-            mantissa_mp <<= 1;
-            mantissa_hi <<= 1;
-            --exponent_mp;
-        }
-    }
-
-    // Step 6: Trim unnecessary digits from the mantissae, using the interval
-    // bounds to determine the shortest information-preserving representation.
-
-    --mantissa_hi;
-    bool lo_exact = true;
-    bool mp_exact = true;
-    boost::multiprecision::cpp_int next_digit = 0;
-
-    while (true) {
-
-        const boost::multiprecision::cpp_int lo_quot = mantissa_lo / 10;
-        const boost::multiprecision::cpp_int hi_quot = mantissa_hi / 10;
-        if (!(lo_quot < hi_quot)) { break; }
-
-        const boost::multiprecision::cpp_int lo_rem = mantissa_lo % 10;
-        const boost::multiprecision::cpp_int mp_rem = mantissa_mp % 10;
-
-        ++exponent_mp;
-        mantissa_lo = lo_quot;
-        mantissa_mp /= 10;
-        mantissa_hi = hi_quot;
-
-        lo_exact &= (lo_rem == 0);
-        mp_exact &= (next_digit == 0);
-        next_digit = mp_rem;
-    }
-
-    // Step 7: Adjust the final digit of the mantissa for correct rounding.
-
-    if (mantissa_mp < mantissa_hi) {
-        if (next_digit > 5) {
-            ++mantissa_mp;
-        } else if ((next_digit == 5) && ((mantissa_mp & 1) || !mp_exact)) {
-            ++mantissa_mp;
-        } else if ((mantissa_lo == mantissa_mp) && !lo_exact) {
-            ++mantissa_mp;
-        }
-    }
-
-    // Step 8: Convert the base-10 exponent and mantissa to a string.
-
-    std::ostringstream digit_stream;
-    digit_stream << mantissa_mp;
-    const std::string digits = digit_stream.str();
-
-    std::ostringstream result_scientific;
-    std::ostringstream result_fixed;
-    if (sign) {
-        result_scientific << "-";
-        result_fixed << "-";
-    } else if (include_plus_sign) {
-        result_scientific << "+";
-        result_fixed << "+";
-    }
-
-    if (digits.size() <= 1) {
-        result_scientific << digits << ".0e" << exponent_mp;
-    } else {
-        result_scientific << digits.substr(0, 1) << "." << digits.substr(1)
-                          << "e" << (exponent_mp + (digits.size() - 1));
-    }
-
-    if (exponent_mp >= 0) {
-        // All digits lie to the left of the decimal point.
-        const std::string::size_type zero_count =
-            static_cast<std::string::size_type>(exponent_mp);
-        result_fixed << digits << std::string(zero_count, '0') << ".0";
-    } else if (-exponent_mp >= digits.size()) {
-        // All digits lie to the right of the decimal point.
-        const std::string::size_type zero_count =
-            static_cast<std::string::size_type>(-(exponent_mp + digits.size()));
-        result_fixed << "0." << std::string(zero_count, '0') << digits;
-    } else {
-        // Digits lie on both sides of the decimal point.
-        const std::string::size_type break_point =
-            static_cast<std::string::size_type>(digits.size() + exponent_mp);
-        result_fixed << digits.substr(0, break_point) << '.'
-                     << digits.substr(break_point);
-    }
-
-    const std::string sci_str = result_scientific.str();
-    const std::string fix_str = result_fixed.str();
-    return (sci_str.size() < fix_str.size()) ? sci_str : fix_str;
+    return (sign ? "-" : (include_plus_sign ? "+" : "")) +
+           binary_float_to_string(
+               exponent, mantissa, raw_mantissa_zero && !is_one(raw_exponent)
+           );
 }
 
 inline std::string to_string(const f32 &x, bool include_plus_sign = false) {

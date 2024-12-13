@@ -7,8 +7,8 @@
                 "/opt/homebrew/include",
                 "/opt/homebrew/Cellar/boost/1.86.0_2/include"
             ],
-            "compilerPath": "/usr/bin/clang",
-            "intelliSenseMode": "macos-clang-arm64"
+            "compilerPath": "/opt/homebrew/bin/g++-14",
+            "intelliSenseMode": "macos-gcc-arm64"
         }
     ],
     "version": 4
