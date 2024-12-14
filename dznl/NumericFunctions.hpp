@@ -26,13 +26,13 @@ constexpr bool isnan(const T &x) {
 
 template <typename T>
 constexpr bool isinf(const T &x) {
-    return (!isnan(x)) & isnan(x - x);
+    return (!isnan(x)) && isnan(x - x);
 }
 
 
 template <typename T>
 constexpr bool isfinite(const T &x) {
-    return !(isnan(x)) & !(isnan(x - x));
+    return !(isnan(x)) && !(isnan(x - x));
 }
 
 

@@ -230,7 +230,100 @@ constexpr MultiFloat<T, L> multifloat_mul(
 }
 
 
+template <int L, int M, typename T, int N>
+constexpr MultiFloat<T, L> multifloat_inv(const MultiFloat<T, N> &x) noexcept {
+    constexpr T ONE = one<T>();
+    constexpr MultiFloat<T, 1> ONE_MF = ONE;
+    MultiFloat<T, M> r = ONE / x.limbs[0];
+    while (true) {
+        const MultiFloat<T, M> next = multifloat_add<M>(
+            r,
+            multifloat_mul<M>(
+                r, multifloat_sub<M>(ONE_MF, multifloat_mul<M>(x, r))
+            )
+        );
+        if (r.identical(next)) { return MultiFloat<T, L>(r); }
+        r = next;
+    }
+}
+
+
+template <int L, int M, typename T, int N>
+constexpr MultiFloat<T, L> multifloat_inv_sqrt(const MultiFloat<T, N> &x
+) noexcept {
+    constexpr T ONE = one<T>();
+    constexpr MultiFloat<T, 1> ONE_MF = ONE;
+    constexpr MultiFloat<T, 1> HALF_MF = ONE / (ONE + ONE);
+    MultiFloat<T, M> r = ONE / sqrt(x.limbs[0]);
+    while (true) {
+        const MultiFloat<T, M> next = multifloat_add<M>(
+            r,
+            multifloat_mul<M>(
+                multifloat_mul<M>(HALF_MF, r),
+                multifloat_sub<M>(
+                    ONE_MF, multifloat_mul<M>(x, multifloat_mul<M>(r, r))
+                )
+            )
+        );
+        if (r.identical(next)) { return MultiFloat<T, L>(r); }
+        r = next;
+    }
+}
+
+
 } // namespace internal
+
+
+template <typename T, int N>
+constexpr MultiFloat<T, N> operator+(const MultiFloat<T, N> &x) noexcept {
+    return x;
+}
+
+
+template <typename T, int N>
+constexpr MultiFloat<T, N> operator-(const MultiFloat<T, N> &x) noexcept {
+    MultiFloat<T, N> result;
+    for (int i = 0; i < N; ++i) { result.limbs[i] = -x.limbs[i]; }
+    return result;
+}
+
+
+template <typename T, int N>
+constexpr MultiFloat<T, N>
+operator+(const MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
+    return internal::multifloat_add<N>(lhs, rhs);
+}
+
+
+template <typename T, int N>
+constexpr MultiFloat<T, N>
+operator-(const MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
+    return internal::multifloat_sub<N>(lhs, rhs);
+}
+
+
+template <typename T, int N>
+constexpr MultiFloat<T, N>
+operator*(const MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
+    return internal::multifloat_mul<N>(lhs, rhs);
+}
+
+
+template <typename T, int N>
+constexpr MultiFloat<T, N>
+operator/(const MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
+    return internal::multifloat_mul<N>(
+        lhs, internal::multifloat_inv<64, 64>(rhs)
+    );
+}
+
+
+template <typename T, int N>
+constexpr MultiFloat<T, N> sqrt(const MultiFloat<T, N> &x) noexcept {
+    return internal::multifloat_mul<N>(
+        x, internal::multifloat_inv_sqrt<64, 64>(x)
+    );
+}
 
 
 #ifdef DZNL_REQUEST_FLOAT_TO_STRING
