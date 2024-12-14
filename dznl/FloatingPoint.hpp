@@ -7,7 +7,6 @@
 #include "NumericFunctions.hpp" // IWYU pragma: keep
 #include "Tuple.hpp"
 
-#define DZNL_REQUEST_FLOAT_TO_STRING
 #ifdef DZNL_REQUEST_FLOAT_TO_STRING
 #include <boost/multiprecision/cpp_int.hpp>
 #include <sstream>
