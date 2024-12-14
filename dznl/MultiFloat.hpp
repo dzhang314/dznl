@@ -230,7 +230,13 @@ constexpr MultiFloat<T, L> multifloat_mul(
 }
 
 
+} // namespace internal
+
+
 #ifdef DZNL_REQUEST_FLOAT_TO_STRING
+
+
+namespace internal {
 
 
 template <typename SIGNED_T, typename UNSIGNED_T, typename FLOAT_T, int N>
@@ -280,10 +286,13 @@ template <typename SIGNED_T, typename UNSIGNED_T, typename FLOAT_T, int N>
 }
 
 
+} // namespace internal
+
+
 template <int N>
 ::std::string
 to_string(const MultiFloat<f32, N> &x, bool include_plus_sign = false) {
-    return ieee_binary_multifloat_to_string<i32, u32, f32, N>(
+    return internal::ieee_binary_multifloat_to_string<i32, u32, f32, N>(
         x, include_plus_sign
     );
 }
@@ -292,7 +301,7 @@ to_string(const MultiFloat<f32, N> &x, bool include_plus_sign = false) {
 template <int N>
 ::std::string
 to_string(const MultiFloat<f64, N> &x, bool include_plus_sign = false) {
-    return ieee_binary_multifloat_to_string<i64, u64, f64, N>(
+    return internal::ieee_binary_multifloat_to_string<i64, u64, f64, N>(
         x, include_plus_sign
     );
 }
@@ -302,7 +311,7 @@ to_string(const MultiFloat<f64, N> &x, bool include_plus_sign = false) {
 template <int N>
 ::std::string
 to_string(const MultiFloat<f16, N> &x, bool include_plus_sign = false) {
-    return ieee_binary_multifloat_to_string<i16, u16, f16, N>(
+    return internal::ieee_binary_multifloat_to_string<i16, u16, f16, N>(
         x, include_plus_sign
     );
 }
@@ -313,7 +322,7 @@ to_string(const MultiFloat<f16, N> &x, bool include_plus_sign = false) {
 template <int N>
 ::std::string
 to_string(const MultiFloat<bf16, N> &x, bool include_plus_sign = false) {
-    return ieee_binary_multifloat_to_string<i16, u16, bf16, N>(
+    return internal::ieee_binary_multifloat_to_string<i16, u16, bf16, N>(
         x, include_plus_sign
     );
 }
@@ -324,7 +333,7 @@ to_string(const MultiFloat<bf16, N> &x, bool include_plus_sign = false) {
 template <int N>
 ::std::string
 to_string(const MultiFloat<f128, N> &x, bool include_plus_sign = false) {
-    return ieee_binary_multifloat_to_string<i128, u128, f128, N>(
+    return internal::ieee_binary_multifloat_to_string<i128, u128, f128, N>(
         x, include_plus_sign
     );
 }
@@ -332,9 +341,6 @@ to_string(const MultiFloat<f128, N> &x, bool include_plus_sign = false) {
 
 
 #endif // DZNL_REQUEST_FLOAT_TO_STRING
-
-
-} // namespace internal
 
 
 } // namespace dznl

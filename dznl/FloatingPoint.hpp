@@ -144,6 +144,9 @@ struct IEEEBinaryFloatData {
 #ifdef DZNL_REQUEST_FLOAT_TO_STRING
 
 
+namespace internal {
+
+
 inline ::std::string binary_float_to_string(
     ::boost::multiprecision::cpp_int exponent,
     ::boost::multiprecision::cpp_int mantissa,
@@ -295,33 +298,46 @@ ieee_binary_float_to_string(const FLOAT_T &x, bool include_plus_sign = false) {
 }
 
 
+} // namespace internal
+
+
 inline ::std::string to_string(const f32 &x, bool include_plus_sign = false) {
-    return ieee_binary_float_to_string<i32, u32>(x, include_plus_sign);
+    return internal::ieee_binary_float_to_string<i32, u32>(
+        x, include_plus_sign
+    );
 }
 
 
 inline ::std::string to_string(const f64 &x, bool include_plus_sign = false) {
-    return ieee_binary_float_to_string<i64, u64>(x, include_plus_sign);
+    return internal::ieee_binary_float_to_string<i64, u64>(
+        x, include_plus_sign
+    );
 }
 
 
 #ifdef DZNL_REQUEST_F16
 inline ::std::string to_string(const f16 &x, bool include_plus_sign = false) {
-    return ieee_binary_float_to_string<i16, u16>(x, include_plus_sign);
+    return internal::ieee_binary_float_to_string<i16, u16>(
+        x, include_plus_sign
+    );
 }
 #endif // DZNL_REQUEST_F16
 
 
 #ifdef DZNL_REQUEST_BF16
 inline ::std::string to_string(const bf16 &x, bool include_plus_sign = false) {
-    return ieee_binary_float_to_string<i16, u16>(x, include_plus_sign);
+    return internal::ieee_binary_float_to_string<i16, u16>(
+        x, include_plus_sign
+    );
 }
 #endif // DZNL_REQUEST_BF16
 
 
 #ifdef DZNL_REQUEST_F128
 inline ::std::string to_string(const f128 &x, bool include_plus_sign = false) {
-    return ieee_binary_float_to_string<i128, u128>(x, include_plus_sign);
+    return internal::ieee_binary_float_to_string<i128, u128>(
+        x, include_plus_sign
+    );
 }
 #endif // DZNL_REQUEST_F128
 
@@ -372,7 +388,7 @@ template <
 
     return (
         (sign ? "-" : (include_plus_sign ? "+" : "")) +
-        binary_float_to_string(
+        internal::binary_float_to_string(
             adjusted_exponent, mantissa, mantissa == boundary, false
         )
     );
