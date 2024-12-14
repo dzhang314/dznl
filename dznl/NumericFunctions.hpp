@@ -119,7 +119,7 @@ constexpr T e_partial_sum(const INTEGER_T &n) {
 
 
 template <typename T>
-constexpr T compute_pi(void) {
+constexpr T compute_pi() {
     T a = internal::bbp_pi_partial_sum<T>(0);
     T b = internal::bbp_pi_partial_sum<T>(1);
     for (int n = 2;; ++n) {
@@ -132,7 +132,7 @@ constexpr T compute_pi(void) {
 
 
 template <typename T>
-constexpr T compute_e(void) {
+constexpr T compute_e() {
     T a = internal::e_partial_sum<T>(0);
     T b = internal::e_partial_sum<T>(1);
     for (int n = 2;; ++n) {
