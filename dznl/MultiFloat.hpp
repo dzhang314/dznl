@@ -7,7 +7,7 @@
 #include <string>
 #endif // DZNL_REQUEST_FLOAT_TO_STRING
 
-#include "FloatingPoint.hpp"
+#include "FloatingPoint.hpp" // IWYU pragma: keep
 #include "NumericConstants.hpp"
 #include "NumericFunctions.hpp"
 #include "Tuple.hpp"

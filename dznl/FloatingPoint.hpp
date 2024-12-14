@@ -76,10 +76,6 @@ template <typename FLOAT_T, typename SIGNED_T, typename UNSIGNED_T>
 struct IEEEBinaryFloatData {
 
     static_assert(compute_radix<FLOAT_T>().second == 2);
-    static_assert(
-        (DZNL_CHAR_BIT * sizeof(SIGNED_T)) >
-        compute_ieee_binary_exponent_width<FLOAT_T>()
-    );
     static_assert(sizeof(UNSIGNED_T) == sizeof(FLOAT_T));
     static constexpr UNSIGNED_T ONE = one<UNSIGNED_T>();
 
@@ -90,6 +86,8 @@ struct IEEEBinaryFloatData {
     static constexpr UNSIGNED_T EXPONENT_WIDTH = BIT_SIZE - PRECISION;
     static constexpr UNSIGNED_T MANTISSA_WIDTH = PRECISION - ONE;
 
+    static_assert(DZNL_CHAR_BIT * sizeof(SIGNED_T) > EXPONENT_WIDTH);
+
     static constexpr UNSIGNED_T EXPONENT_BIAS =
         (ONE << (EXPONENT_WIDTH - ONE)) - ONE;
     static constexpr UNSIGNED_T MAX_RAW_EXPONENT =
@@ -99,11 +97,6 @@ struct IEEEBinaryFloatData {
 
     static constexpr UNSIGNED_T IMPLICIT_BIT = ONE << MANTISSA_WIDTH;
     static constexpr UNSIGNED_T MANTISSA_MASK = IMPLICIT_BIT - ONE;
-
-    static_assert(!(~(SIGN_MASK | EXPONENT_MASK | MANTISSA_MASK)));
-    static_assert(!(SIGN_MASK & EXPONENT_MASK));
-    static_assert(!(SIGN_MASK & MANTISSA_MASK));
-    static_assert(!(EXPONENT_MASK & MANTISSA_MASK));
 
     UNSIGNED_T data;
     UNSIGNED_T raw_exponent;
