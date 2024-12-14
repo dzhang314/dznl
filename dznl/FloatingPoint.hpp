@@ -252,8 +252,8 @@ ieee_binary_float_to_string(const FLOAT_T &x, bool include_plus_sign = false) {
 
     const auto [sign, raw_exponent, raw_mantissa] =
         split_ieee_binary_float<UNSIGNED_T>(x);
-    const bool is_subnormal = is_zero(raw_exponent);
-    const bool raw_mantissa_zero = is_zero(raw_mantissa);
+    const bool is_subnormal = iszero(raw_exponent);
+    const bool raw_mantissa_zero = iszero(raw_mantissa);
 
     if (raw_exponent == MAX_RAW_EXPONENT) {
         if (raw_mantissa_zero) {
@@ -274,7 +274,7 @@ ieee_binary_float_to_string(const FLOAT_T &x, bool include_plus_sign = false) {
     return (
         (sign ? "-" : (include_plus_sign ? "+" : "")) +
         binary_float_to_string(
-            exponent, mantissa, raw_mantissa_zero && !is_one(raw_exponent)
+            exponent, mantissa, raw_mantissa_zero && !isone(raw_exponent)
         )
     );
 }

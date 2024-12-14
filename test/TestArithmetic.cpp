@@ -23,23 +23,23 @@ constexpr bool test_signed() {
 
     bool result = true;
 
-    result &= !dznl::is_zero(neg_two);
-    result &= !dznl::is_zero(neg_one);
-    result &= dznl::is_zero(zero);
-    result &= !dznl::is_zero(one);
-    result &= !dznl::is_zero(two);
+    result &= !dznl::iszero(neg_two);
+    result &= !dznl::iszero(neg_one);
+    result &= dznl::iszero(zero);
+    result &= !dznl::iszero(one);
+    result &= !dznl::iszero(two);
 
-    result &= !dznl::is_one(neg_two);
-    result &= !dznl::is_one(neg_one);
-    result &= !dznl::is_one(zero);
-    result &= dznl::is_one(one);
-    result &= !dznl::is_one(two);
+    result &= !dznl::isone(neg_two);
+    result &= !dznl::isone(neg_one);
+    result &= !dznl::isone(zero);
+    result &= dznl::isone(one);
+    result &= !dznl::isone(two);
 
-    result &= dznl::sign_bit(neg_two);
-    result &= dznl::sign_bit(neg_one);
-    result &= !dznl::sign_bit(zero);
-    result &= !dznl::sign_bit(one);
-    result &= !dznl::sign_bit(two);
+    result &= dznl::signbit(neg_two);
+    result &= dznl::signbit(neg_one);
+    result &= !dznl::signbit(zero);
+    result &= !dznl::signbit(one);
+    result &= !dznl::signbit(two);
 
     result &= (neg_two + zero == neg_two);
     result &= (neg_two + one == neg_one);
@@ -133,17 +133,17 @@ constexpr bool test_unsigned() {
 
     bool result = true;
 
-    result &= dznl::is_zero(zero);
-    result &= !dznl::is_zero(one);
-    result &= !dznl::is_zero(two);
+    result &= dznl::iszero(zero);
+    result &= !dznl::iszero(one);
+    result &= !dznl::iszero(two);
 
-    result &= !dznl::is_one(zero);
-    result &= dznl::is_one(one);
-    result &= !dznl::is_one(two);
+    result &= !dznl::isone(zero);
+    result &= dznl::isone(one);
+    result &= !dznl::isone(two);
 
-    result &= !dznl::sign_bit(zero);
-    result &= !dznl::sign_bit(one);
-    result &= !dznl::sign_bit(two);
+    result &= !dznl::signbit(zero);
+    result &= !dznl::signbit(one);
+    result &= !dznl::signbit(two);
 
     result &= (zero + zero == zero);
     result &= (zero + one == one);

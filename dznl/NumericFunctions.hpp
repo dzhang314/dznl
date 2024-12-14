@@ -7,32 +7,44 @@ namespace dznl {
 
 
 template <typename T>
-constexpr bool is_zero(const T &x) {
+constexpr bool iszero(const T &x) {
     return x == zero<T>();
 }
 
 
 template <typename T>
-constexpr bool is_one(const T &x) {
+constexpr bool isone(const T &x) {
     return x == one<T>();
 }
 
 
 template <typename T>
-constexpr bool is_nan(const T &x) {
+constexpr bool isnan(const T &x) {
     return !(x == x);
 }
 
 
 template <typename T>
-constexpr bool is_inf(const T &x) {
-    return (!is_nan(x)) & is_nan(x - x);
+constexpr bool isinf(const T &x) {
+    return (!isnan(x)) & isnan(x - x);
 }
 
 
 template <typename T>
-constexpr bool sign_bit(const T &x) {
+constexpr bool isfinite(const T &x) {
+    return !(isnan(x)) & !(isnan(x - x));
+}
+
+
+template <typename T>
+constexpr bool signbit(const T &x) {
     return x < zero<T>();
+}
+
+
+template <typename T>
+constexpr T fma(const T &x, const T &y, const T &z) {
+    return __builtin_fma(x, y, z);
 }
 
 
@@ -41,9 +53,9 @@ namespace internal {
 
 template <typename T, typename INTEGER_T>
 constexpr T mul_by_doubling(const T &x, const INTEGER_T &n) {
-    if (is_zero(n)) {
+    if (iszero(n)) {
         return zero<T>();
-    } else if (is_one(n)) {
+    } else if (isone(n)) {
         return x;
     } else {
         const T y = mul_by_doubling(x, n >> 1);
@@ -55,9 +67,9 @@ constexpr T mul_by_doubling(const T &x, const INTEGER_T &n) {
 
 template <typename T, typename INTEGER_T>
 constexpr T pow_by_squaring(const T &x, const INTEGER_T &n) {
-    if (is_zero(n)) {
+    if (iszero(n)) {
         return one<T>();
-    } else if (is_one(n)) {
+    } else if (isone(n)) {
         return x;
     } else {
         const T y = pow_by_squaring(x, n >> 1);
@@ -86,7 +98,7 @@ constexpr T bbp_pi_term(const INTEGER_T &n) {
 template <typename T, typename INTEGER_T>
 constexpr T bbp_pi_partial_sum(const INTEGER_T &n) {
     T result = zero<T>();
-    for (INTEGER_T i = n; !is_zero(i); --i) { result += bbp_pi_term<T>(i); }
+    for (INTEGER_T i = n; !iszero(i); --i) { result += bbp_pi_term<T>(i); }
     result += bbp_pi_term<T>(0);
     return result;
 }
@@ -96,7 +108,7 @@ template <typename T, typename INTEGER_T>
 constexpr T e_partial_sum(const INTEGER_T &n) {
     const T ONE = one<T>();
     T result = ONE;
-    for (INTEGER_T i = n; !is_zero(i); --i) {
+    for (INTEGER_T i = n; !iszero(i); --i) {
         result = ONE + result / mul_by_doubling(ONE, i);
     }
     return result;
