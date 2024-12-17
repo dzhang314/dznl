@@ -8,6 +8,8 @@ using ProgressMeter
 
 const ShortFloatSummary = Tuple{Bool,Int8}
 const ShortPairSummary = Tuple{ShortFloatSummary,ShortFloatSummary}
+const MediumFloatSummary = Tuple{Bool,Int8,Int16}
+const MediumPairSummary = Tuple{MediumFloatSummary,MediumFloatSummary}
 const LongFloatSummary = Tuple{Bool,Bool,Bool,Int8,Int8,Int8}
 const LongPairSummary = Tuple{LongFloatSummary,LongFloatSummary}
 
@@ -23,6 +25,27 @@ const LongPairSummary = Tuple{LongFloatSummary,LongFloatSummary}
     k = reinterpret(U, x)
     return (signbit(x),
         Int8(Int((k & EXPONENT_MASK) >> MANTISSA_WIDTH) - EXPONENT_BIAS))
+end
+
+
+@inline function medium_summary(x::T, ::Type{U}) where {T,U}
+    if !isnormal(x)
+        println("RECEIVED NON-NORMAL INPUT: ", x)
+        @assert false
+    end
+    BIT_SIZE = 8 * sizeof(T)
+    MANTISSA_WIDTH = precision(T) - 1
+    SIGN_EXPONENT_WIDTH = BIT_SIZE - MANTISSA_WIDTH
+    EXPONENT_WIDTH = SIGN_EXPONENT_WIDTH - 1
+    ONE_U = one(U)
+    EXPONENT_MASK = ((ONE_U << EXPONENT_WIDTH) - ONE_U) << MANTISSA_WIDTH
+    EXPONENT_BIAS = (1 << (EXPONENT_WIDTH - 1)) - 1
+    MANTISSA_MASK = (ONE_U << MANTISSA_WIDTH) - ONE_U
+    k = reinterpret(U, x)
+    exponent = Int((k & EXPONENT_MASK) >> MANTISSA_WIDTH) - EXPONENT_BIAS
+    tz = trailing_zeros(k | ~MANTISSA_MASK)
+    return (signbit(x), Int8(exponent),
+        Int16(exponent - (MANTISSA_WIDTH - tz)))
 end
 
 
@@ -63,6 +86,18 @@ function all_short_summaries(::Type{T}, ::Type{U}) where {T,U}
 end
 
 
+function all_medium_summaries(::Type{T}, ::Type{U}) where {T,U}
+    result = Set{MediumFloatSummary}()
+    for i = typemin(U):typemax(U)
+        x = reinterpret(T, i)
+        if isnormal(x)
+            push!(result, medium_summary(x, U))
+        end
+    end
+    return sort!(collect(result))
+end
+
+
 function all_long_summaries(::Type{T}, ::Type{U}) where {T,U}
     result = Set{LongFloatSummary}()
     for i = typemin(U):typemax(U)
@@ -85,6 +120,16 @@ const FLOAT16_SHORT_SUMMARIES = all_short_summaries(Float16, UInt16)
 @assert issorted(FLOAT16_SHORT_SUMMARIES)
 
 
+const FLOAT16_POSITIVE_ZERO_MEDIUM_SUMMARY = medium_summary(zero(Float16), UInt16)
+const FLOAT16_NEGATIVE_ZERO_MEDIUM_SUMMARY = medium_summary(-zero(Float16), UInt16)
+const FLOAT16_MEDIUM_SUMMARIES = all_medium_summaries(Float16, UInt16)
+
+@assert FLOAT16_POSITIVE_ZERO_MEDIUM_SUMMARY in FLOAT16_MEDIUM_SUMMARIES
+@assert FLOAT16_NEGATIVE_ZERO_MEDIUM_SUMMARY in FLOAT16_MEDIUM_SUMMARIES
+@assert length(FLOAT16_MEDIUM_SUMMARIES) == 662
+@assert issorted(FLOAT16_MEDIUM_SUMMARIES)
+
+
 const FLOAT16_POSITIVE_ZERO_LONG_SUMMARY = long_summary(zero(Float16), UInt16)
 const FLOAT16_NEGATIVE_ZERO_LONG_SUMMARY = long_summary(-zero(Float16), UInt16)
 const FLOAT16_LONG_SUMMARIES = all_long_summaries(Float16, UInt16)
@@ -105,6 +150,16 @@ const BFLOAT16_SHORT_SUMMARIES = all_short_summaries(BFloat16, UInt16)
 @assert issorted(BFLOAT16_SHORT_SUMMARIES)
 
 
+const BFLOAT16_POSITIVE_ZERO_MEDIUM_SUMMARY = medium_summary(zero(BFloat16), UInt16)
+const BFLOAT16_NEGATIVE_ZERO_MEDIUM_SUMMARY = medium_summary(-zero(BFloat16), UInt16)
+const BFLOAT16_MEDIUM_SUMMARIES = all_medium_summaries(BFloat16, UInt16)
+
+@assert BFLOAT16_POSITIVE_ZERO_MEDIUM_SUMMARY in BFLOAT16_MEDIUM_SUMMARIES
+@assert BFLOAT16_NEGATIVE_ZERO_MEDIUM_SUMMARY in BFLOAT16_MEDIUM_SUMMARIES
+@assert length(BFLOAT16_MEDIUM_SUMMARIES) == 4066
+@assert issorted(BFLOAT16_MEDIUM_SUMMARIES)
+
+
 const BFLOAT16_POSITIVE_ZERO_LONG_SUMMARY = long_summary(zero(BFloat16), UInt16)
 const BFLOAT16_NEGATIVE_ZERO_LONG_SUMMARY = long_summary(-zero(BFloat16), UInt16)
 const BFLOAT16_LONG_SUMMARIES = all_long_summaries(BFloat16, UInt16)
@@ -113,71 +168,6 @@ const BFLOAT16_LONG_SUMMARIES = all_long_summaries(BFloat16, UInt16)
 @assert BFLOAT16_NEGATIVE_ZERO_LONG_SUMMARY in BFLOAT16_LONG_SUMMARIES
 @assert length(BFLOAT16_LONG_SUMMARIES) == 32514
 @assert issorted(BFLOAT16_LONG_SUMMARIES)
-
-
-#=
-
-function summary_to_string(
-    ::Type{T},
-    (s, e, z, o, m, n)::FloatSummary,
-) where {T}
-
-    p = precision(T)
-    e_max = exponent(floatmax(T))
-    e_min = exponent(floatmin(T))
-    result = ['0' for _ = 1:(e_max-e_min+p)]
-
-    if e >= e_min
-        mantissa = ['?' for _ = 1:p-1]
-
-        # z: number of leading zeros
-        for i = 1:z
-            @assert (mantissa[i] == '?') || (mantissa[i] == '0')
-            mantissa[i] = '0'
-        end
-        if z + 1 < p
-            @assert (mantissa[z+1] == '?') || (mantissa[z+1] == '1')
-            mantissa[z+1] = '1'
-        end
-
-        # o: number of leading ones
-        for i = 1:o
-            @assert (mantissa[i] == '?') || (mantissa[i] == '1')
-            mantissa[i] = '1'
-        end
-        if o + 1 < p
-            @assert (mantissa[o+1] == '?') || (mantissa[o+1] == '0')
-            mantissa[o+1] = '0'
-        end
-
-        # m: index of final zero
-        if m > 0
-            @assert (mantissa[m] == '?') || (mantissa[m] == '0')
-            mantissa[m] = '0'
-        end
-        for i = m+1:p-1
-            @assert (mantissa[i] == '?') || (mantissa[i] == '1')
-            mantissa[i] = '1'
-        end
-
-        # n: index of final one
-        if n > 0
-            @assert (mantissa[n] == '?') || (mantissa[n] == '1')
-            mantissa[n] = '1'
-        end
-        for i = n+1:p-1
-            @assert (mantissa[i] == '?') || (mantissa[i] == '0')
-            mantissa[i] = '0'
-        end
-
-        result[e_max-e+1] = '1'
-        result[e_max-e+2:e_max-e+p] .= mantissa
-    end
-
-    return (s ? '-' : '+') * String(result)
-end
-
-=#
 
 
 function all_short_two_sum_summaries(::Type{T}, ::Type{U}) where {T,U}
@@ -201,6 +191,39 @@ function all_short_two_sum_summaries(::Type{T}, ::Type{U}) where {T,U}
                             push!(result, (
                                 (short_summary(x, U), short_summary(y, U)),
                                 (short_summary(s, U), short_summary(e, U))))
+                        end
+                    end
+                end
+            end
+        end
+        next!(p)
+    end
+    finish!(p)
+    return sort!(collect(union(results...)))
+end
+
+
+function all_medium_two_sum_summaries(::Type{T}, ::Type{U}) where {T,U}
+    results = [Set{Tuple{MediumPairSummary,MediumPairSummary}}() for _ = 1:nthreads()]
+    p = Progress(length(typemin(U):typemax(U)); showspeed=true)
+    @threads for i = typemin(U):typemax(U)
+        result = results[threadid()]
+        x = reinterpret(T, i)
+        if isnormal(x)
+            for j = typemin(U):typemax(U)
+                y = reinterpret(T, j)
+                if isnormal(y)
+                    s = x + y
+                    if isnormal(s)
+                        x_eff = s - y
+                        y_eff = s - x_eff
+                        x_err = x - x_eff
+                        y_err = y - y_eff
+                        e = x_err + y_err
+                        if isnormal(e)
+                            push!(result, (
+                                (medium_summary(x, U), medium_summary(y, U)),
+                                (medium_summary(s, U), medium_summary(e, U))))
                         end
                     end
                 end
@@ -265,23 +288,44 @@ println("Successfully loaded Float16ShortTwoSumSummaries.jld2.")
 flush(stdout)
 
 
-if !isfile("Float16LongTwoSumSummaries.jld2")
-    println("Computing Float16LongTwoSumSummaries.jld2...")
+if !isfile("Float16MediumTwoSumSummaries.jld2")
+    println("Computing Float16MediumTwoSumSummaries.jld2...")
     flush(stdout)
-    save_object("Float16LongTwoSumSummaries.jld2",
-        all_long_two_sum_summaries(Float16, UInt16))
+    save_object("Float16MediumTwoSumSummaries.jld2",
+        all_medium_two_sum_summaries(Float16, UInt16))
 end
 
-println("Loading Float16LongTwoSumSummaries.jld2...")
+println("Loading Float16MediumTwoSumSummaries.jld2...")
 flush(stdout)
-const FLOAT16_LONG_TWO_SUM_SUMMARIES = load_object(
-    "Float16LongTwoSumSummaries.jld2")
-@assert FLOAT16_LONG_TWO_SUM_SUMMARIES isa Vector{
-    Tuple{LongPairSummary,LongPairSummary}}
-@assert length(FLOAT16_LONG_TWO_SUM_SUMMARIES) == 319_985_950
-@assert issorted(FLOAT16_LONG_TWO_SUM_SUMMARIES)
-println("Successfully loaded Float16LongTwoSumSummaries.jld2.")
+const FLOAT16_MEDIUM_TWO_SUM_SUMMARIES = load_object(
+    "Float16MediumTwoSumSummaries.jld2")
+@assert FLOAT16_MEDIUM_TWO_SUM_SUMMARIES isa Vector{
+    Tuple{MediumPairSummary,MediumPairSummary}}
+@assert length(FLOAT16_MEDIUM_TWO_SUM_SUMMARIES) == 3_833_700
+@assert issorted(FLOAT16_MEDIUM_TWO_SUM_SUMMARIES)
+println("Successfully loaded Float16MediumTwoSumSummaries.jld2.")
 flush(stdout)
+
+
+if "--long-fp16" in ARGS
+    if !isfile("Float16LongTwoSumSummaries.jld2")
+        println("Computing Float16LongTwoSumSummaries.jld2...")
+        flush(stdout)
+        save_object("Float16LongTwoSumSummaries.jld2",
+            all_long_two_sum_summaries(Float16, UInt16))
+    end
+
+    println("Loading Float16LongTwoSumSummaries.jld2...")
+    flush(stdout)
+    const FLOAT16_LONG_TWO_SUM_SUMMARIES = load_object(
+        "Float16LongTwoSumSummaries.jld2")
+    @assert FLOAT16_LONG_TWO_SUM_SUMMARIES isa Vector{
+        Tuple{LongPairSummary,LongPairSummary}}
+    @assert length(FLOAT16_LONG_TWO_SUM_SUMMARIES) == 319_985_950
+    @assert issorted(FLOAT16_LONG_TWO_SUM_SUMMARIES)
+    println("Successfully loaded Float16LongTwoSumSummaries.jld2.")
+    flush(stdout)
+end
 
 
 if !isfile("BFloat16ShortTwoSumSummaries.jld2")
@@ -303,29 +347,57 @@ println("Successfully loaded BFloat16ShortTwoSumSummaries.jld2.")
 flush(stdout)
 
 
-if !isfile("BFloat16LongTwoSumSummaries.jld2")
-    println("Computing BFloat16LongTwoSumSummaries.jld2...")
+if !isfile("BFloat16MediumTwoSumSummaries.jld2")
+    println("Computing BFloat16MediumTwoSumSummaries.jld2...")
     flush(stdout)
-    save_object("BFloat16LongTwoSumSummaries.jld2",
-        all_long_two_sum_summaries(BFloat16, UInt16))
+    save_object("BFloat16MediumTwoSumSummaries.jld2",
+        all_medium_two_sum_summaries(BFloat16, UInt16))
 end
 
-println("Loading BFloat16LongTwoSumSummaries.jld2...")
+println("Loading BFloat16MediumTwoSumSummaries.jld2...")
 flush(stdout)
-const BFLOAT16_LONG_TWO_SUM_SUMMARIES = load_object(
-    "BFloat16LongTwoSumSummaries.jld2")
-@assert BFLOAT16_LONG_TWO_SUM_SUMMARIES isa Vector{
-    Tuple{LongPairSummary,LongPairSummary}}
-@assert length(BFLOAT16_LONG_TWO_SUM_SUMMARIES) == 1_172_449_766
-@assert issorted(BFLOAT16_LONG_TWO_SUM_SUMMARIES)
-println("Successfully loaded BFloat16LongTwoSumSummaries.jld2.")
+const BFLOAT16_MEDIUM_TWO_SUM_SUMMARIES = load_object(
+    "BFloat16MediumTwoSumSummaries.jld2")
+@assert BFLOAT16_MEDIUM_TWO_SUM_SUMMARIES isa Vector{
+    Tuple{MediumPairSummary,MediumPairSummary}}
+@assert length(BFLOAT16_MEDIUM_TWO_SUM_SUMMARIES) == 26_618_866
+@assert issorted(BFLOAT16_MEDIUM_TWO_SUM_SUMMARIES)
+println("Successfully loaded BFloat16MediumTwoSumSummaries.jld2.")
 flush(stdout)
+
+
+if "--long-bf16" in ARGS
+    if !isfile("BFloat16LongTwoSumSummaries.jld2")
+        println("Computing BFloat16LongTwoSumSummaries.jld2...")
+        flush(stdout)
+        save_object("BFloat16LongTwoSumSummaries.jld2",
+            all_long_two_sum_summaries(BFloat16, UInt16))
+    end
+
+    println("Loading BFloat16LongTwoSumSummaries.jld2...")
+    flush(stdout)
+    const BFLOAT16_LONG_TWO_SUM_SUMMARIES = load_object(
+        "BFloat16LongTwoSumSummaries.jld2")
+    @assert BFLOAT16_LONG_TWO_SUM_SUMMARIES isa Vector{
+        Tuple{LongPairSummary,LongPairSummary}}
+    @assert length(BFLOAT16_LONG_TWO_SUM_SUMMARIES) == 1_172_449_766
+    @assert issorted(BFLOAT16_LONG_TWO_SUM_SUMMARIES)
+    println("Successfully loaded BFloat16LongTwoSumSummaries.jld2.")
+    flush(stdout)
+end
 
 
 lookup_summaries(
     s::AbstractVector{Tuple{ShortPairSummary,ShortPairSummary}},
     rx::ShortFloatSummary,
     ry::ShortFloatSummary,
+) = last.(view(s, searchsorted(s, ((rx, ry), (rx, ry)); by=first)))
+
+
+lookup_summaries(
+    s::AbstractVector{Tuple{MediumPairSummary,MediumPairSummary}},
+    rx::MediumFloatSummary,
+    ry::MediumFloatSummary,
 ) = last.(view(s, searchsorted(s, ((rx, ry), (rx, ry)); by=first)))
 
 

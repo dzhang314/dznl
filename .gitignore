@@ -4,6 +4,8 @@
 /scripts/__pycache__
 /scripts/smt2
 /scripts/Float16ShortTwoSumSummaries.jld2
+/scripts/Float16MediumTwoSumSummaries.jld2
 /scripts/Float16LongTwoSumSummaries.jld2
 /scripts/BFloat16ShortTwoSumSummaries.jld2
+/scripts/BFloat16MediumTwoSumSummaries.jld2
 /scripts/BFloat16LongTwoSumSummaries.jld2
