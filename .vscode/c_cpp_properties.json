@@ -5,7 +5,7 @@
             "includePath": [
                 "${workspaceFolder}",
                 "/opt/homebrew/include",
-                "/opt/homebrew/Cellar/boost/1.86.0_2/include"
+                "/opt/homebrew/Cellar/boost/1.87.0/include"
             ],
             "compilerPath": "/opt/homebrew/bin/g++-14",
             "intelliSenseMode": "macos-gcc-arm64"

@@ -29,10 +29,6 @@ end
 
 
 @inline function medium_summary(x::T, ::Type{U}) where {T,U}
-    if !isnormal(x)
-        println("RECEIVED NON-NORMAL INPUT: ", x)
-        @assert false
-    end
     BIT_SIZE = 8 * sizeof(T)
     MANTISSA_WIDTH = precision(T) - 1
     SIGN_EXPONENT_WIDTH = BIT_SIZE - MANTISSA_WIDTH
@@ -42,10 +38,9 @@ end
     EXPONENT_BIAS = (1 << (EXPONENT_WIDTH - 1)) - 1
     MANTISSA_MASK = (ONE_U << MANTISSA_WIDTH) - ONE_U
     k = reinterpret(U, x)
-    exponent = Int((k & EXPONENT_MASK) >> MANTISSA_WIDTH) - EXPONENT_BIAS
-    tz = trailing_zeros(k | ~MANTISSA_MASK)
-    return (signbit(x), Int8(exponent),
-        Int16(exponent - (MANTISSA_WIDTH - tz)))
+    e = Int((k & EXPONENT_MASK) >> MANTISSA_WIDTH) - EXPONENT_BIAS
+    return (signbit(x), Int8(e),
+        Int16(e - (MANTISSA_WIDTH - trailing_zeros(k | ~MANTISSA_MASK))))
 end
 
 
