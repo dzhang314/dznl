@@ -40,11 +40,13 @@ struct MultiFloat {
 
     T limbs[N];
 
-    constexpr MultiFloat() noexcept {
+    constexpr MultiFloat() noexcept
+        : limbs{} {
         for (int i = 0; i < N; ++i) { limbs[i] = zero<T>(); }
     }
 
-    constexpr MultiFloat(const T &x) noexcept {
+    constexpr MultiFloat(const T &x) noexcept
+        : limbs{} {
         if (isfinite(x)) {
             if constexpr (N > 0) { limbs[0] = x; }
             for (int i = 1; i < N; ++i) { limbs[i] = zero<T>(); }
@@ -54,7 +56,8 @@ struct MultiFloat {
     }
 
     template <int M>
-    explicit constexpr MultiFloat(const MultiFloat<T, M> &rhs) noexcept {
+    explicit constexpr MultiFloat(const MultiFloat<T, M> &rhs) noexcept
+        : limbs{} {
         if constexpr (M < N) {
             for (int i = 0; i < M; ++i) { limbs[i] = rhs.limbs[i]; }
             for (int i = M; i < N; ++i) { limbs[i] = zero<T>(); }
@@ -185,6 +188,17 @@ public:
 }; // struct MultiFloat<T, N>
 
 
+template <typename T, int N>
+struct constants<MultiFloat<T, N>> {
+    static constexpr MultiFloat<T, N> zero() noexcept {
+        return MultiFloat<T, N>();
+    }
+    static constexpr MultiFloat<T, N> one() noexcept {
+        return MultiFloat<T, N>(constants<T>::one());
+    }
+}; // struct constants<MultiFloat<T, N>>
+
+
 namespace internal {
 
 
@@ -296,9 +310,25 @@ operator+(const MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
 
 
 template <typename T, int N>
+constexpr MultiFloat<T, N> &
+operator+=(MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
+    lhs = lhs + rhs;
+    return lhs;
+}
+
+
+template <typename T, int N>
 constexpr MultiFloat<T, N>
 operator-(const MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
     return internal::multifloat_sub<N>(lhs, rhs);
+}
+
+
+template <typename T, int N>
+constexpr MultiFloat<T, N> &
+operator-=(MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
+    lhs = lhs - rhs;
+    return lhs;
 }
 
 
@@ -310,11 +340,27 @@ operator*(const MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
 
 
 template <typename T, int N>
+constexpr MultiFloat<T, N> &
+operator*=(MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
+    lhs = lhs * rhs;
+    return lhs;
+}
+
+
+template <typename T, int N>
 constexpr MultiFloat<T, N>
 operator/(const MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
     return internal::multifloat_mul<N>(
         lhs, internal::multifloat_inv<64, 64>(rhs)
     );
+}
+
+
+template <typename T, int N>
+constexpr MultiFloat<T, N> &
+operator/=(MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
+    lhs = lhs / rhs;
+    return lhs;
 }
 
 
