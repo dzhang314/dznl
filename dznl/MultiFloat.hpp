@@ -188,6 +188,54 @@ public:
 }; // struct MultiFloat<T, N>
 
 
+template <typename T, int L, int R>
+constexpr bool operator==(MultiFloat<T, L> lhs, MultiFloat<T, R> rhs) {
+    constexpr int MIN_SIZE = (L < R) ? L : R;
+    constexpr int MAX_SIZE = (L > R) ? L : R;
+    lhs.renormalize();
+    rhs.renormalize();
+    bool result = true;
+    for (int i = 0; i < MIN_SIZE; ++i) {
+        result &= (lhs.limbs[i] == rhs.limbs[i]);
+    }
+    if constexpr (L > R) {
+        for (int i = MIN_SIZE; i < MAX_SIZE; ++i) {
+            result &= iszero(lhs.limbs[i]);
+        }
+    }
+    if constexpr (L < R) {
+        for (int i = MIN_SIZE; i < MAX_SIZE; ++i) {
+            result &= iszero(rhs.limbs[i]);
+        }
+    }
+    return result;
+}
+
+
+template <typename T, int L, int R>
+constexpr bool operator!=(MultiFloat<T, L> lhs, MultiFloat<T, R> rhs) {
+    constexpr int MIN_SIZE = (L < R) ? L : R;
+    constexpr int MAX_SIZE = (L > R) ? L : R;
+    lhs.renormalize();
+    rhs.renormalize();
+    bool result = false;
+    for (int i = 0; i < MIN_SIZE; ++i) {
+        result |= (lhs.limbs[i] != rhs.limbs[i]);
+    }
+    if constexpr (L > R) {
+        for (int i = MIN_SIZE; i < MAX_SIZE; ++i) {
+            result |= !iszero(lhs.limbs[i]);
+        }
+    }
+    if constexpr (L < R) {
+        for (int i = MIN_SIZE; i < MAX_SIZE; ++i) {
+            result |= !iszero(rhs.limbs[i]);
+        }
+    }
+    return result;
+}
+
+
 template <typename T, int N>
 struct constants<MultiFloat<T, N>> {
 
