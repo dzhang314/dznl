@@ -66,24 +66,24 @@ struct MultiFloat {
         }
     }
 
+    constexpr MultiFloat operator+() const noexcept {
+        MultiFloat result;
+        for (int i = 0; i < N; ++i) { result.limbs[i] = +limbs[i]; }
+        return result;
+    }
+
+    constexpr MultiFloat operator-() const noexcept {
+        MultiFloat result;
+        for (int i = 0; i < N; ++i) { result.limbs[i] = -limbs[i]; }
+        return result;
+    }
+
     constexpr bool identical(const MultiFloat &rhs) const noexcept {
         bool result = true;
         for (int i = 0; i < N; ++i) {
             result &= (limbs[i] == rhs.limbs[i]) |
                       (isnan(limbs[i]) && isnan(rhs.limbs[i]));
         }
-        return result;
-    }
-
-    constexpr bool operator==(const MultiFloat &rhs) const noexcept {
-        bool result = true;
-        for (int i = 0; i < N; ++i) { result &= (limbs[i] == rhs.limbs[i]); }
-        return result;
-    }
-
-    constexpr bool operator!=(const MultiFloat &rhs) const noexcept {
-        bool result = false;
-        for (int i = 0; i < N; ++i) { result |= (limbs[i] != rhs.limbs[i]); }
         return result;
     }
 
@@ -190,97 +190,202 @@ public:
 
 template <typename T, int N>
 struct constants<MultiFloat<T, N>> {
+
     static constexpr MultiFloat<T, N> zero() noexcept {
         return MultiFloat<T, N>();
     }
+
     static constexpr MultiFloat<T, N> one() noexcept {
         return MultiFloat<T, N>(constants<T>::one());
     }
+
 }; // struct constants<MultiFloat<T, N>>
 
 
 namespace internal {
 
 
-template <int L, typename T, int M, int N>
-constexpr MultiFloat<T, L> multifloat_add(
-    const MultiFloat<T, M> &lhs, const MultiFloat<T, N> &rhs
+template <int N, typename T, int L, int R>
+[[deprecated("WARNING: You are using a large or unusual MultiFloat size that"
+             " no optimized addition algorithm has been developed for."
+             " A slow fallback algorithm will be used instead.")]]
+constexpr MultiFloat<T, N> multifloat_add_fallback(
+    const MultiFloat<T, L> &lhs, const MultiFloat<T, R> &rhs
 ) noexcept {
-    MultiFloat<T, M + N> temp;
-    for (int i = 0; i < M; ++i) { temp.limbs[i] = lhs.limbs[i]; }
-    for (int i = 0; i < N; ++i) { temp.limbs[M + i] = rhs.limbs[i]; }
+    MultiFloat<T, L + R> temp;
+    for (int i = 0; i < L; ++i) { temp.limbs[i] = lhs.limbs[i]; }
+    for (int i = 0; i < R; ++i) { temp.limbs[L + i] = rhs.limbs[i]; }
     temp.renormalize();
-    return MultiFloat<T, L>(temp);
+    return MultiFloat<T, N>(temp);
 }
 
 
-template <int L, typename T, int M, int N>
-constexpr MultiFloat<T, L> multifloat_sub(
-    const MultiFloat<T, M> &lhs, const MultiFloat<T, N> &rhs
-) noexcept {
-    MultiFloat<T, M + N> temp;
-    for (int i = 0; i < M; ++i) { temp.limbs[i] = lhs.limbs[i]; }
-    for (int i = 0; i < N; ++i) { temp.limbs[M + i] = -rhs.limbs[i]; }
-    temp.renormalize();
-    return MultiFloat<T, L>(temp);
-}
-
-
-template <int L, typename T, int M, int N>
-constexpr MultiFloat<T, L> multifloat_mul(
-    const MultiFloat<T, M> &lhs, const MultiFloat<T, N> &rhs
-) noexcept {
-    MultiFloat<T, 2 * M * N> temp;
+inline constexpr int
+multifloat_mul_fallback_limb_count(int N, int L, int R) noexcept {
     int k = 0;
-    for (int i = 0; i < M; ++i) {
-        for (int j = 0; j < N; ++j) {
-            const auto [prod, err] = two_prod(lhs.limbs[i], rhs.limbs[j]);
-            temp.limbs[k++] = prod;
-            temp.limbs[k++] = err;
+    for (int i = 0; i < L; ++i) {
+        for (int j = 0; j < R; ++j) {
+            if (i + j + 1 < N) {
+                k += 2;
+            } else if (i + j + 1 == N) {
+                k += 1;
+            }
+        }
+    }
+    return k;
+}
+
+
+template <int N, typename T, int L, int R>
+[[deprecated("WARNING: You are using a large or unusual MultiFloat size that"
+             " no optimized multiplication algorithm has been developed for."
+             " A slow fallback algorithm will be used instead.")]]
+constexpr MultiFloat<T, N> multifloat_mul_fallback(
+    const MultiFloat<T, L> &lhs, const MultiFloat<T, R> &rhs
+) noexcept {
+    constexpr int K = multifloat_mul_fallback_limb_count(N, L, R);
+    MultiFloat<T, K> temp;
+    int k = 0;
+    for (int i = 0; i < L; ++i) {
+        for (int j = 0; j < R; ++j) {
+            if (i + j + 1 < N) {
+                const auto [prod, err] = two_prod(lhs.limbs[i], rhs.limbs[j]);
+                temp.limbs[k++] = prod;
+                temp.limbs[k++] = err;
+            } else if (i + j + 1 == N) {
+                temp.limbs[k++] = lhs.limbs[i] * rhs.limbs[j];
+            }
         }
     }
     temp.renormalize();
-    return MultiFloat<T, L>(temp);
+    return MultiFloat<T, N>(temp);
 }
 
 
-template <int L, int M, typename T, int N>
-constexpr MultiFloat<T, L> multifloat_inv(const MultiFloat<T, N> &x) noexcept {
-    constexpr T ONE = one<T>();
-    constexpr MultiFloat<T, 1> ONE_MF = ONE;
-    MultiFloat<T, M> r = ONE / x.limbs[0];
-    while (true) {
-        const MultiFloat<T, M> next = multifloat_add<M>(
-            r,
-            multifloat_mul<M>(
-                r, multifloat_sub<M>(ONE_MF, multifloat_mul<M>(x, r))
-            )
+template <int N, int L, int R>
+struct MultiFloatAlgorithms {
+
+    template <typename T>
+    static constexpr MultiFloat<T, N>
+    add(const MultiFloat<T, L> &lhs, const MultiFloat<T, R> &rhs) noexcept {
+        return multifloat_add_fallback<N>(lhs, rhs);
+    }
+
+    template <typename T>
+    static constexpr MultiFloat<T, N>
+    mul(const MultiFloat<T, L> &lhs, const MultiFloat<T, R> &rhs) noexcept {
+        return multifloat_mul_fallback<N>(lhs, rhs);
+    }
+
+}; // struct MultiFloatAlgorithms<L, M, N>
+
+
+template <>
+struct MultiFloatAlgorithms<1, 1, 1> {
+
+    template <typename T>
+    static constexpr MultiFloat<T, 1>
+    add(const MultiFloat<T, 1> &lhs, const MultiFloat<T, 1> &rhs) noexcept {
+        return MultiFloat<T, 1>(lhs.limbs[0] + rhs.limbs[0]);
+    }
+
+    template <typename T>
+    static constexpr MultiFloat<T, 1>
+    mul(const MultiFloat<T, 1> &lhs, const MultiFloat<T, 1> &rhs) noexcept {
+        return MultiFloat<T, 1>(lhs.limbs[0] * rhs.limbs[0]);
+    }
+
+}; // struct MultiFloatAlgorithms<1, 1, 1>
+
+
+template <>
+struct MultiFloatAlgorithms<2, 1, 1> {
+
+    template <typename T>
+    static constexpr MultiFloat<T, 2>
+    add(const MultiFloat<T, 1> &lhs, const MultiFloat<T, 1> &rhs) noexcept {
+        const auto [sum, err] = two_sum(lhs.limbs[0], rhs.limbs[0]);
+        MultiFloat<T, 2> result;
+        result.limbs[0] = sum;
+        result.limbs[1] = err;
+        return result;
+    }
+
+    template <typename T>
+    static constexpr MultiFloat<T, 2>
+    mul(const MultiFloat<T, 1> &lhs, const MultiFloat<T, 1> &rhs) noexcept {
+        const auto [prod, err] = two_prod(lhs.limbs[0], rhs.limbs[0]);
+        MultiFloat<T, 2> result;
+        result.limbs[0] = prod;
+        result.limbs[1] = err;
+        return result;
+    }
+
+}; // struct MultiFloatAlgorithms<2, 1, 1>
+
+
+} // namespace internal
+
+
+template <int N, typename T, int L, int R>
+constexpr MultiFloat<T, N> multifloat_add(
+    const MultiFloat<T, L> &lhs, const MultiFloat<T, R> &rhs
+) noexcept {
+    return internal::MultiFloatAlgorithms<N, L, R>::add(lhs, rhs);
+}
+
+
+template <int N, typename T, int L, int R>
+constexpr MultiFloat<T, N> multifloat_mul(
+    const MultiFloat<T, L> &lhs, const MultiFloat<T, R> &rhs
+) noexcept {
+    return internal::MultiFloatAlgorithms<N, L, R>::mul(lhs, rhs);
+}
+
+
+namespace internal {
+
+
+template <int N, typename T, int X, int E>
+constexpr MultiFloat<T, N> multifloat_inv_impl(
+    const MultiFloat<T, X> &x, const MultiFloat<T, E> &estimate
+) noexcept {
+    constexpr MultiFloat<T, 1> ONE = one<T>();
+    const MultiFloat<T, E> residual =
+        multifloat_add<E>(ONE, -multifloat_mul<E + E>(x, estimate));
+    const MultiFloat<T, E> correction = multifloat_mul<E>(estimate, residual);
+    if constexpr (E + E >= N) {
+        return multifloat_add<N>(estimate, correction);
+    } else {
+        return multifloat_inv_impl<N>(
+            x, multifloat_add<E + E>(estimate, correction)
         );
-        if (r.identical(next)) { return MultiFloat<T, L>(r); }
-        r = next;
     }
 }
 
 
-template <int L, int M, typename T, int N>
-constexpr MultiFloat<T, L> multifloat_inv_sqrt(const MultiFloat<T, N> &x
+template <int N, typename T, int X, int Y, int E>
+constexpr MultiFloat<T, N> multifloat_div_impl(
+    const MultiFloat<T, X> &x,
+    const MultiFloat<T, Y> &y,
+    const MultiFloat<T, E> &estimate
 ) noexcept {
-    constexpr T ONE = one<T>();
-    constexpr MultiFloat<T, 1> ONE_MF = ONE;
-    constexpr MultiFloat<T, 1> HALF_MF = ONE / (ONE + ONE);
-    MultiFloat<T, M> r = ONE / sqrt(x.limbs[0]);
-    while (true) {
-        const MultiFloat<T, M> next = multifloat_add<M>(
-            r,
-            multifloat_mul<M>(
-                multifloat_mul<M>(HALF_MF, r),
-                multifloat_sub<M>(
-                    ONE_MF, multifloat_mul<M>(x, multifloat_mul<M>(r, r))
-                )
-            )
+    if constexpr (E + E >= N) {
+        const MultiFloat<T, E> quotient = multifloat_mul<E>(x, estimate);
+        const MultiFloat<T, E> residual =
+            multifloat_add<E>(x, -multifloat_mul<E + E>(y, quotient));
+        const MultiFloat<T, E> correction =
+            multifloat_mul<E>(estimate, residual);
+        return multifloat_add<N>(quotient, correction);
+    } else {
+        constexpr MultiFloat<T, 1> ONE = one<T>();
+        const MultiFloat<T, E> residual =
+            multifloat_add<E>(ONE, -multifloat_mul<E + E>(y, estimate));
+        const MultiFloat<T, E> correction =
+            multifloat_mul<E>(estimate, residual);
+        return multifloat_div_impl<N>(
+            x, y, multifloat_add<E + E>(estimate, correction)
         );
-        if (r.identical(next)) { return MultiFloat<T, L>(r); }
-        r = next;
     }
 }
 
@@ -288,24 +393,28 @@ constexpr MultiFloat<T, L> multifloat_inv_sqrt(const MultiFloat<T, N> &x
 } // namespace internal
 
 
-template <typename T, int N>
-constexpr MultiFloat<T, N> operator+(const MultiFloat<T, N> &x) noexcept {
-    return x;
+template <int N, typename T, int X>
+constexpr MultiFloat<T, N> multifloat_inv(const MultiFloat<T, X> &x) noexcept {
+    return internal::multifloat_inv_impl<N>(
+        x, MultiFloat<T, 1>(one<T>() / x.limbs[0])
+    );
 }
 
 
-template <typename T, int N>
-constexpr MultiFloat<T, N> operator-(const MultiFloat<T, N> &x) noexcept {
-    MultiFloat<T, N> result;
-    for (int i = 0; i < N; ++i) { result.limbs[i] = -x.limbs[i]; }
-    return result;
+template <int N, typename T, int L, int R>
+constexpr MultiFloat<T, N> multifloat_div(
+    const MultiFloat<T, L> &lhs, const MultiFloat<T, R> &rhs
+) noexcept {
+    return internal::multifloat_div_impl<N>(
+        lhs, rhs, MultiFloat<T, 1>(one<T>() / rhs.limbs[0])
+    );
 }
 
 
 template <typename T, int N>
 constexpr MultiFloat<T, N>
 operator+(const MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
-    return internal::multifloat_add<N>(lhs, rhs);
+    return multifloat_add<N>(lhs, rhs);
 }
 
 
@@ -320,7 +429,7 @@ operator+=(MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
 template <typename T, int N>
 constexpr MultiFloat<T, N>
 operator-(const MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
-    return internal::multifloat_sub<N>(lhs, rhs);
+    return multifloat_add<N>(lhs, -rhs);
 }
 
 
@@ -335,7 +444,7 @@ operator-=(MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
 template <typename T, int N>
 constexpr MultiFloat<T, N>
 operator*(const MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
-    return internal::multifloat_mul<N>(lhs, rhs);
+    return multifloat_mul<N>(lhs, rhs);
 }
 
 
@@ -350,9 +459,7 @@ operator*=(MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
 template <typename T, int N>
 constexpr MultiFloat<T, N>
 operator/(const MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
-    return internal::multifloat_mul<N>(
-        lhs, internal::multifloat_inv<64, 64>(rhs)
-    );
+    return multifloat_div<N>(lhs, rhs);
 }
 
 
@@ -361,14 +468,6 @@ constexpr MultiFloat<T, N> &
 operator/=(MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
     lhs = lhs / rhs;
     return lhs;
-}
-
-
-template <typename T, int N>
-constexpr MultiFloat<T, N> sqrt(const MultiFloat<T, N> &x) noexcept {
-    return internal::multifloat_mul<N>(
-        x, internal::multifloat_inv_sqrt<64, 64>(x)
-    );
 }
 
 
