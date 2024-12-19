@@ -15,6 +15,9 @@
 namespace dznl {
 
 
+///////////////////////////////////////////////////// ERROR-FREE TRANSFORMATIONS
+
+
 template <typename T>
 constexpr Tuple<T, T> two_sum(const T &x, const T &y) noexcept {
     const T sum = x + y;
@@ -35,15 +38,21 @@ constexpr Tuple<T, T> two_prod(const T &x, const T &y) noexcept {
 }
 
 
+////////////////////////////////////////////////////// MULTIFLOAT DATA STRUCTURE
+
+
 template <typename T, int N>
 struct MultiFloat {
 
+
     T limbs[N];
+
 
     constexpr MultiFloat() noexcept
         : limbs{} {
         for (int i = 0; i < N; ++i) { limbs[i] = zero<T>(); }
     }
+
 
     constexpr MultiFloat(const T &x) noexcept
         : limbs{} {
@@ -54,6 +63,7 @@ struct MultiFloat {
             for (int i = 0; i < N; ++i) { limbs[i] = x; }
         }
     }
+
 
     template <int M>
     explicit constexpr MultiFloat(const MultiFloat<T, M> &rhs) noexcept
@@ -66,17 +76,6 @@ struct MultiFloat {
         }
     }
 
-    constexpr MultiFloat operator+() const noexcept {
-        MultiFloat result;
-        for (int i = 0; i < N; ++i) { result.limbs[i] = +limbs[i]; }
-        return result;
-    }
-
-    constexpr MultiFloat operator-() const noexcept {
-        MultiFloat result;
-        for (int i = 0; i < N; ++i) { result.limbs[i] = -limbs[i]; }
-        return result;
-    }
 
     constexpr bool identical(const MultiFloat &rhs) const noexcept {
         bool result = true;
@@ -87,7 +86,9 @@ struct MultiFloat {
         return result;
     }
 
-private:
+
+private: /////////////////////////////////////////////////////// RENORMALIZATION
+
 
     constexpr void top_down_renorm_pass() noexcept {
         for (int i = 1; i < N; ++i) {
@@ -97,6 +98,7 @@ private:
         }
     }
 
+
     constexpr void bottom_up_renorm_pass() noexcept {
         for (int i = N; i > 1; --i) {
             const auto [sum, err] = two_sum(limbs[i - 2], limbs[i - 1]);
@@ -104,6 +106,7 @@ private:
             limbs[i - 1] = err;
         }
     }
+
 
     constexpr void top_down_renorm_pass(MultiFloat &dst) const noexcept {
         if constexpr (N > 0) {
@@ -117,6 +120,7 @@ private:
         }
     }
 
+
     constexpr void bottom_up_renorm_pass(MultiFloat &dst) const noexcept {
         if constexpr (N > 0) {
             T carry = limbs[N - 1];
@@ -129,6 +133,7 @@ private:
         }
     }
 
+
     constexpr void top_down_renormalize() noexcept {
         MultiFloat temp;
         while (true) {
@@ -138,6 +143,7 @@ private:
             if (identical(temp)) { break; }
         }
     }
+
 
     constexpr void bottom_up_renormalize() noexcept {
         MultiFloat temp;
@@ -149,7 +155,9 @@ private:
         }
     }
 
+
 public:
+
 
     constexpr void renormalize() noexcept {
         for (int i = 0; i < N; ++i) {
@@ -185,11 +193,15 @@ public:
         }
     }
 
+
 }; // struct MultiFloat<T, N>
 
 
+/////////////////////////////////////////////////////////// COMPARISON OPERATORS
+
+
 template <typename T, int L, int R>
-constexpr bool operator==(MultiFloat<T, L> lhs, MultiFloat<T, R> rhs) {
+constexpr bool operator==(MultiFloat<T, L> lhs, MultiFloat<T, R> rhs) noexcept {
     constexpr int MIN_SIZE = (L < R) ? L : R;
     constexpr int MAX_SIZE = (L > R) ? L : R;
     lhs.renormalize();
@@ -213,7 +225,7 @@ constexpr bool operator==(MultiFloat<T, L> lhs, MultiFloat<T, R> rhs) {
 
 
 template <typename T, int L, int R>
-constexpr bool operator!=(MultiFloat<T, L> lhs, MultiFloat<T, R> rhs) {
+constexpr bool operator!=(MultiFloat<T, L> lhs, MultiFloat<T, R> rhs) noexcept {
     constexpr int MIN_SIZE = (L < R) ? L : R;
     constexpr int MAX_SIZE = (L > R) ? L : R;
     lhs.renormalize();
@@ -236,18 +248,69 @@ constexpr bool operator!=(MultiFloat<T, L> lhs, MultiFloat<T, R> rhs) {
 }
 
 
+////////////////////////////////////////////////////////////// NUMERIC CONSTANTS
+
+
 template <typename T, int N>
 struct constants<MultiFloat<T, N>> {
+
 
     static constexpr MultiFloat<T, N> zero() noexcept {
         return MultiFloat<T, N>();
     }
 
+
     static constexpr MultiFloat<T, N> one() noexcept {
         return MultiFloat<T, N>(constants<T>::one());
     }
 
+
 }; // struct constants<MultiFloat<T, N>>
+
+
+///////////////////////////////////////////////////// UNARY ARITHMETIC OPERATORS
+
+
+template <typename T, int N>
+constexpr MultiFloat<T, N> operator+(const MultiFloat<T, N> &x) noexcept {
+    MultiFloat<T, N> result;
+    for (int i = 0; i < N; ++i) { result.limbs[i] = +x.limbs[i]; }
+    return result;
+}
+
+
+template <typename T, int N>
+constexpr MultiFloat<T, N> operator-(const MultiFloat<T, N> &x) noexcept {
+    MultiFloat<T, N> result;
+    for (int i = 0; i < N; ++i) { result.limbs[i] = -x.limbs[i]; }
+    return result;
+}
+
+
+template <typename T, int N>
+constexpr MultiFloat<T, N> twice(const MultiFloat<T, N> &x) noexcept {
+    static_assert(compute_radix<T>().second == 2);
+    MultiFloat<T, N> result = x;
+    // TODO: Implement in terms of twice(T).
+    for (int i = 0; i < N; ++i) { result.limbs[i] += result.limbs[i]; }
+    return result;
+}
+
+
+template <typename T, int N>
+constexpr MultiFloat<T, N> halve(const MultiFloat<T, N> &x) noexcept {
+    static_assert(compute_radix<T>().second == 2);
+    constexpr T ONE = one<T>();
+    constexpr T TWO = ONE + ONE;
+    constexpr T HALF = ONE / TWO;
+    MultiFloat<T, N> result = x;
+    // TODO: Implement in terms of halve(T).
+    for (int i = 0; i < N; ++i) { result.limbs[i] *= HALF; }
+    return result;
+}
+
+
+//////////////////////////////////////////////////// ADDITION AND MULTIPLICATION
 
 
 namespace internal {
@@ -325,7 +388,7 @@ struct MultiFloatAlgorithms {
         return multifloat_mul_fallback<N>(lhs, rhs);
     }
 
-}; // struct MultiFloatAlgorithms<L, M, N>
+}; // struct MultiFloatAlgorithms<N, L, R>
 
 
 template <>
@@ -391,6 +454,9 @@ constexpr MultiFloat<T, N> multifloat_mul(
 }
 
 
+////////////////////////////////////////////////////// DIVISION AND SQUARE ROOTS
+
+
 namespace internal {
 
 
@@ -438,6 +504,53 @@ constexpr MultiFloat<T, N> multifloat_div_impl(
 }
 
 
+template <int N, typename T, int X, int E>
+constexpr MultiFloat<T, N> multifloat_rsqrt_impl(
+    const MultiFloat<T, X> &x, const MultiFloat<T, E> &estimate
+) noexcept {
+    const MultiFloat<T, E + E> square =
+        multifloat_mul<E + E>(estimate, estimate);
+    const MultiFloat<T, E> residual = multifloat_add<E>(
+        one<MultiFloat<T, 1>>(), -multifloat_mul<E + E>(x, square)
+    );
+    const MultiFloat<T, E> correction =
+        multifloat_mul<E>(halve(estimate), residual);
+    if constexpr (E + E >= N) {
+        return multifloat_add<N>(estimate, correction);
+    } else {
+        return multifloat_rsqrt_impl<N>(
+            x, multifloat_add<E + E>(estimate, correction)
+        );
+    }
+}
+
+
+template <int N, typename T, int X, int E>
+constexpr MultiFloat<T, N> multifloat_sqrt_impl(
+    const MultiFloat<T, X> &x, const MultiFloat<T, E> &estimate
+) noexcept {
+    if constexpr (E + E >= N) {
+        const MultiFloat<T, E> root = multifloat_mul<E>(x, estimate);
+        const MultiFloat<T, E + E> square = multifloat_mul<E + E>(root, root);
+        const MultiFloat<T, E> residual = multifloat_add<E>(x, -square);
+        const MultiFloat<T, E> correction =
+            multifloat_mul<E>(halve(estimate), residual);
+        return multifloat_add<N>(root, correction);
+    } else {
+        const MultiFloat<T, E + E> square =
+            multifloat_mul<E + E>(estimate, estimate);
+        const MultiFloat<T, E> residual = multifloat_add<E>(
+            one<MultiFloat<T, 1>>(), -multifloat_mul<E + E>(x, square)
+        );
+        const MultiFloat<T, E> correction =
+            multifloat_mul<E>(halve(estimate), residual);
+        return multifloat_sqrt_impl<N>(
+            x, multifloat_add<E + E>(estimate, correction)
+        );
+    }
+}
+
+
 } // namespace internal
 
 
@@ -457,6 +570,26 @@ constexpr MultiFloat<T, N> multifloat_div(
         lhs, rhs, MultiFloat<T, 1>(one<T>() / rhs.limbs[0])
     );
 }
+
+
+template <int N, typename T, int X>
+constexpr MultiFloat<T, N> multifloat_rsqrt(const MultiFloat<T, X> &x
+) noexcept {
+    return internal::multifloat_rsqrt_impl<N>(
+        x, MultiFloat<T, 1>(one<T>() / sqrt(x.limbs[0]))
+    );
+}
+
+
+template <int N, typename T, int X>
+constexpr MultiFloat<T, N> multifloat_sqrt(const MultiFloat<T, X> &x) noexcept {
+    return internal::multifloat_sqrt_impl<N>(
+        x, MultiFloat<T, 1>(one<T>() / sqrt(x.limbs[0]))
+    );
+}
+
+
+///////////////////////////////////////////////////////////// OPERATOR OVERLOADS
 
 
 template <typename T, int N>
@@ -505,6 +638,12 @@ operator*=(MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
 
 
 template <typename T, int N>
+constexpr MultiFloat<T, N> inv(const MultiFloat<T, N> &x) noexcept {
+    return multifloat_inv<N>(x);
+}
+
+
+template <typename T, int N>
 constexpr MultiFloat<T, N>
 operator/(const MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
     return multifloat_div<N>(lhs, rhs);
@@ -517,6 +656,21 @@ operator/=(MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
     lhs = lhs / rhs;
     return lhs;
 }
+
+
+template <typename T, int N>
+constexpr MultiFloat<T, N> sqrt(const MultiFloat<T, N> &x) noexcept {
+    return multifloat_sqrt<N>(x);
+}
+
+
+template <typename T, int N>
+constexpr MultiFloat<T, N> rsqrt(const MultiFloat<T, N> &x) noexcept {
+    return multifloat_rsqrt<N>(x);
+}
+
+
+/////////////////////////////////////////////////////////// CONVERSION TO STRING
 
 
 #ifdef DZNL_REQUEST_FLOAT_TO_STRING
