@@ -341,8 +341,7 @@ constexpr MultiFloat<T, N> multifloat_add_fallback(
 }
 
 
-inline constexpr int
-multifloat_mul_fallback_limb_count(int N, int L, int R) noexcept {
+constexpr int multifloat_mul_fallback_limb_count(int N, int L, int R) noexcept {
     int k = 0;
     for (int i = 0; i < L; ++i) {
         for (int j = 0; j < R; ++j) {

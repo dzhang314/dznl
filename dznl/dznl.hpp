@@ -40,5 +40,6 @@
 #include "NumericConstants.hpp"
 #include "NumericFunctions.hpp"
 #include "NumericTypes.hpp"
+#include "StaticString.hpp"
 #include "Tuple.hpp"
 // IWYU pragma: end_exports
