@@ -43,6 +43,12 @@ constexpr bool signbit(const T &x) {
 
 
 template <typename T>
+constexpr T sqrt(const T &x) {
+    return __builtin_sqrt(x);
+}
+
+
+template <typename T>
 constexpr T fma(const T &x, const T &y, const T &z) {
     return __builtin_fma(x, y, z);
 }
@@ -58,9 +64,10 @@ constexpr T mul_by_doubling(const T &x, const INTEGER_T &n) {
     } else if (isone(n)) {
         return x;
     } else {
-        const T y = mul_by_doubling(x, n >> 1);
+        constexpr INTEGER_T ONE = one<INTEGER_T>();
+        const T y = mul_by_doubling(x, n >> ONE);
         const T z = y + y;
-        return (n & 1) ? (z + x) : z;
+        return (n & ONE) ? (z + x) : z;
     }
 }
 
@@ -72,9 +79,10 @@ constexpr T pow_by_squaring(const T &x, const INTEGER_T &n) {
     } else if (isone(n)) {
         return x;
     } else {
-        const T y = pow_by_squaring(x, n >> 1);
+        constexpr INTEGER_T ONE = one<INTEGER_T>();
+        const T y = pow_by_squaring(x, n >> ONE);
         const T z = y * y;
-        return (n & 1) ? (z * x) : z;
+        return (n & ONE) ? (z * x) : z;
     }
 }
 
