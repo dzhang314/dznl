@@ -197,6 +197,16 @@ public:
 }; // struct MultiFloat<T, N>
 
 
+using f64x1 = MultiFloat<f64, 1>;
+using f64x2 = MultiFloat<f64, 2>;
+using f64x3 = MultiFloat<f64, 3>;
+using f64x4 = MultiFloat<f64, 4>;
+using f64x5 = MultiFloat<f64, 5>;
+using f64x6 = MultiFloat<f64, 6>;
+using f64x7 = MultiFloat<f64, 7>;
+using f64x8 = MultiFloat<f64, 8>;
+
+
 /////////////////////////////////////////////////////////// COMPARISON OPERATORS
 
 
