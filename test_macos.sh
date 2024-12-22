@@ -99,3 +99,12 @@ compile_and_run_clang_19 test/TestFloatToString.cpp bin/TestFloatToStringClang19
 compile_and_run_apple_clang test/TestFloatToString.cpp bin/TestFloatToStringAppleClang &
 
 wait
+
+compile_and_run_gcc_13 test/TestToHexString.cpp bin/TestToHexStringGCC13 &
+compile_and_run_gcc_14 test/TestToHexString.cpp bin/TestToHexStringGCC14 &
+compile_and_run_clang_17 test/TestToHexString.cpp bin/TestToHexStringClang17 &
+compile_and_run_clang_18 test/TestToHexString.cpp bin/TestToHexStringClang18 &
+compile_and_run_clang_19 test/TestToHexString.cpp bin/TestToHexStringClang19 &
+compile_and_run_apple_clang test/TestToHexString.cpp bin/TestToHexStringAppleClang &
+
+wait
