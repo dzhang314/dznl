@@ -2,23 +2,30 @@
 
 #include <boost/multiprecision/cpp_bin_float.hpp>
 
+#ifndef _MSC_VER
 #define DZNL_REQUEST_16_BIT_FLOATS
+#endif // _MSC_VER
+
 #if defined(__GNUC__) && !defined(__clang__)
 #define DZNL_REQUEST_128_BIT_FLOATS
 #define DZNL_REQUEST_DECIMAL_FLOATS
 #endif // defined(__GNUC__) && !defined(__clang__)
+
 #include <dznl/dznl.hpp>
 
 int main() {
 
-    static_assert(dznl::compute_radix<dznl::f16>().second == 2);
-    static_assert(dznl::compute_precision<dznl::f16>() == 11);
-    static_assert(dznl::compute_radix<dznl::bf16>().second == 2);
-    static_assert(dznl::compute_precision<dznl::bf16>() == 8);
     static_assert(dznl::compute_radix<dznl::f32>().second == 2);
     static_assert(dznl::compute_precision<dznl::f32>() == 24);
     static_assert(dznl::compute_radix<dznl::f64>().second == 2);
     static_assert(dznl::compute_precision<dznl::f64>() == 53);
+
+#ifndef _MSC_VER
+    static_assert(dznl::compute_radix<dznl::f16>().second == 2);
+    static_assert(dznl::compute_precision<dznl::f16>() == 11);
+    static_assert(dznl::compute_radix<dznl::bf16>().second == 2);
+    static_assert(dznl::compute_precision<dznl::bf16>() == 8);
+#endif // _MSC_VER
 
 #if defined(__GNUC__) && !defined(__clang__)
     static_assert(dznl::compute_radix<dznl::f128>().second == 2);
@@ -49,4 +56,6 @@ int main() {
     if (dznl::compute_radix<cpp_bin_float_100>().second != 2) { return EXIT_FAILURE; }
     if (dznl::compute_precision<cpp_bin_float_100>() != 334) { return EXIT_FAILURE; }
     // clang-format on
+
+    return EXIT_SUCCESS;
 }

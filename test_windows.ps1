@@ -57,3 +57,11 @@ if (-Not (Test-Path -Path "bin")) {
 Compile-And-Run-MSVC test\TestArithmetic.cpp bin\TestArithmeticMSVC.exe
 Compile-And-Run-GCC test\TestArithmetic.cpp bin\TestArithmeticGCC.exe
 Compile-And-Run-Clang test\TestArithmetic.cpp bin\TestArithmeticClang.exe
+
+Compile-And-Run-MSVC test\TestFloatingPoint.cpp bin\TestFloatingPointMSVC.exe
+Compile-And-Run-GCC test\TestFloatingPoint.cpp bin\TestFloatingPointGCC.exe
+Compile-And-Run-Clang test\TestFloatingPoint.cpp bin\TestFloatingPointClang.exe
+
+Compile-And-Run-MSVC test\TestFloatToString.cpp bin\TestFloatToStringMSVC.exe
+Compile-And-Run-GCC test\TestFloatToString.cpp bin\TestFloatToStringGCC.exe
+Compile-And-Run-Clang test\TestFloatToString.cpp bin\TestFloatToStringClang.exe

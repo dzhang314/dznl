@@ -1,11 +1,16 @@
 #include <cstdlib>
 #include <string>
 
+#ifndef _MSC_VER
 #define DZNL_REQUEST_16_BIT_FLOATS
+#endif // _MSC_VER
+
 #if defined(__GNUC__) && !defined(__clang__)
 #define DZNL_REQUEST_128_BIT_FLOATS
 #endif // defined(__GNUC__) && !defined(__clang__)
+
 #define DZNL_REQUEST_FLOAT_TO_STRING
+
 #include <dznl/dznl.hpp>
 
 
@@ -54,11 +59,18 @@ bool test_to_string() {
 
 
 int main() {
-    if (!test_to_string<dznl::f16>()) { return EXIT_FAILURE; }
-    if (!test_to_string<dznl::bf16>()) { return EXIT_FAILURE; }
+
     if (!test_to_string<dznl::f32>()) { return EXIT_FAILURE; }
     if (!test_to_string<dznl::f64>()) { return EXIT_FAILURE; }
+
+#ifndef _MSC_VER
+    if (!test_to_string<dznl::f16>()) { return EXIT_FAILURE; }
+    if (!test_to_string<dznl::bf16>()) { return EXIT_FAILURE; }
+#endif // _MSC_VER
+
 #if defined(__GNUC__) && !defined(__clang__)
     if (!test_to_string<dznl::f128>()) { return EXIT_FAILURE; }
 #endif // defined(__GNUC__) && !defined(__clang__)
+
+    return EXIT_SUCCESS;
 }
