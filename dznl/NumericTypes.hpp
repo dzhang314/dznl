@@ -1,6 +1,8 @@
 #ifndef DZNL_NUMERIC_TYPES_HPP_INCLUDED
 #define DZNL_NUMERIC_TYPES_HPP_INCLUDED
 
+#include "Macros.hpp"
+
 namespace dznl {
 
 
