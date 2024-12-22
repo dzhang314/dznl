@@ -3,12 +3,16 @@
 #include <boost/multiprecision/cpp_bin_float.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 
+#ifndef _MSC_VER
 #define DZNL_REQUEST_128_BIT_INTEGERS
 #define DZNL_REQUEST_16_BIT_FLOATS
+#endif // _MSC_VER
+
 #if defined(__GNUC__) && !defined(__clang__)
 #define DZNL_REQUEST_128_BIT_FLOATS
 #define DZNL_REQUEST_DECIMAL_FLOATS
 #endif // defined(__GNUC__) && !defined(__clang__)
+
 #include <dznl/dznl.hpp>
 
 
@@ -184,16 +188,19 @@ int main() {
     static_assert(test_signed<dznl::i16>());
     static_assert(test_signed<dznl::i32>());
     static_assert(test_signed<dznl::i64>());
-    static_assert(test_signed<dznl::i128>());
     static_assert(test_unsigned<dznl::u8>());
     static_assert(test_unsigned<dznl::u16>());
     static_assert(test_unsigned<dznl::u32>());
     static_assert(test_unsigned<dznl::u64>());
+    static_assert(test_signed<dznl::f32>());
+    static_assert(test_signed<dznl::f64>());
+
+#ifndef _MSC_VER
+    static_assert(test_signed<dznl::i128>());
     static_assert(test_unsigned<dznl::u128>());
     static_assert(test_signed<dznl::f16>());
     static_assert(test_signed<dznl::bf16>());
-    static_assert(test_signed<dznl::f32>());
-    static_assert(test_signed<dznl::f64>());
+#endif // _MSC_VER
 
 #if defined(__GNUC__) && !defined(__clang__)
     static_assert(test_signed<dznl::f128>());
