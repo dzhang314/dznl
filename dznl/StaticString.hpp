@@ -3,6 +3,7 @@
 
 #include "FloatingPoint.hpp"
 #include "Memory.hpp"
+#include "NumericFunctions.hpp"
 #include "NumericTypes.hpp"
 
 namespace dznl {
@@ -87,9 +88,25 @@ struct StaticString {
 
     constexpr int length() const noexcept {
         for (int i = 0; i < N; ++i) {
+            // TODO: Why is this usage of data[i] not marked as unsafe?
             if (data[i] == '\0') { return i; }
         }
         return N;
+    }
+
+
+    constexpr bool operator==(const char *s) const noexcept {
+#ifdef __clang__
+#pragma clang unsafe_buffer_usage begin
+#endif // __clang__
+        for (int i = 0; i < N; ++i) {
+            if (data[i] != s[i]) { return false; }
+            if (data[i] == '\0') { return true; }
+        }
+        return (s[N] == '\0');
+#ifdef __clang__
+#pragma clang unsafe_buffer_usage end
+#endif // __clang__
     }
 
 

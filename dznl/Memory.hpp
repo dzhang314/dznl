@@ -2,7 +2,7 @@
 #define DZNL_MEMORY_HPP_INCLUDED
 
 #include "Macros.hpp"
-#include "NumericConstants.hpp"
+#include "NumericConstants.hpp" // IWYU pragma: keep
 #include "NumericFunctions.hpp"
 
 namespace dznl {
