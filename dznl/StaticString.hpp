@@ -9,6 +9,13 @@
 namespace dznl {
 
 
+// TODO: Revisit Clang unsafe-buffer-usage warnings when
+// https://github.com/llvm/llvm-project/issues/64646 is resolved.
+#ifdef __clang__
+#pragma clang unsafe_buffer_usage begin
+#endif // __clang__
+
+
 template <int N>
 struct StaticString {
 
@@ -18,47 +25,29 @@ struct StaticString {
 
     constexpr StaticString() noexcept
         : data{} {
-#ifdef __clang__
-#pragma clang unsafe_buffer_usage begin
-#endif // __clang__
         for (int i = 0; i < N; ++i) { data[i] = '\0'; }
         data[N] = '\0';
-#ifdef __clang__
-#pragma clang unsafe_buffer_usage end
-#endif // __clang__
     }
 
 
     constexpr StaticString(const char *s) noexcept
         : data{} {
         bool done = false;
-#ifdef __clang__
-#pragma clang unsafe_buffer_usage begin
-#endif // __clang__
         for (int i = 0; i < N; ++i) {
             if (s[i] == '\0') { done = true; }
             data[i] = done ? '\0' : s[i];
         }
         data[N] = '\0';
-#ifdef __clang__
-#pragma clang unsafe_buffer_usage end
-#endif // __clang__
     }
 
 
     constexpr StaticString &operator=(const char *s) noexcept {
         bool done = false;
-#ifdef __clang__
-#pragma clang unsafe_buffer_usage begin
-#endif // __clang__
         for (int i = 0; i < N; ++i) {
             if (s[i] == '\0') { done = true; }
             data[i] = done ? '\0' : s[i];
         }
         data[N] = '\0';
-#ifdef __clang__
-#pragma clang unsafe_buffer_usage end
-#endif // __clang__
         return *this;
     }
 
@@ -67,28 +56,15 @@ struct StaticString {
         if (i < 0) {
             return data[0];
         } else if (i >= N) {
-#ifdef __clang__
-#pragma clang unsafe_buffer_usage begin
-#endif // __clang__
             return data[N - 1];
-#ifdef __clang__
-#pragma clang unsafe_buffer_usage end
-#endif // __clang__
         } else {
-#ifdef __clang__
-#pragma clang unsafe_buffer_usage begin
-#endif // __clang__
             return data[i];
-#ifdef __clang__
-#pragma clang unsafe_buffer_usage end
-#endif // __clang__
         }
     }
 
 
     constexpr int length() const noexcept {
         for (int i = 0; i < N; ++i) {
-            // TODO: Why is this usage of data[i] not marked as unsafe?
             if (data[i] == '\0') { return i; }
         }
         return N;
@@ -96,21 +72,20 @@ struct StaticString {
 
 
     constexpr bool operator==(const char *s) const noexcept {
-#ifdef __clang__
-#pragma clang unsafe_buffer_usage begin
-#endif // __clang__
         for (int i = 0; i < N; ++i) {
             if (data[i] != s[i]) { return false; }
             if (data[i] == '\0') { return true; }
         }
         return (s[N] == '\0');
-#ifdef __clang__
-#pragma clang unsafe_buffer_usage end
-#endif // __clang__
     }
 
 
 }; // struct StaticString<N>
+
+
+#ifdef __clang__
+#pragma clang unsafe_buffer_usage end
+#endif // __clang__
 
 
 template <int N>
@@ -202,7 +177,8 @@ constexpr StaticString<24> to_hex_string(f64 x) noexcept {
     } else if (data.is_inf()) {
         return data.sign ? "-Inf" : "+Inf";
     } else if (data.is_zero()) {
-        return data.sign ? "-0.0" : "+0.0";
+        return data.sign ? "-0x0.0000000000000p+0000"
+                         : "+0x0.0000000000000p+0000";
     } else {
         StaticString<24> result;
         result[0] = data.sign ? '-' : '+';
