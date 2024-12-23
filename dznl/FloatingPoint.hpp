@@ -3,8 +3,8 @@
 
 #include "Macros.hpp"
 #include "Memory.hpp"
-#include "NumericConstants.hpp"
-#include "NumericFunctions.hpp" // IWYU pragma: keep
+#include "NumericFunctions.hpp"
+#include "NumericTypes.hpp" // IWYU pragma: keep
 #include "Tuple.hpp"
 
 #ifdef DZNL_REQUEST_FLOAT_TO_STRING
@@ -111,31 +111,31 @@ struct IEEEBinaryFloatData {
 
     constexpr SIGNED_T exponent() const noexcept {
         return (
-            (iszero(raw_exponent) ? one<SIGNED_T>()
-                                  : static_cast<SIGNED_T>(raw_exponent)) -
+            (is_zero(raw_exponent) ? one<SIGNED_T>()
+                                   : static_cast<SIGNED_T>(raw_exponent)) -
             static_cast<SIGNED_T>(EXPONENT_BIAS + MANTISSA_WIDTH)
         );
     }
 
     constexpr UNSIGNED_T mantissa() const noexcept {
-        return iszero(raw_exponent) ? raw_mantissa
-                                    : (IMPLICIT_BIT | raw_mantissa);
+        return is_zero(raw_exponent) ? raw_mantissa
+                                     : (IMPLICIT_BIT | raw_mantissa);
     }
 
-    constexpr bool is_nan() const noexcept {
-        return (raw_exponent == MAX_RAW_EXPONENT) && !iszero(raw_mantissa);
+    constexpr bool is_ieee_nan() const noexcept {
+        return (raw_exponent == MAX_RAW_EXPONENT) && !is_zero(raw_mantissa);
     }
 
-    constexpr bool is_inf() const noexcept {
-        return (raw_exponent == MAX_RAW_EXPONENT) && iszero(raw_mantissa);
+    constexpr bool is_ieee_inf() const noexcept {
+        return (raw_exponent == MAX_RAW_EXPONENT) && is_zero(raw_mantissa);
     }
 
-    constexpr bool is_zero() const noexcept {
-        return iszero(raw_exponent) && iszero(raw_mantissa);
+    constexpr bool is_ieee_zero() const noexcept {
+        return is_zero(raw_exponent) && is_zero(raw_mantissa);
     }
 
     constexpr bool lies_on_exponent_boundary() const noexcept {
-        return (raw_exponent > ONE) && iszero(raw_mantissa);
+        return (raw_exponent > ONE) && is_zero(raw_mantissa);
     }
 
 }; // struct IEEEBinaryFloatData<FLOAT_T, SIGNED_T, UNSIGNED_T>
@@ -278,11 +278,11 @@ template <typename SIGNED_T, typename UNSIGNED_T, typename FLOAT_T>
 ::std::string
 ieee_binary_float_to_string(const FLOAT_T &x, bool include_plus_sign = false) {
     IEEEBinaryFloatData<FLOAT_T, SIGNED_T, UNSIGNED_T> data(x);
-    if (data.is_nan()) {
+    if (data.is_ieee_nan()) {
         return "NaN";
-    } else if (data.is_inf()) {
+    } else if (data.is_ieee_inf()) {
         return data.sign ? "-Inf" : (include_plus_sign ? "+Inf" : "Inf");
-    } else if (data.is_zero()) {
+    } else if (data.is_ieee_zero()) {
         return data.sign ? "-0.0" : (include_plus_sign ? "+0.0" : "0.0");
     } else {
         return (

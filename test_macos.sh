@@ -8,7 +8,7 @@ done
 
 compile_and_run_gcc_13() {
     /opt/homebrew/bin/g++-13 -std=c++17 \
-        -Wall -Wextra -pedantic -Werror \
+        -Wall -Wextra -pedantic -Werror -fmax-errors=1 \
         -isystem /opt/homebrew/include -I . \
         "$1" -o "$2"
     "$2"
@@ -16,7 +16,7 @@ compile_and_run_gcc_13() {
 
 compile_and_run_gcc_14() {
     /opt/homebrew/bin/g++-14 -std=c++17 \
-        -Wall -Wextra -pedantic -Werror \
+        -Wall -Wextra -pedantic -Werror -fmax-errors=1 \
         -isystem /opt/homebrew/include -I . \
         "$1" -o "$2"
     "$2"
@@ -24,7 +24,7 @@ compile_and_run_gcc_14() {
 
 compile_and_run_clang_17() {
     /opt/homebrew/opt/llvm@17/bin/clang++ -std=c++17 \
-        -Weverything -Werror \
+        -Weverything -Werror -ferror-limit=1 \
         -Wno-padded \
         -Wno-float-equal \
         -Wno-c++98-compat \
@@ -36,7 +36,7 @@ compile_and_run_clang_17() {
 
 compile_and_run_clang_18() {
     /opt/homebrew/opt/llvm@18/bin/clang++ -std=c++17 \
-        -Weverything -Werror \
+        -Weverything -Werror -ferror-limit=1 \
         -Wno-padded \
         -Wno-float-equal \
         -Wno-c++98-compat \
@@ -48,7 +48,7 @@ compile_and_run_clang_18() {
 
 compile_and_run_clang_19() {
     /opt/homebrew/opt/llvm@19/bin/clang++ -std=c++17 \
-        -Weverything -Werror \
+        -Weverything -Werror -ferror-limit=1 \
         -Wno-padded \
         -Wno-float-equal \
         -Wno-c++98-compat \
@@ -60,7 +60,7 @@ compile_and_run_clang_19() {
 
 compile_and_run_apple_clang() {
     clang++ -std=c++17 \
-        -Weverything -Werror \
+        -Weverything -Werror -ferror-limit=1 \
         -Wno-padded \
         -Wno-float-equal \
         -Wno-c++98-compat \

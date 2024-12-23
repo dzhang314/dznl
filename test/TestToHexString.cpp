@@ -18,6 +18,8 @@ int main() {
         dznl::to_hex_string(dznl::one<dznl::u64>()) == "0x0000000000000001"
     );
 
+    static_assert(dznl::to_hex_string(0.0) == "+0x0.0000000000000p+0000");
+    static_assert(dznl::to_hex_string(-0.0) == "-0x0.0000000000000p+0000");
     static_assert(dznl::to_hex_string(1.0) == "+0x1.0000000000000p+0000");
     static_assert(dznl::to_hex_string(1.5) == "+0x1.8000000000000p+0000");
     static_assert(dznl::to_hex_string(1.75) == "+0x1.C000000000000p+0000");

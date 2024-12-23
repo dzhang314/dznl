@@ -2,7 +2,6 @@
 #define DZNL_STATIC_STRING_HPP_INCLUDED
 
 #include "FloatingPoint.hpp"
-#include "Memory.hpp"
 #include "NumericFunctions.hpp"
 #include "NumericTypes.hpp"
 
@@ -172,11 +171,11 @@ constexpr StaticString<18> to_hex_string(u64 x) noexcept {
 constexpr StaticString<24> to_hex_string(f64 x) noexcept {
     constexpr u64 NIBBLE_MASK = 0xF000000000000000;
     IEEEBinaryFloatData<f64, i64, u64> data(x);
-    if (data.is_nan()) {
+    if (data.is_ieee_nan()) {
         return "NaN";
-    } else if (data.is_inf()) {
+    } else if (data.is_ieee_inf()) {
         return data.sign ? "-Inf" : "+Inf";
-    } else if (data.is_zero()) {
+    } else if (data.is_ieee_zero()) {
         return data.sign ? "-0x0.0000000000000p+0000"
                          : "+0x0.0000000000000p+0000";
     } else {
@@ -197,7 +196,7 @@ constexpr StaticString<24> to_hex_string(f64 x) noexcept {
         }
         result[18] = 'p';
         int exponent = static_cast<int>(data.exponent()) + (64 - shift);
-        if (signbit(exponent)) {
+        if (sign_bit(exponent)) {
             result[19] = '-';
             exponent = -exponent;
         } else {

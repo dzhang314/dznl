@@ -8,7 +8,6 @@
 #endif // DZNL_REQUEST_FLOAT_TO_STRING
 
 #include "FloatingPoint.hpp"
-#include "NumericConstants.hpp"
 #include "NumericFunctions.hpp"
 #include "NumericTypes.hpp"
 #include "Tuple.hpp"
@@ -172,7 +171,7 @@ public:
         int neg_inf_index = -1;
         for (int i = 0; i < N; ++i) {
             if (isinf(limbs[i])) {
-                if (signbit(limbs[i])) {
+                if (sign_bit(limbs[i])) {
                     if (neg_inf_index == -1) { neg_inf_index = i; }
                 } else {
                     if (pos_inf_index == -1) { pos_inf_index = i; }
@@ -223,12 +222,12 @@ constexpr bool operator==(MultiFloat<T, L> lhs, MultiFloat<T, R> rhs) noexcept {
     }
     if constexpr (L > R) {
         for (int i = MIN_SIZE; i < MAX_SIZE; ++i) {
-            result &= iszero(lhs.limbs[i]);
+            result &= is_zero(lhs.limbs[i]);
         }
     }
     if constexpr (L < R) {
         for (int i = MIN_SIZE; i < MAX_SIZE; ++i) {
-            result &= iszero(rhs.limbs[i]);
+            result &= is_zero(rhs.limbs[i]);
         }
     }
     return result;
@@ -247,32 +246,32 @@ constexpr bool operator!=(MultiFloat<T, L> lhs, MultiFloat<T, R> rhs) noexcept {
     }
     if constexpr (L > R) {
         for (int i = MIN_SIZE; i < MAX_SIZE; ++i) {
-            result |= !iszero(lhs.limbs[i]);
+            result |= !is_zero(lhs.limbs[i]);
         }
     }
     if constexpr (L < R) {
         for (int i = MIN_SIZE; i < MAX_SIZE; ++i) {
-            result |= !iszero(rhs.limbs[i]);
+            result |= !is_zero(rhs.limbs[i]);
         }
     }
     return result;
 }
 
 
-////////////////////////////////////////////////////////////// NUMERIC CONSTANTS
+///////////////////////////////////////////////////////////////// NUMERIC TRAITS
 
 
 template <typename T, int N>
-struct constants<MultiFloat<T, N>> {
+struct NumTraits<MultiFloat<T, N>> {
 
 
-    static constexpr MultiFloat<T, N> zero() noexcept {
+    static constexpr MultiFloat<T, N> zero_impl() noexcept {
         return MultiFloat<T, N>();
     }
 
 
-    static constexpr MultiFloat<T, N> one() noexcept {
-        return MultiFloat<T, N>(constants<T>::one());
+    static constexpr MultiFloat<T, N> one_impl() noexcept {
+        return MultiFloat<T, N>(one<T>());
     }
 
 
@@ -697,11 +696,11 @@ template <typename SIGNED_T, typename UNSIGNED_T, typename FLOAT_T, int N>
     if constexpr (N > 0) {
         x.renormalize();
         const FloatData head(x.limbs[0]);
-        if (head.is_nan()) {
+        if (head.is_ieee_nan()) {
             return "NaN";
-        } else if (head.is_inf()) {
+        } else if (head.is_ieee_inf()) {
             return head.sign ? "-Inf" : (include_plus_sign ? "+Inf" : "Inf");
-        } else if (head.is_zero()) {
+        } else if (head.is_ieee_zero()) {
             return head.sign ? "-0.0" : (include_plus_sign ? "+0.0" : "0.0");
         } else {
             const FloatData tail(x.limbs[N - 1]);

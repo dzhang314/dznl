@@ -2,8 +2,6 @@
 #define DZNL_MEMORY_HPP_INCLUDED
 
 #include "Macros.hpp"
-#include "NumericConstants.hpp" // IWYU pragma: keep
-#include "NumericFunctions.hpp"
 
 namespace dznl {
 
@@ -32,25 +30,6 @@ constexpr DST_T bit_cast(const SRC_T &x) noexcept {
     DST_T result;
     memcpy(&result, &x, sizeof(DST_T));
     return result;
-#endif
-}
-
-
-template <typename UNSIGNED_T>
-constexpr int leading_zeros(UNSIGNED_T x) noexcept {
-    constexpr int BIT_SIZE = DZNL_CHAR_BIT * sizeof(UNSIGNED_T);
-#if DZNL_HAS_BUILTIN(__builtin_clzg)
-    return iszero(x) ? BIT_SIZE : __builtin_clzg(x);
-#else
-    constexpr UNSIGNED_T BIT_MASK = one<UNSIGNED_T>() << (BIT_SIZE - 1);
-    for (int i = 0; i < BIT_SIZE; ++i) {
-        if (!iszero(x & BIT_MASK)) {
-            return i;
-        } else {
-            x <<= 1;
-        }
-    }
-    return BIT_SIZE;
 #endif
 }
 
