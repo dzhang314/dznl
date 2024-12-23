@@ -261,17 +261,118 @@ constexpr bool operator!=(MultiFloat<T, L> lhs, MultiFloat<T, R> rhs) noexcept {
 ///////////////////////////////////////////////////////////////// NUMERIC TRAITS
 
 
+template <int N, typename T, int X>
+constexpr MultiFloat<T, N> multifloat_inv(const MultiFloat<T, X> &x) noexcept;
+
+
+template <int N, typename T, int L, int R>
+constexpr MultiFloat<T, N> multifloat_div(
+    const MultiFloat<T, L> &lhs, const MultiFloat<T, R> &rhs
+) noexcept;
+
+
+template <int N, typename T, int X>
+constexpr MultiFloat<T, N> multifloat_rsqrt(const MultiFloat<T, X> &x) noexcept;
+
+
+template <int N, typename T, int X>
+constexpr MultiFloat<T, N> multifloat_sqrt(const MultiFloat<T, X> &x) noexcept;
+
+
 template <typename T, int N>
 struct NumTraits<MultiFloat<T, N>> {
 
 
     static constexpr MultiFloat<T, N> zero_impl() noexcept {
-        return MultiFloat<T, N>();
+        return MultiFloat<T, N>(zero<T>());
     }
 
 
     static constexpr MultiFloat<T, N> one_impl() noexcept {
         return MultiFloat<T, N>(one<T>());
+    }
+
+
+    static constexpr bool is_zero_impl(MultiFloat<T, N> x) noexcept {
+        x.renormalize();
+        bool result = true;
+        for (int i = 0; i < N; ++i) { result &= is_zero(x.limbs[i]); }
+        return result;
+    }
+
+
+    static constexpr bool is_one_impl(MultiFloat<T, N> x) noexcept {
+        if constexpr (N > 0) {
+            x.renormalize();
+            bool result = is_one(x.limbs[0]);
+            for (int i = 1; i < N; ++i) { result &= is_zero(x.limbs[i]); }
+            return result;
+        } else {
+            return false;
+        }
+    }
+
+
+    static constexpr bool sign_bit_impl(MultiFloat<T, N> x) noexcept {
+        x.renormalize();
+        return sign_bit(x.limbs[0]);
+    }
+
+
+    static constexpr bool is_nan_impl(MultiFloat<T, N> x) noexcept {
+        x.renormalize();
+        return is_nan(x.limbs[0]);
+    }
+
+
+    static constexpr bool is_inf_impl(MultiFloat<T, N> x) noexcept {
+        x.renormalize();
+        return is_inf(x.limbs[0]);
+    }
+
+
+    static constexpr bool is_finite_impl(MultiFloat<T, N> x) noexcept {
+        x.renormalize();
+        return is_finite(x.limbs[0]);
+    }
+
+
+    static constexpr MultiFloat<T, N> twice_impl(const MultiFloat<T, N> &x
+    ) noexcept {
+        static_assert(compute_radix<T>().second == 2);
+        MultiFloat<T, N> result;
+        for (int i = 0; i < N; ++i) { result.limbs[i] = twice(x.limbs[i]); }
+        return result;
+    }
+
+    // TODO: square
+    // TODO: fma
+
+
+    static constexpr MultiFloat<T, N> inv_impl(const MultiFloat<T, N> &x
+    ) noexcept {
+        return multifloat_inv<N>(x);
+    }
+
+
+    static constexpr MultiFloat<T, N> halve_impl(const MultiFloat<T, N> &x
+    ) noexcept {
+        static_assert(compute_radix<T>().second == 2);
+        MultiFloat<T, N> result;
+        for (int i = 0; i < N; ++i) { result.limbs[i] = halve(x.limbs[i]); }
+        return result;
+    }
+
+
+    static constexpr MultiFloat<T, N> sqrt_impl(const MultiFloat<T, N> &x
+    ) noexcept {
+        return multifloat_sqrt<N>(x);
+    }
+
+
+    static constexpr MultiFloat<T, N> rsqrt_impl(const MultiFloat<T, N> &x
+    ) noexcept {
+        return multifloat_rsqrt<N>(x);
     }
 
 
@@ -293,29 +394,6 @@ template <typename T, int N>
 constexpr MultiFloat<T, N> operator-(const MultiFloat<T, N> &x) noexcept {
     MultiFloat<T, N> result;
     for (int i = 0; i < N; ++i) { result.limbs[i] = -x.limbs[i]; }
-    return result;
-}
-
-
-template <typename T, int N>
-constexpr MultiFloat<T, N> twice(const MultiFloat<T, N> &x) noexcept {
-    static_assert(compute_radix<T>().second == 2);
-    MultiFloat<T, N> result = x;
-    // TODO: Implement in terms of twice(T).
-    for (int i = 0; i < N; ++i) { result.limbs[i] += result.limbs[i]; }
-    return result;
-}
-
-
-template <typename T, int N>
-constexpr MultiFloat<T, N> halve(const MultiFloat<T, N> &x) noexcept {
-    static_assert(compute_radix<T>().second == 2);
-    constexpr T ONE = one<T>();
-    constexpr T TWO = ONE + ONE;
-    constexpr T HALF = ONE / TWO;
-    MultiFloat<T, N> result = x;
-    // TODO: Implement in terms of halve(T).
-    for (int i = 0; i < N; ++i) { result.limbs[i] *= HALF; }
     return result;
 }
 
@@ -647,12 +725,6 @@ operator*=(MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
 
 
 template <typename T, int N>
-constexpr MultiFloat<T, N> inv(const MultiFloat<T, N> &x) noexcept {
-    return multifloat_inv<N>(x);
-}
-
-
-template <typename T, int N>
 constexpr MultiFloat<T, N>
 operator/(const MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
     return multifloat_div<N>(lhs, rhs);
@@ -664,18 +736,6 @@ constexpr MultiFloat<T, N> &
 operator/=(MultiFloat<T, N> &lhs, const MultiFloat<T, N> &rhs) noexcept {
     lhs = lhs / rhs;
     return lhs;
-}
-
-
-template <typename T, int N>
-constexpr MultiFloat<T, N> sqrt(const MultiFloat<T, N> &x) noexcept {
-    return multifloat_sqrt<N>(x);
-}
-
-
-template <typename T, int N>
-constexpr MultiFloat<T, N> rsqrt(const MultiFloat<T, N> &x) noexcept {
-    return multifloat_rsqrt<N>(x);
 }
 
 
