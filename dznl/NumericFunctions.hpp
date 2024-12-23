@@ -851,27 +851,42 @@ constexpr T pow_by_squaring(const T &x, const INTEGER_T &n) {
 
 
 template <typename T, typename INTEGER_T>
-constexpr T bbp_pi_term(const INTEGER_T &n) {
-    const T ONE = one<T>();
-    const T TWO = ONE + ONE;
-    const T FOUR = TWO + TWO;
-    const T FIVE = FOUR + ONE;
-    const T SIX = FOUR + TWO;
-    const T EIGHT = FOUR + FOUR;
-    const T SIXTEEN = EIGHT + EIGHT;
-    const T eight_n = mul_by_doubling(EIGHT, n);
-    const T term_1 = inv(eight_n + SIX) + inv(eight_n + FIVE);
-    const T term_2 = term_1 + twice(inv(eight_n + FOUR));
-    const T term_3 = twice(twice(inv(eight_n + ONE))) - term_2;
-    return term_3 / pow_by_squaring(SIXTEEN, n);
+constexpr T bbp_pi_term(
+    const INTEGER_T &n,
+    const T &K1,
+    const T &K3,
+    const T &K5,
+    const T &K47,
+    const T &K120,
+    const T &K151
+) {
+    const T KN = mul_by_doubling(K1, n);
+    const T K2N = KN + KN;
+    const T K4N = K2N + K2N;
+    const T K8N = K4N + K4N;
+    const T num = (K120 * KN + K151) * KN + K47;
+    const T den = (K2N + K1) * (K4N + K3) * (K8N + K1) * (K8N + K5);
+    return num / den;
 }
 
 
 template <typename T, typename INTEGER_T>
-constexpr T bbp_pi_partial_sum(const INTEGER_T &n) {
-    T result = zero<T>();
-    for (INTEGER_T i = n; !is_zero(i); --i) { result += bbp_pi_term<T>(i); }
-    result += bbp_pi_term<T>(0);
+constexpr T bbp_pi_partial_sum(
+    const INTEGER_T &n,
+    const T &K0,
+    const T &K1,
+    const T &K3,
+    const T &K5,
+    const T &K16,
+    const T &K47,
+    const T &K120,
+    const T &K151
+) {
+    T result = K0;
+    for (INTEGER_T i = n; !is_zero(i); --i) {
+        result = bbp_pi_term<T>(i, K1, K3, K5, K47, K120, K151) + result / K16;
+    }
+    result = bbp_pi_term<T>(0, K1, K3, K5, K47, K120, K151) + result / K16;
     return result;
 }
 
@@ -892,26 +907,45 @@ constexpr T e_partial_sum(const INTEGER_T &n) {
 
 template <typename T>
 constexpr T compute_pi() {
-    T a = internal::bbp_pi_partial_sum<T>(0);
-    T b = internal::bbp_pi_partial_sum<T>(1);
-    for (int n = 2;; ++n) {
-        const T c = internal::bbp_pi_partial_sum<T>(n);
-        if ((a == b) && (b == c)) { return a; }
-        a = b;
-        b = c;
+    const T K0 = zero<T>();
+    const T K1 = one<T>();
+    const T K2 = K1 + K1;
+    const T K3 = K2 + K1;
+    const T K4 = K2 + K2;
+    const T K5 = K4 + K1;
+    const T K7 = K4 + K3;
+    const T K8 = K4 + K4;
+    const T K15 = K8 + K7;
+    const T K16 = K8 + K8;
+    const T K23 = K16 + K7;
+    const T K24 = K16 + K8;
+    const T K32 = K16 + K16;
+    const T K47 = K32 + K15;
+    const T K56 = K32 + K24;
+    const T K64 = K32 + K32;
+    const T K120 = K64 + K56;
+    const T K128 = K64 + K64;
+    const T K151 = K128 + K23;
+    T current = internal::bbp_pi_partial_sum<T>(
+        0, K0, K1, K3, K5, K16, K47, K120, K151
+    );
+    for (int n = 1;; ++n) {
+        const T next = internal::bbp_pi_partial_sum<T>(
+            n, K0, K1, K3, K5, K16, K47, K120, K151
+        );
+        if (current == next) { return current; }
+        current = next;
     }
 }
 
 
 template <typename T>
 constexpr T compute_e() {
-    T a = internal::e_partial_sum<T>(0);
-    T b = internal::e_partial_sum<T>(1);
-    for (int n = 2;; ++n) {
-        const T c = internal::e_partial_sum<T>(n);
-        if ((a == b) && (b == c)) { return a; }
-        a = b;
-        b = c;
+    T current = internal::e_partial_sum<T>(0);
+    for (int n = 1;; ++n) {
+        const T next = internal::e_partial_sum<T>(n);
+        if (current == next) { return current; }
+        current = next;
     }
 }
 
