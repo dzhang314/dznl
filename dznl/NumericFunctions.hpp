@@ -51,13 +51,31 @@ constexpr bool sign_bit(const T &x) noexcept {
 
 
 template <typename T>
-constexpr T twice(const T &x) {
+constexpr bool is_nan(const T &x) noexcept {
+    return NumTraits<T>::is_nan_impl(x);
+}
+
+
+template <typename T>
+constexpr bool is_inf(const T &x) noexcept {
+    return NumTraits<T>::is_inf_impl(x);
+}
+
+
+template <typename T>
+constexpr bool is_finite(const T &x) noexcept {
+    return NumTraits<T>::is_finite_impl(x);
+}
+
+
+template <typename T>
+constexpr T twice(const T &x) noexcept {
     return NumTraits<T>::twice_impl(x);
 }
 
 
 template <typename T>
-constexpr T square(const T &x) {
+constexpr T square(const T &x) noexcept {
     return NumTraits<T>::square_impl(x);
 }
 
@@ -101,6 +119,15 @@ struct NumTraits<signed char> {
     static constexpr bool sign_bit_impl(const signed char &x) noexcept {
         return x < ZERO_CONST;
     }
+    static constexpr bool is_nan_impl(const signed char &) noexcept {
+        return false;
+    }
+    static constexpr bool is_inf_impl(const signed char &) noexcept {
+        return false;
+    }
+    static constexpr bool is_finite_impl(const signed char &) noexcept {
+        return true;
+    }
 }; // struct NumTraits<signed char>
 
 
@@ -118,6 +145,15 @@ struct NumTraits<unsigned char> {
     }
     static constexpr bool sign_bit_impl(const unsigned char &) noexcept {
         return false;
+    }
+    static constexpr bool is_nan_impl(const unsigned char &) noexcept {
+        return false;
+    }
+    static constexpr bool is_inf_impl(const unsigned char &) noexcept {
+        return false;
+    }
+    static constexpr bool is_finite_impl(const unsigned char &) noexcept {
+        return true;
     }
 }; // struct NumTraits<unsigned char>
 
@@ -137,6 +173,11 @@ struct NumTraits<short> {
     static constexpr bool sign_bit_impl(const short &x) noexcept {
         return x < ZERO_CONST;
     }
+    static constexpr bool is_nan_impl(const short &) noexcept { return false; }
+    static constexpr bool is_inf_impl(const short &) noexcept { return false; }
+    static constexpr bool is_finite_impl(const short &) noexcept {
+        return true;
+    }
 }; // struct NumTraits<short>
 
 
@@ -154,6 +195,15 @@ struct NumTraits<unsigned short> {
     }
     static constexpr bool sign_bit_impl(const unsigned short &) noexcept {
         return false;
+    }
+    static constexpr bool is_nan_impl(const unsigned short &) noexcept {
+        return false;
+    }
+    static constexpr bool is_inf_impl(const unsigned short &) noexcept {
+        return false;
+    }
+    static constexpr bool is_finite_impl(const unsigned short &) noexcept {
+        return true;
     }
 }; // struct NumTraits<unsigned short>
 
@@ -173,6 +223,9 @@ struct NumTraits<int> {
     static constexpr bool sign_bit_impl(const int &x) noexcept {
         return x < ZERO_CONST;
     }
+    static constexpr bool is_nan_impl(const int &) noexcept { return false; }
+    static constexpr bool is_inf_impl(const int &) noexcept { return false; }
+    static constexpr bool is_finite_impl(const int &) noexcept { return true; }
 }; // struct NumTraits<int>
 
 
@@ -190,6 +243,15 @@ struct NumTraits<unsigned> {
     }
     static constexpr bool sign_bit_impl(const unsigned &) noexcept {
         return false;
+    }
+    static constexpr bool is_nan_impl(const unsigned &) noexcept {
+        return false;
+    }
+    static constexpr bool is_inf_impl(const unsigned &) noexcept {
+        return false;
+    }
+    static constexpr bool is_finite_impl(const unsigned &) noexcept {
+        return true;
     }
 }; // struct NumTraits<unsigned>
 
@@ -209,6 +271,9 @@ struct NumTraits<long> {
     static constexpr bool sign_bit_impl(const long &x) noexcept {
         return x < ZERO_CONST;
     }
+    static constexpr bool is_nan_impl(const long &) noexcept { return false; }
+    static constexpr bool is_inf_impl(const long &) noexcept { return false; }
+    static constexpr bool is_finite_impl(const long &) noexcept { return true; }
 }; // struct NumTraits<long>
 
 
@@ -227,6 +292,15 @@ struct NumTraits<unsigned long> {
     static constexpr bool sign_bit_impl(const unsigned long &) noexcept {
         return false;
     }
+    static constexpr bool is_nan_impl(const unsigned long &) noexcept {
+        return false;
+    }
+    static constexpr bool is_inf_impl(const unsigned long &) noexcept {
+        return false;
+    }
+    static constexpr bool is_finite_impl(const unsigned long &) noexcept {
+        return true;
+    }
 }; // struct NumTraits<unsigned long>
 
 
@@ -244,6 +318,15 @@ struct NumTraits<long long> {
     }
     static constexpr bool sign_bit_impl(const long long &x) noexcept {
         return x < ZERO_CONST;
+    }
+    static constexpr bool is_nan_impl(const long long &) noexcept {
+        return false;
+    }
+    static constexpr bool is_inf_impl(const long long &) noexcept {
+        return false;
+    }
+    static constexpr bool is_finite_impl(const long long &) noexcept {
+        return true;
     }
 }; // struct NumTraits<long long>
 
@@ -267,6 +350,15 @@ struct NumTraits<unsigned long long> {
     static constexpr bool sign_bit_impl(const unsigned long long &) noexcept {
         return false;
     }
+    static constexpr bool is_nan_impl(const unsigned long long &) noexcept {
+        return false;
+    }
+    static constexpr bool is_inf_impl(const unsigned long long &) noexcept {
+        return false;
+    }
+    static constexpr bool is_finite_impl(const unsigned long long &) noexcept {
+        return true;
+    }
 }; // struct NumTraits<unsigned long long>
 
 
@@ -287,6 +379,9 @@ struct NumTraits<i128> {
     static constexpr bool sign_bit_impl(const i128 &x) noexcept {
         return x < 0LL;
     }
+    static constexpr bool is_nan_impl(const i128 &) noexcept { return false; }
+    static constexpr bool is_inf_impl(const i128 &) noexcept { return false; }
+    static constexpr bool is_finite_impl(const i128 &) noexcept { return true; }
 }; // struct NumTraits<i128>
 #endif // DZNL_REQUEST_I128
 
@@ -303,6 +398,9 @@ struct NumTraits<u128> {
         return x == 1ULL;
     }
     static constexpr bool sign_bit_impl(const u128 &) noexcept { return false; }
+    static constexpr bool is_nan_impl(const u128 &) noexcept { return false; }
+    static constexpr bool is_inf_impl(const u128 &) noexcept { return false; }
+    static constexpr bool is_finite_impl(const u128 &) noexcept { return true; }
 }; // struct NumTraits<u128>
 #endif // DZNL_REQUEST_U128
 
@@ -323,6 +421,15 @@ struct NumTraits<f32> {
     static constexpr bool sign_bit_impl(const f32 &x) noexcept {
         return sign_bit(bit_cast<i32>(x));
     }
+    static constexpr bool is_nan_impl(const f32 &x) noexcept {
+        return !(x == x);
+    }
+    static constexpr bool is_inf_impl(const f32 &x) noexcept {
+        return (!is_nan(x)) && is_nan(x - x);
+    }
+    static constexpr bool is_finite_impl(const f32 &x) noexcept {
+        return (!is_nan(x)) && (!is_nan(x - x));
+    }
 }; // struct NumTraits<f32>
 
 
@@ -338,6 +445,15 @@ struct NumTraits<f64> {
     }
     static constexpr bool sign_bit_impl(const f64 &x) noexcept {
         return sign_bit(bit_cast<i64>(x));
+    }
+    static constexpr bool is_nan_impl(const f64 &x) noexcept {
+        return !(x == x);
+    }
+    static constexpr bool is_inf_impl(const f64 &x) noexcept {
+        return (!is_nan(x)) && is_nan(x - x);
+    }
+    static constexpr bool is_finite_impl(const f64 &x) noexcept {
+        return (!is_nan(x)) && (!is_nan(x - x));
     }
 }; // struct NumTraits<f64>
 
@@ -359,6 +475,15 @@ struct NumTraits<f16> {
     static constexpr bool sign_bit_impl(const f16 &x) noexcept {
         return sign_bit(bit_cast<i16>(x));
     }
+    static constexpr bool is_nan_impl(const f16 &x) noexcept {
+        return !(x == x);
+    }
+    static constexpr bool is_inf_impl(const f16 &x) noexcept {
+        return (!is_nan(x)) && is_nan(x - x);
+    }
+    static constexpr bool is_finite_impl(const f16 &x) noexcept {
+        return (!is_nan(x)) && (!is_nan(x - x));
+    }
 }; // struct NumTraits<f16>
 #endif // DZNL_REQUEST_F16
 
@@ -376,6 +501,15 @@ struct NumTraits<bf16> {
     }
     static constexpr bool sign_bit_impl(const bf16 &x) noexcept {
         return sign_bit(bit_cast<i16>(x));
+    }
+    static constexpr bool is_nan_impl(const bf16 &x) noexcept {
+        return !(x == x);
+    }
+    static constexpr bool is_inf_impl(const bf16 &x) noexcept {
+        return (!is_nan(x)) && is_nan(x - x);
+    }
+    static constexpr bool is_finite_impl(const bf16 &x) noexcept {
+        return (!is_nan(x)) && (!is_nan(x - x));
     }
 }; // struct NumTraits<bf16>
 #endif // DZNL_REQUEST_BF16
@@ -395,6 +529,15 @@ struct NumTraits<f128> {
     static constexpr bool sign_bit_impl(const f128 &x) noexcept {
         return sign_bit(bit_cast<i128>(x));
     }
+    static constexpr bool is_nan_impl(const f128 &x) noexcept {
+        return !(x == x);
+    }
+    static constexpr bool is_inf_impl(const f128 &x) noexcept {
+        return (!is_nan(x)) && is_nan(x - x);
+    }
+    static constexpr bool is_finite_impl(const f128 &x) noexcept {
+        return (!is_nan(x)) && (!is_nan(x - x));
+    }
 }; // struct NumTraits<f128>
 #endif // DZNL_REQUEST_F128
 
@@ -412,6 +555,15 @@ struct NumTraits<d32> {
     }
     static constexpr bool sign_bit_impl(const d32 &x) noexcept {
         return sign_bit(bit_cast<i32>(x));
+    }
+    static constexpr bool is_nan_impl(const d32 &x) noexcept {
+        return !(x == x);
+    }
+    static constexpr bool is_inf_impl(const d32 &x) noexcept {
+        return (!is_nan(x)) && is_nan(x - x);
+    }
+    static constexpr bool is_finite_impl(const d32 &x) noexcept {
+        return (!is_nan(x)) && (!is_nan(x - x));
     }
 }; // struct NumTraits<d32>
 #endif // DZNL_REQUEST_D32
@@ -431,6 +583,15 @@ struct NumTraits<d64> {
     static constexpr bool sign_bit_impl(const d64 &x) noexcept {
         return sign_bit(bit_cast<i64>(x));
     }
+    static constexpr bool is_nan_impl(const d64 &x) noexcept {
+        return !(x == x);
+    }
+    static constexpr bool is_inf_impl(const d64 &x) noexcept {
+        return (!is_nan(x)) && is_nan(x - x);
+    }
+    static constexpr bool is_finite_impl(const d64 &x) noexcept {
+        return (!is_nan(x)) && (!is_nan(x - x));
+    }
 }; // struct NumTraits<d64>
 #endif // DZNL_REQUEST_D64
 
@@ -448,6 +609,15 @@ struct NumTraits<d128> {
     }
     static constexpr bool sign_bit_impl(const d128 &x) noexcept {
         return sign_bit(bit_cast<i128>(x));
+    }
+    static constexpr bool is_nan_impl(const d128 &x) noexcept {
+        return !(x == x);
+    }
+    static constexpr bool is_inf_impl(const d128 &x) noexcept {
+        return (!is_nan(x)) && is_nan(x - x);
+    }
+    static constexpr bool is_finite_impl(const d128 &x) noexcept {
+        return (!is_nan(x)) && (!is_nan(x - x));
     }
 }; // struct NumTraits<d128>
 #endif // DZNL_REQUEST_D128

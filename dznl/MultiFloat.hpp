@@ -56,7 +56,7 @@ struct MultiFloat {
 
     constexpr MultiFloat(const T &x) noexcept
         : limbs{} {
-        if (isfinite(x)) {
+        if (is_finite(x)) {
             if constexpr (N > 0) { limbs[0] = x; }
             for (int i = 1; i < N; ++i) { limbs[i] = zero<T>(); }
         } else {
@@ -81,7 +81,7 @@ struct MultiFloat {
         bool result = true;
         for (int i = 0; i < N; ++i) {
             result &= (limbs[i] == rhs.limbs[i]) |
-                      (isnan(limbs[i]) && isnan(rhs.limbs[i]));
+                      (is_nan(limbs[i]) && is_nan(rhs.limbs[i]));
         }
         return result;
     }
@@ -161,7 +161,7 @@ public:
 
     constexpr void renormalize() noexcept {
         for (int i = 0; i < N; ++i) {
-            if (isnan(limbs[i])) {
+            if (is_nan(limbs[i])) {
                 const T nan = limbs[i];
                 for (int j = 0; j < N; ++j) { limbs[j] = nan; }
                 return;
@@ -170,7 +170,7 @@ public:
         int pos_inf_index = -1;
         int neg_inf_index = -1;
         for (int i = 0; i < N; ++i) {
-            if (isinf(limbs[i])) {
+            if (is_inf(limbs[i])) {
                 if (sign_bit(limbs[i])) {
                     if (neg_inf_index == -1) { neg_inf_index = i; }
                 } else {
