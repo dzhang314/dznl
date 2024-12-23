@@ -81,6 +81,12 @@ constexpr T square(const T &x) noexcept {
 
 
 template <typename T>
+constexpr T fma(const T &x, const T &y, const T &z) noexcept {
+    return NumTraits<T>::fma_impl(x, y, z);
+}
+
+
+template <typename T>
 constexpr T sqrt(const T &x) {
     return NumTraits<T>::sqrt_impl(x);
 }
@@ -92,14 +98,9 @@ constexpr T sqrt(const T &x) {
 template <>
 struct NumTraits<char> {
     static constexpr char ZERO_CONST = '\0';
-    static constexpr char ONE_CONST = '\1';
     static constexpr char zero_impl() noexcept { return ZERO_CONST; }
-    static constexpr char one_impl() noexcept { return ONE_CONST; }
     static constexpr bool is_zero_impl(const char &x) noexcept {
         return x == ZERO_CONST;
-    }
-    static constexpr bool is_one_impl(const char &x) noexcept {
-        return x == ONE_CONST;
     }
 }; // struct NumTraits<char>
 
@@ -430,6 +431,17 @@ struct NumTraits<f32> {
     static constexpr bool is_finite_impl(const f32 &x) noexcept {
         return (!is_nan(x)) && (!is_nan(x - x));
     }
+#if DZNL_HAS_BUILTIN(__builtin_fmaf)
+    static constexpr f32
+    fma_impl(const f32 &x, const f32 &y, const f32 &z) noexcept {
+        return __builtin_fmaf(x, y, z);
+    }
+#endif
+#if DZNL_HAS_BUILTIN(__builtin_sqrtf)
+    static constexpr f32 sqrt_impl(const f32 &x) noexcept {
+        return __builtin_sqrtf(x);
+    }
+#endif
 }; // struct NumTraits<f32>
 
 
@@ -455,6 +467,17 @@ struct NumTraits<f64> {
     static constexpr bool is_finite_impl(const f64 &x) noexcept {
         return (!is_nan(x)) && (!is_nan(x - x));
     }
+#if DZNL_HAS_BUILTIN(__builtin_fma)
+    static constexpr f64
+    fma_impl(const f64 &x, const f64 &y, const f64 &z) noexcept {
+        return __builtin_fma(x, y, z);
+    }
+#endif
+#if DZNL_HAS_BUILTIN(__builtin_sqrt)
+    static constexpr f64 sqrt_impl(const f64 &x) noexcept {
+        return __builtin_sqrt(x);
+    }
+#endif
 }; // struct NumTraits<f64>
 
 
@@ -713,7 +736,7 @@ constexpr T mul_by_doubling(const T &x, const INTEGER_T &n) {
         constexpr INTEGER_T ONE = one<INTEGER_T>();
         const T y = mul_by_doubling(x, n >> ONE);
         const T z = y + y;
-        return (n & ONE) ? (z + x) : z;
+        return is_zero(n & ONE) ? z : (z + x);
     }
 }
 
@@ -728,7 +751,7 @@ constexpr T pow_by_squaring(const T &x, const INTEGER_T &n) {
         constexpr INTEGER_T ONE = one<INTEGER_T>();
         const T y = pow_by_squaring(x, n >> ONE);
         const T z = y * y;
-        return (n & ONE) ? (z * x) : z;
+        return is_zero(n & ONE) ? z : (z * x);
     }
 }
 
