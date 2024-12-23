@@ -26,4 +26,5 @@ int main() {
     static_assert(dznl::to_hex_string(-100.0) == "-0x1.9000000000000p+0006");
     static_assert(dznl::to_hex_string(273.15) == "+0x1.1126666666666p+0008");
     static_assert(dznl::to_hex_string(0.0001) == "+0x1.A36E2EB1C432Dp-0014");
+    static_assert(dznl::to_hex_string(-5.0e-324) == "-0x1.0000000000000p-1074");
 }

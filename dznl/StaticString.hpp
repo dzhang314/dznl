@@ -187,7 +187,11 @@ constexpr StaticString<24> to_hex_string(f64 x) noexcept {
         result[4] = '.';
         u64 mantissa = data.mantissa();
         const int shift = leading_zeros(mantissa) + 1;
-        mantissa <<= shift;
+        if (shift == 64) {
+            mantissa = zero<u64>();
+        } else {
+            mantissa <<= shift;
+        }
         for (int i = 0; i < 13; ++i) {
             result[i + 5] = internal::nibble_to_hex_char(
                 static_cast<int>((mantissa & NIBBLE_MASK) >> 60)
