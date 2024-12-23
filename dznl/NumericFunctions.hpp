@@ -659,6 +659,21 @@ struct NumTraits<
     ) noexcept {
         return x < 0;
     }
+    static constexpr bool is_nan_impl(
+        const ::boost::multiprecision::number<Backend, ExpressionTemplates> &x
+    ) noexcept {
+        return !(x == x);
+    }
+    static constexpr bool is_inf_impl(
+        const ::boost::multiprecision::number<Backend, ExpressionTemplates> &x
+    ) noexcept {
+        return (!is_nan_impl(x)) && is_nan_impl(x - x);
+    }
+    static constexpr bool is_finite_impl(
+        const ::boost::multiprecision::number<Backend, ExpressionTemplates> &x
+    ) noexcept {
+        return (!is_nan_impl(x)) && (!is_nan_impl(x - x));
+    }
 };
 #endif // DZNL_REQUEST_BOOST_MULTIPRECISION_INTEROP
 

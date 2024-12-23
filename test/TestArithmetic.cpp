@@ -45,6 +45,24 @@ constexpr bool test_signed() {
     result &= !dznl::sign_bit(one);
     result &= !dznl::sign_bit(two);
 
+    result &= !dznl::is_nan(neg_two);
+    result &= !dznl::is_nan(neg_one);
+    result &= !dznl::is_nan(zero);
+    result &= !dznl::is_nan(one);
+    result &= !dznl::is_nan(two);
+
+    result &= !dznl::is_inf(neg_two);
+    result &= !dznl::is_inf(neg_one);
+    result &= !dznl::is_inf(zero);
+    result &= !dznl::is_inf(one);
+    result &= !dznl::is_inf(two);
+
+    result &= dznl::is_finite(neg_two);
+    result &= dznl::is_finite(neg_one);
+    result &= dznl::is_finite(zero);
+    result &= dznl::is_finite(one);
+    result &= dznl::is_finite(two);
+
     result &= (neg_two + zero == neg_two);
     result &= (neg_two + one == neg_one);
     result &= (neg_two + two == zero);
@@ -148,6 +166,18 @@ constexpr bool test_unsigned() {
     result &= !dznl::sign_bit(zero);
     result &= !dznl::sign_bit(one);
     result &= !dznl::sign_bit(two);
+
+    result &= !dznl::is_nan(zero);
+    result &= !dznl::is_nan(one);
+    result &= !dznl::is_nan(two);
+
+    result &= !dznl::is_inf(zero);
+    result &= !dznl::is_inf(one);
+    result &= !dznl::is_inf(two);
+
+    result &= dznl::is_finite(zero);
+    result &= dznl::is_finite(one);
+    result &= dznl::is_finite(two);
 
     result &= (zero + zero == zero);
     result &= (zero + one == one);
