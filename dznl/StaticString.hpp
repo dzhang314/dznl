@@ -10,9 +10,9 @@ namespace dznl {
 
 // TODO: Revisit Clang unsafe-buffer-usage warnings when
 // https://github.com/llvm/llvm-project/issues/64646 is resolved.
-#ifdef __clang__
+#if defined(__clang__) && (__clang_major__ >= 17)
 #pragma clang unsafe_buffer_usage begin
-#endif // __clang__
+#endif // defined(__clang__) && (__clang_major__ >= 17)
 
 
 template <int N>
@@ -82,9 +82,9 @@ struct StaticString {
 }; // struct StaticString<N>
 
 
-#ifdef __clang__
+#if defined(__clang__) && (__clang_major__ >= 17)
 #pragma clang unsafe_buffer_usage end
-#endif // __clang__
+#endif // defined(__clang__) && (__clang_major__ >= 17)
 
 
 template <int N>

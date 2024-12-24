@@ -2,13 +2,15 @@
 
 #include <boost/multiprecision/cpp_bin_float.hpp>
 
-#if defined(__GNUC__) &&                                                       \
-    (defined(__clang__) || ((!defined(__clang__)) && (__GNUC__ >= 12)))
+#if (defined(__GNUC__) && (!defined(__clang__)) && (__GNUC__ >= 12)) ||        \
+    (defined(__clang__) &&                                                     \
+     (defined(__apple_build_version__) || (__clang_major__ >= 15)))
 #define DZNL_REQUEST_F16
 #endif
 
-#if defined(__GNUC__) &&                                                       \
-    (defined(__clang__) || ((!defined(__clang__)) && (__GNUC__ >= 13)))
+#if (defined(__GNUC__) && (!defined(__clang__)) && (__GNUC__ >= 13)) ||        \
+    (defined(__clang__) &&                                                     \
+     (defined(__apple_build_version__) || (__clang_major__ >= 17)))
 #define DZNL_REQUEST_BF16
 #endif
 
@@ -27,14 +29,16 @@ int main() {
     static_assert(dznl::compute_radix<dznl::f64>().second == 2);
     static_assert(dznl::compute_precision<dznl::f64>() == 53);
 
-#if defined(__GNUC__) &&                                                       \
-    (defined(__clang__) || ((!defined(__clang__)) && (__GNUC__ >= 12)))
+#if (defined(__GNUC__) && (!defined(__clang__)) && (__GNUC__ >= 12)) ||        \
+    (defined(__clang__) &&                                                     \
+     (defined(__apple_build_version__) || (__clang_major__ >= 15)))
     static_assert(dznl::compute_radix<dznl::f16>().second == 2);
     static_assert(dznl::compute_precision<dznl::f16>() == 11);
 #endif
 
-#if defined(__GNUC__) &&                                                       \
-    (defined(__clang__) || ((!defined(__clang__)) && (__GNUC__ >= 13)))
+#if (defined(__GNUC__) && (!defined(__clang__)) && (__GNUC__ >= 13)) ||        \
+    (defined(__clang__) &&                                                     \
+     (defined(__apple_build_version__) || (__clang_major__ >= 17)))
     static_assert(dznl::compute_radix<dznl::bf16>().second == 2);
     static_assert(dznl::compute_precision<dznl::bf16>() == 8);
 #endif

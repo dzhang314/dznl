@@ -49,8 +49,10 @@ static_assert(DZNL_CHAR_BIT * sizeof(u128) == 128);
 
 
 #ifdef DZNL_REQUEST_F16
-#if (defined(__GNUC__) && (!defined(__clang__)) && (__GNUC__ < 12))
-#error "float16 support requires GCC 12+"
+#if (defined(__GNUC__) && (!defined(__clang__)) && (__GNUC__ < 12)) ||         \
+    (defined(__clang__) && (!defined(__apple_build_version__)) &&              \
+     (__clang_major__ < 15))
+#error "float16 support requires GCC 12+, Clang 15+, or Apple Clang"
 #else
 using f16 = _Float16;
 static_assert(DZNL_CHAR_BIT * sizeof(f16) == 16);
