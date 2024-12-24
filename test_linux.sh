@@ -1,44 +1,53 @@
 #!/bin/sh
 
-set -eux
+set -eu
 
 for f in dznl/*.hpp; do
     include-what-you-use -I dznl $f
 done
 
 compile_and_run_gcc_11() {
+    echo "Compiling $1 -> $2 with GCC 11"
     g++-11 -std=c++17 \
         -Wall -Wextra -pedantic -Werror -fmax-errors=1 \
         -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 compile_and_run_gcc_12() {
+    echo "Compiling $1 -> $2 with GCC 12"
     g++-12 -std=c++17 \
         -Wall -Wextra -pedantic -Werror -fmax-errors=1 \
         -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 compile_and_run_gcc_13() {
+    echo "Compiling $1 -> $2 with GCC 13"
     g++-13 -std=c++17 \
         -Wall -Wextra -pedantic -Werror -fmax-errors=1 \
         -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 compile_and_run_gcc_14() {
+    echo "Compiling $1 -> $2 with GCC 14"
     g++-14 -std=c++17 \
         -Wall -Wextra -pedantic -Werror -fmax-errors=1 \
         -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 compile_and_run_clang_14() {
+    echo "Compiling $1 -> $2 with Clang 14"
     clang++-14 -std=c++17 \
         -Weverything -Werror -ferror-limit=1 \
         -Wno-padded \
@@ -48,9 +57,11 @@ compile_and_run_clang_14() {
         -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 compile_and_run_clang_15() {
+    echo "Compiling $1 -> $2 with Clang 15"
     clang++-15 -std=c++17 \
         -Weverything -Werror -ferror-limit=1 \
         -Wno-padded \
@@ -60,9 +71,11 @@ compile_and_run_clang_15() {
         -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 compile_and_run_clang_16() {
+    echo "Compiling $1 -> $2 with Clang 16"
     clang++-16 -std=c++17 \
         -Weverything -Werror -ferror-limit=1 \
         -Wno-padded \
@@ -73,9 +86,11 @@ compile_and_run_clang_16() {
         -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 compile_and_run_clang_17() {
+    echo "Compiling $1 -> $2 with Clang 17"
     clang++-17 -std=c++17 \
         -Weverything -Werror -ferror-limit=1 \
         -Wno-padded \
@@ -85,9 +100,11 @@ compile_and_run_clang_17() {
         -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 compile_and_run_clang_18() {
+    echo "Compiling $1 -> $2 with Clang 18"
     clang++-18 -std=c++17 \
         -Weverything -Werror -ferror-limit=1 \
         -Wno-padded \
@@ -97,22 +114,27 @@ compile_and_run_clang_18() {
         -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 compile_and_run_icpx() {
+    echo "Compiling $1 -> $2 with ICPX"
     /opt/intel/oneapi/compiler/latest/bin/icpx -std=c++17 \
         -Wall \
         -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 compile_and_run_nvcpp() {
+    echo "Compiling $1 -> $2 with NVC++"
     /opt/nvidia/hpc_sdk/Linux_x86_64/2024/compilers/bin/nvc++ -std=c++17 \
         -Wall \
         -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 mkdir -p bin
