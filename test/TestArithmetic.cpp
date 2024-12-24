@@ -5,8 +5,17 @@
 
 #ifndef _MSC_VER
 #define DZNL_REQUEST_128_BIT_INTEGERS
-#define DZNL_REQUEST_16_BIT_FLOATS
 #endif // _MSC_VER
+
+#if defined(__GNUC__) &&                                                       \
+    (defined(__clang__) || ((!defined(__clang__)) && (__GNUC__ >= 12)))
+#define DZNL_REQUEST_F16
+#endif
+
+#if defined(__GNUC__) &&                                                       \
+    (defined(__clang__) || ((!defined(__clang__)) && (__GNUC__ >= 13)))
+#define DZNL_REQUEST_BF16
+#endif
 
 #if defined(__GNUC__) && !defined(__clang__)
 #define DZNL_REQUEST_128_BIT_FLOATS
@@ -228,9 +237,17 @@ int main() {
 #ifndef _MSC_VER
     static_assert(test_signed<dznl::i128>());
     static_assert(test_unsigned<dznl::u128>());
-    static_assert(test_signed<dznl::f16>());
-    static_assert(test_signed<dznl::bf16>());
 #endif // _MSC_VER
+
+#if defined(__GNUC__) &&                                                       \
+    (defined(__clang__) || ((!defined(__clang__)) && (__GNUC__ >= 12)))
+    static_assert(test_signed<dznl::f16>());
+#endif
+
+#if defined(__GNUC__) &&                                                       \
+    (defined(__clang__) || ((!defined(__clang__)) && (__GNUC__ >= 13)))
+    static_assert(test_signed<dznl::bf16>());
+#endif
 
 #if defined(__GNUC__) && !defined(__clang__)
     static_assert(test_signed<dznl::f128>());

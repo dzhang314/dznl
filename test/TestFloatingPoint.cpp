@@ -2,9 +2,15 @@
 
 #include <boost/multiprecision/cpp_bin_float.hpp>
 
-#ifndef _MSC_VER
-#define DZNL_REQUEST_16_BIT_FLOATS
-#endif // _MSC_VER
+#if defined(__GNUC__) &&                                                       \
+    (defined(__clang__) || ((!defined(__clang__)) && (__GNUC__ >= 12)))
+#define DZNL_REQUEST_F16
+#endif
+
+#if defined(__GNUC__) &&                                                       \
+    (defined(__clang__) || ((!defined(__clang__)) && (__GNUC__ >= 13)))
+#define DZNL_REQUEST_BF16
+#endif
 
 #if defined(__GNUC__) && !defined(__clang__)
 #define DZNL_REQUEST_128_BIT_FLOATS
@@ -13,6 +19,7 @@
 
 #include <dznl/dznl.hpp>
 
+
 int main() {
 
     static_assert(dznl::compute_radix<dznl::f32>().second == 2);
@@ -20,12 +27,17 @@ int main() {
     static_assert(dznl::compute_radix<dznl::f64>().second == 2);
     static_assert(dznl::compute_precision<dznl::f64>() == 53);
 
-#ifndef _MSC_VER
+#if defined(__GNUC__) &&                                                       \
+    (defined(__clang__) || ((!defined(__clang__)) && (__GNUC__ >= 12)))
     static_assert(dznl::compute_radix<dznl::f16>().second == 2);
     static_assert(dznl::compute_precision<dznl::f16>() == 11);
+#endif
+
+#if defined(__GNUC__) &&                                                       \
+    (defined(__clang__) || ((!defined(__clang__)) && (__GNUC__ >= 13)))
     static_assert(dznl::compute_radix<dznl::bf16>().second == 2);
     static_assert(dznl::compute_precision<dznl::bf16>() == 8);
-#endif // _MSC_VER
+#endif
 
 #if defined(__GNUC__) && !defined(__clang__)
     static_assert(dznl::compute_radix<dznl::f128>().second == 2);
