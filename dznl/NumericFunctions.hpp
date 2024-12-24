@@ -909,22 +909,22 @@ template <typename T>
 constexpr T compute_pi() {
     const T K0 = zero<T>();
     const T K1 = one<T>();
-    const T K2 = K1 + K1;
+    const T K2 = twice(K1);
     const T K3 = K2 + K1;
-    const T K4 = K2 + K2;
+    const T K4 = twice(K2);
     const T K5 = K4 + K1;
     const T K7 = K4 + K3;
-    const T K8 = K4 + K4;
+    const T K8 = twice(K4);
     const T K15 = K8 + K7;
-    const T K16 = K8 + K8;
+    const T K16 = twice(K8);
     const T K23 = K16 + K7;
     const T K24 = K16 + K8;
-    const T K32 = K16 + K16;
+    const T K32 = twice(K16);
     const T K47 = K32 + K15;
     const T K56 = K32 + K24;
-    const T K64 = K32 + K32;
+    const T K64 = twice(K32);
     const T K120 = K64 + K56;
-    const T K128 = K64 + K64;
+    const T K128 = twice(K64);
     const T K151 = K128 + K23;
     T current = internal::bbp_pi_partial_sum<T>(
         0, K0, K1, K3, K5, K16, K47, K120, K151
