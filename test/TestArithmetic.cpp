@@ -1,28 +1,35 @@
 #include <cstdlib>
 
+#ifndef __NVCOMPILER
 #include <boost/multiprecision/cpp_bin_float.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
+#endif
 
 #ifndef _MSC_VER
 #define DZNL_REQUEST_128_BIT_INTEGERS
-#endif // _MSC_VER
+#endif
 
-#if (defined(__GNUC__) && (!defined(__clang__)) && (__GNUC__ >= 12)) ||        \
+#if (defined(__GNUC__) && (!defined(__clang__)) && (!defined(__NVCOMPILER)) && \
+     (__GNUC__ >= 12)) ||                                                      \
     (defined(__clang__) &&                                                     \
      (defined(__apple_build_version__) || (__clang_major__ >= 15)))
 #define DZNL_REQUEST_F16
 #endif
 
-#if (defined(__GNUC__) && (!defined(__clang__)) && (__GNUC__ >= 13)) ||        \
+#if (defined(__GNUC__) && (!defined(__clang__)) && (!defined(__NVCOMPILER)) && \
+     (__GNUC__ >= 13)) ||                                                      \
     (defined(__clang__) &&                                                     \
      (defined(__apple_build_version__) || (__clang_major__ >= 17)))
 #define DZNL_REQUEST_BF16
 #endif
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && (!defined(__clang__))
 #define DZNL_REQUEST_128_BIT_FLOATS
+#endif
+
+#if defined(__GNUC__) && (!defined(__clang__)) && (!defined(__NVCOMPILER))
 #define DZNL_REQUEST_DECIMAL_FLOATS
-#endif // defined(__GNUC__) && !defined(__clang__)
+#endif
 
 #include <dznl/dznl.hpp>
 
@@ -241,27 +248,32 @@ int main() {
     static_assert(test_unsigned<dznl::u128>());
 #endif // _MSC_VER
 
-#if (defined(__GNUC__) && (!defined(__clang__)) && (__GNUC__ >= 12)) ||        \
+#if (defined(__GNUC__) && (!defined(__clang__)) && (!defined(__NVCOMPILER)) && \
+     (__GNUC__ >= 12)) ||                                                      \
     (defined(__clang__) &&                                                     \
      (defined(__apple_build_version__) || (__clang_major__ >= 15)))
     static_assert(test_signed<dznl::f16>());
 #endif
 
-#if (defined(__GNUC__) && (!defined(__clang__)) && (__GNUC__ >= 13)) ||        \
+#if (defined(__GNUC__) && (!defined(__clang__)) && (!defined(__NVCOMPILER)) && \
+     (__GNUC__ >= 13)) ||                                                      \
     (defined(__clang__) &&                                                     \
      (defined(__apple_build_version__) || (__clang_major__ >= 17)))
     static_assert(test_signed<dznl::bf16>());
 #endif
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if defined(__GNUC__) && (!defined(__clang__))
     static_assert(test_signed<dznl::f128>());
+#endif
+
+#if defined(__GNUC__) && (!defined(__clang__)) && (!defined(__NVCOMPILER))
     static_assert(test_signed<dznl::d32>());
     static_assert(test_signed<dznl::d64>());
     static_assert(test_signed<dznl::d128>());
-#endif // defined(__GNUC__) && !defined(__clang__)
+#endif
 
+#ifndef __NVCOMPILER
     using namespace boost::multiprecision;
-
     if (!test_signed<cpp_bin_float_single>()) { return EXIT_FAILURE; }
     if (!test_signed<cpp_bin_float_double>()) { return EXIT_FAILURE; }
     if (!test_signed<cpp_bin_float_double_extended>()) { return EXIT_FAILURE; }
@@ -271,6 +283,7 @@ int main() {
     if (!test_signed<cpp_bin_float_100>()) { return EXIT_FAILURE; }
     if (!test_signed<cpp_dec_float_50>()) { return EXIT_FAILURE; }
     if (!test_signed<cpp_dec_float_100>()) { return EXIT_FAILURE; }
+#endif
 
     return EXIT_SUCCESS;
 }

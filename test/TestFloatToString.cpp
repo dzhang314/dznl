@@ -1,13 +1,15 @@
 #include <cstdlib>
 #include <string>
 
-#if (defined(__GNUC__) && (!defined(__clang__)) && (__GNUC__ >= 12)) ||        \
+#if (defined(__GNUC__) && (!defined(__clang__)) && (!defined(__NVCOMPILER)) && \
+     (__GNUC__ >= 12)) ||                                                      \
     (defined(__clang__) &&                                                     \
      (defined(__apple_build_version__) || (__clang_major__ >= 15)))
 #define DZNL_REQUEST_F16
 #endif
 
-#if (defined(__GNUC__) && (!defined(__clang__)) && (__GNUC__ >= 13)) ||        \
+#if (defined(__GNUC__) && (!defined(__clang__)) && (!defined(__NVCOMPILER)) && \
+     (__GNUC__ >= 13)) ||                                                      \
     (defined(__clang__) &&                                                     \
      (defined(__apple_build_version__) || (__clang_major__ >= 17)))
 #define DZNL_REQUEST_BF16
@@ -71,13 +73,15 @@ int main() {
     if (!test_to_string<dznl::f32>()) { return EXIT_FAILURE; }
     if (!test_to_string<dznl::f64>()) { return EXIT_FAILURE; }
 
-#if (defined(__GNUC__) && (!defined(__clang__)) && (__GNUC__ >= 12)) ||        \
+#if (defined(__GNUC__) && (!defined(__clang__)) && (!defined(__NVCOMPILER)) && \
+     (__GNUC__ >= 12)) ||                                                      \
     (defined(__clang__) &&                                                     \
      (defined(__apple_build_version__) || (__clang_major__ >= 15)))
     if (!test_to_string<dznl::f16>()) { return EXIT_FAILURE; }
 #endif
 
-#if (defined(__GNUC__) && (!defined(__clang__)) && (__GNUC__ >= 13)) ||        \
+#if (defined(__GNUC__) && (!defined(__clang__)) && (!defined(__NVCOMPILER)) && \
+     (__GNUC__ >= 13)) ||                                                      \
     (defined(__clang__) &&                                                     \
      (defined(__apple_build_version__) || (__clang_major__ >= 17)))
     if (!test_to_string<dznl::bf16>()) { return EXIT_FAILURE; }
@@ -85,7 +89,7 @@ int main() {
 
 #if defined(__GNUC__) && !defined(__clang__)
     if (!test_to_string<dznl::f128>()) { return EXIT_FAILURE; }
-#endif // defined(__GNUC__) && !defined(__clang__)
+#endif
 
     return EXIT_SUCCESS;
 }

@@ -24,7 +24,8 @@ constexpr void *memcpy(void *dst, const void *src, size_t n) noexcept {
 template <typename DST_T, typename SRC_T>
 constexpr DST_T bit_cast(const SRC_T &x) noexcept {
     static_assert(sizeof(DST_T) == sizeof(SRC_T));
-#if DZNL_HAS_BUILTIN(__builtin_bit_cast) || defined(_MSC_VER)
+#if DZNL_HAS_BUILTIN(__builtin_bit_cast) || defined(_MSC_VER) ||               \
+    defined(__NVCOMPILER)
     return __builtin_bit_cast(DST_T, x);
 #else
     DST_T result;

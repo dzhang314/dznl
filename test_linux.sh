@@ -99,6 +99,22 @@ compile_and_run_clang_18() {
     "$2"
 }
 
+compile_and_run_icpx() {
+    /opt/intel/oneapi/compiler/latest/bin/icpx -std=c++17 \
+        -Wall \
+        -I . \
+        "$1" -o "$2"
+    "$2"
+}
+
+compile_and_run_nvcpp() {
+    /opt/nvidia/hpc_sdk/Linux_x86_64/2024/compilers/bin/nvc++ -std=c++17 \
+        -Wall \
+        -I . \
+        "$1" -o "$2"
+    "$2"
+}
+
 mkdir -p bin
 
 compile_and_run_gcc_11 test/TestArithmetic.cpp bin/TestArithmeticGCC11 &
@@ -110,6 +126,8 @@ compile_and_run_clang_15 test/TestArithmetic.cpp bin/TestArithmeticClang15 &
 compile_and_run_clang_16 test/TestArithmetic.cpp bin/TestArithmeticClang16 &
 compile_and_run_clang_17 test/TestArithmetic.cpp bin/TestArithmeticClang17 &
 compile_and_run_clang_18 test/TestArithmetic.cpp bin/TestArithmeticClang18 &
+compile_and_run_icpx test/TestArithmetic.cpp bin/TestArithmeticICPX &
+compile_and_run_nvcpp test/TestArithmetic.cpp bin/TestArithmeticNVCPP &
 
 wait
 
@@ -122,6 +140,8 @@ compile_and_run_clang_15 test/TestFloatingPoint.cpp bin/TestFloatingPointClang15
 compile_and_run_clang_16 test/TestFloatingPoint.cpp bin/TestFloatingPointClang16 &
 compile_and_run_clang_17 test/TestFloatingPoint.cpp bin/TestFloatingPointClang17 &
 compile_and_run_clang_18 test/TestFloatingPoint.cpp bin/TestFloatingPointClang18 &
+compile_and_run_icpx test/TestFloatingPoint.cpp bin/TestFloatingPointICPX &
+compile_and_run_nvcpp test/TestFloatingPoint.cpp bin/TestFloatingPointNVCPP &
 
 wait
 
@@ -134,6 +154,8 @@ compile_and_run_clang_15 test/TestFloatToString.cpp bin/TestFloatToStringClang15
 compile_and_run_clang_16 test/TestFloatToString.cpp bin/TestFloatToStringClang16 &
 compile_and_run_clang_17 test/TestFloatToString.cpp bin/TestFloatToStringClang17 &
 compile_and_run_clang_18 test/TestFloatToString.cpp bin/TestFloatToStringClang18 &
+compile_and_run_icpx test/TestFloatToString.cpp bin/TestFloatToStringICPX &
+# compile_and_run_nvcpp test/TestFloatToString.cpp bin/TestFloatToStringNVCPP &
 
 wait
 
@@ -146,5 +168,7 @@ compile_and_run_clang_15 test/TestToHexString.cpp bin/TestToHexStringClang15 &
 compile_and_run_clang_16 test/TestToHexString.cpp bin/TestToHexStringClang16 &
 compile_and_run_clang_17 test/TestToHexString.cpp bin/TestToHexStringClang17 &
 compile_and_run_clang_18 test/TestToHexString.cpp bin/TestToHexStringClang18 &
+compile_and_run_icpx test/TestToHexString.cpp bin/TestToHexStringICPX &
+compile_and_run_nvcpp test/TestToHexString.cpp bin/TestToHexStringNVCPP &
 
 wait
