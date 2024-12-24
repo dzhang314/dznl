@@ -602,7 +602,7 @@ constexpr MultiFloat<T, N> multifloat_rsqrt_impl(
     );
     const MultiFloat<T, E> correction =
         multifloat_mul<E>(halve(estimate), residual);
-    if constexpr (E + E >= N) {
+    if constexpr (E + E > N) {
         return multifloat_add<N>(estimate, correction);
     } else {
         return multifloat_rsqrt_impl<N>(
@@ -616,7 +616,7 @@ template <int N, typename T, int X, int E>
 constexpr MultiFloat<T, N> multifloat_sqrt_impl(
     const MultiFloat<T, X> &x, const MultiFloat<T, E> &estimate
 ) noexcept {
-    if constexpr (E + E >= N) {
+    if constexpr (E + E > N) {
         const MultiFloat<T, E> root = multifloat_mul<E>(x, estimate);
         const MultiFloat<T, E + E> square = multifloat_mul<E + E>(root, root);
         const MultiFloat<T, E> residual = multifloat_add<E>(x, -square);
