@@ -1,28 +1,33 @@
 #!/bin/sh
 
-set -euxo pipefail
+set -euo pipefail
 
 for f in dznl/*.hpp; do
     include-what-you-use -I dznl $f
 done
 
 compile_and_run_gcc_13() {
+    echo "Compiling $1 -> $2 with GCC 13"
     /opt/homebrew/bin/g++-13 -std=c++17 \
         -Wall -Wextra -pedantic -Werror -fmax-errors=1 \
         -isystem /opt/homebrew/include -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 compile_and_run_gcc_14() {
+    echo "Compiling $1 -> $2 with GCC 14"
     /opt/homebrew/bin/g++-14 -std=c++17 \
         -Wall -Wextra -pedantic -Werror -fmax-errors=1 \
         -isystem /opt/homebrew/include -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 compile_and_run_clang_17() {
+    echo "Compiling $1 -> $2 with Clang 17"
     /opt/homebrew/opt/llvm@17/bin/clang++ -std=c++17 \
         -Weverything -Werror -ferror-limit=1 \
         -Wno-padded \
@@ -32,9 +37,11 @@ compile_and_run_clang_17() {
         -isystem /opt/homebrew/include -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 compile_and_run_clang_18() {
+    echo "Compiling $1 -> $2 with Clang 18"
     /opt/homebrew/opt/llvm@18/bin/clang++ -std=c++17 \
         -Weverything -Werror -ferror-limit=1 \
         -Wno-padded \
@@ -44,9 +51,11 @@ compile_and_run_clang_18() {
         -isystem /opt/homebrew/include -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 compile_and_run_clang_19() {
+    echo "Compiling $1 -> $2 with Clang 19"
     /opt/homebrew/opt/llvm@19/bin/clang++ -std=c++17 \
         -Weverything -Werror -ferror-limit=1 \
         -Wno-padded \
@@ -56,9 +65,11 @@ compile_and_run_clang_19() {
         -isystem /opt/homebrew/include -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 compile_and_run_apple_clang() {
+    echo "Compiling $1 -> $2 with Apple Clang"
     clang++ -std=c++17 \
         -Weverything -Werror -ferror-limit=1 \
         -Wno-padded \
@@ -69,6 +80,7 @@ compile_and_run_apple_clang() {
         -isystem /opt/homebrew/include -I . \
         "$1" -o "$2"
     "$2"
+    echo "$2: $?"
 }
 
 mkdir -p bin
