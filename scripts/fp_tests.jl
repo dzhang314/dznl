@@ -409,49 +409,22 @@ struct RangePusher
 end
 
 
-function (rp::RangePusher)(
-    v::Vector{ShortPairSummary},
-    ss::Bool,
-    es_range::AbstractRange,
-    se::Bool,
-    ee::Integer,
-)
-    for es in es_range
-        if rp.e_min <= es <= rp.e_max
-            push!(v, ((ss, es), (se, ee)))
-        end
-    end
-    return v
-end
+@inline _range_helper(::RangePusher, r::UnitRange{Bool}) = r
+@inline _range_helper(::RangePusher, r::Bool) = UnitRange{Bool}(r, r)
+@inline _range_helper(rp::RangePusher, r::UnitRange{I}) where {I<:Integer} =
+    UnitRange{I}(max(rp.e_min, r.start), min(rp.e_max, r.stop))
+@inline _range_helper(::RangePusher, r::I) where {I<:Integer} =
+    UnitRange{I}(r, r)
 
 
 function (rp::RangePusher)(
-    v::Vector{ShortPairSummary},
-    ss::Bool,
-    es::Integer,
-    se::Bool,
-    ee_range::AbstractRange,
+    v::AbstractVector{ShortPairSummary},
+    (ss_range, es_range), (se_range, ee_range),
 )
-    for ee in ee_range
-        if rp.e_min <= ee <= rp.e_max
-            push!(v, ((ss, es), (se, ee)))
-        end
-    end
-    return v
-end
-
-
-function (rp::RangePusher)(
-    v::Vector{ShortPairSummary},
-    ss::Bool,
-    es_range::AbstractRange,
-    se::Bool,
-    ee_range::AbstractRange,
-)
-    for es in es_range
-        if rp.e_min <= es <= rp.e_max
-            for ee in ee_range
-                if rp.e_min <= ee <= rp.e_max
+    for ss in _range_helper(rp, ss_range)
+        for es in _range_helper(rp, es_range)
+            for se in _range_helper(rp, se_range)
+                for ee in _range_helper(rp, ee_range)
                     push!(v, ((ss, es), (se, ee)))
                 end
             end
@@ -459,31 +432,6 @@ function (rp::RangePusher)(
     end
     return v
 end
-
-
-function (rp::RangePusher)(
-    v::Vector{ShortPairSummary},
-    ss::Bool,
-    es_range::AbstractRange,
-    se_range::AbstractRange,
-    ee_range::AbstractRange,
-)
-    for es in es_range
-        if rp.e_min <= es <= rp.e_max
-            for se in se_range
-                for ee in ee_range
-                    if rp.e_min <= ee <= rp.e_max
-                        push!(v, ((ss, es), (se, ee)))
-                    end
-                end
-            end
-        end
-    end
-    return v
-end
-
-
-@inline (rp::RangePusher)(v, (ss, es), (se, ee)) = rp(v, ss, es, se, ee)
 
 
 function main(
@@ -882,174 +830,3 @@ main(
     BFLOAT16_SHORT_SUMMARIES,
     BFLOAT16_SHORT_TWO_SUM_SUMMARIES,
 )
-
-
-#=
-
-
-function main(
-    ::Type{T},
-    pos_zero::FloatSummary,
-    neg_zero::FloatSummary,
-    summaries::Vector{FloatSummary},
-    two_sum_summaries::Vector{Tuple{PairSummary,PairSummary}},
-) where {T}
-
-    _zero = zero(Int8)
-    _one = one(Int8)
-    _two = _one + _one
-    _three = _two + _one
-
-    _p = Int8(precision(T))
-    _e_min = exponent(floatmin(T))
-
-    handled_zero = Atomic{Int}(0)
-    handled_nonoverlapping = Atomic{Int}(0)
-    handled_test_case = Atomic{Int}(0)
-
-    unhandled_none = Atomic{Int}(0)
-    unhandled_single = Atomic{Int}(0)
-    unhandled_multiple = Atomic{Int}(0)
-
-    print_lock = SpinLock()
-
-    @threads :dynamic for rx in summaries
-        for ry in summaries
-            s = lookup_summaries(two_sum_summaries, rx, ry)
-            (sx, ex, zx, ox, mx, nx) = rx
-            (sy, ey, zy, oy, my, ny) = ry
-
-            if (rx == pos_zero) && (ry == pos_zero)
-                @assert only(s) == (pos_zero, pos_zero)
-                atomic_add!(handled_zero, 1)
-            elseif (rx == pos_zero) && (ry == neg_zero)
-                @assert only(s) == (pos_zero, pos_zero)
-                atomic_add!(handled_zero, 1)
-            elseif (rx == neg_zero) && (ry == pos_zero)
-                @assert only(s) == (pos_zero, pos_zero)
-                atomic_add!(handled_zero, 1)
-            elseif (rx == neg_zero) && (ry == neg_zero)
-                @assert only(s) == (neg_zero, pos_zero)
-                atomic_add!(handled_zero, 1)
-
-            elseif ry == pos_zero
-                @assert only(s) == (rx, pos_zero)
-                atomic_add!(handled_zero, 1)
-            elseif ry == neg_zero
-                @assert only(s) == (rx, pos_zero)
-                atomic_add!(handled_zero, 1)
-            elseif rx == pos_zero
-                @assert only(s) == (ry, pos_zero)
-                atomic_add!(handled_zero, 1)
-            elseif rx == neg_zero
-                @assert only(s) == (ry, pos_zero)
-                atomic_add!(handled_zero, 1)
-
-            elseif ex - (_p + 1) > ey
-                @assert only(s) == (rx, ry)
-                atomic_add!(handled_nonoverlapping, 1)
-            elseif ex < ey - (_p + 1)
-                @assert only(s) == (ry, rx)
-                atomic_add!(handled_nonoverlapping, 1)
-            elseif (ex - (_p + 1) == ey) && ((sx == sy) || (nx != 0) ||
-                                             ((nx == 0) && (ny == 0)))
-                @assert only(s) == (rx, ry)
-                atomic_add!(handled_nonoverlapping, 1)
-            elseif (ex == ey - (_p + 1)) && ((sx == sy) || (ny != 0) ||
-                                             ((nx == 0) && (ny == 0)))
-                @assert only(s) == (ry, rx)
-                atomic_add!(handled_nonoverlapping, 1)
-
-            elseif ((sx == sy) &&
-                    (ex - ey < _p - 1) &&
-                    (ox > 0) &&
-                    (ox < mx - 1) &&
-                    (mx < ex - ey) &&
-                    (zy >= _p - (ex - ey)) &&
-                    (zy < my) &&
-                    (my < _p - 1))
-                rs = (sx, ex, _zero, ox, ex - ey, _p - _one)
-                ee = ey - (zy + _one)
-                me = _p - _one
-                ne = _p - (zy + _two)
-                r = PairSummary[]
-                if ee >= _e_min
-                    for oe = _one:my-(zy+_two)
-                        push!(r, (rs, (sx, ee, _zero, oe, me, ne)))
-                    end
-                    for ze = _one:my-(zy+_three)
-                        push!(r, (rs, (sx, ee, ze, _zero, me, ne)))
-                    end
-                    push!(r, (rs, (sx, ee, my - (zy + _one), _zero, me, ne)))
-                end
-                @assert r == s
-                atomic_add!(handled_test_case, 1)
-
-            elseif ((sx == sy) &&
-                    (ey - ex < _p - 1) &&
-                    (oy > 0) &&
-                    (oy < my - 1) &&
-                    (my < ey - ex) &&
-                    (zx >= _p - (ey - ex)) &&
-                    (zx < mx) &&
-                    (mx < _p - 1))
-                rs = (sy, ey, _zero, oy, ey - ex, _p - _one)
-                ee = ex - (zx + _one)
-                me = _p - _one
-                ne = _p - (zx + _two)
-                r = PairSummary[]
-                if ee >= _e_min
-                    for oe = _one:mx-(zx+_two)
-                        push!(r, (rs, (sy, ee, _zero, oe, me, ne)))
-                    end
-                    for ze = _one:mx-(zx+_three)
-                        push!(r, (rs, (sy, ee, ze, _zero, me, ne)))
-                    end
-                    push!(r, (rs, (sy, ee, mx - (zx + _one), _zero, me, ne)))
-                end
-                @assert r == s
-                atomic_add!(handled_test_case, 1)
-
-            else
-                if isempty(s)
-                    atomic_add!(unhandled_none, 1)
-                elseif isone(length(s))
-                    atomic_add!(unhandled_single, 1)
-                else
-                    atomic_add!(unhandled_multiple, 1)
-                    # if ex >= -5 && ey >= -5
-                    #     lock(print_lock) do
-                    #         println(summary_to_string(T, rx), ' ', rx)
-                    #         println(summary_to_string(T, ry), ' ', ry)
-                    #         println()
-                    #         for (rs, re) in s
-                    #             println(summary_to_string(T, rs), ' ', rs)
-                    #             println(summary_to_string(T, re), ' ', re)
-                    #             println()
-                    #         end
-                    #         println('-'^80)
-                    #         println()
-                    #     end
-                    # end
-                end
-            end
-        end
-    end
-
-    handled = handled_zero[] + handled_nonoverlapping[] + handled_test_case[]
-    unhandled = unhandled_none[] + unhandled_single[] + unhandled_multiple[]
-    @assert handled + unhandled == length(summaries)^2
-
-    println(handled, " out of ", length(summaries)^2, " cases handled.")
-    println(handled_zero[], " cases with zero inputs.")
-    println(handled_nonoverlapping[], " cases with non-overlapping inputs.")
-    println(handled_test_case[], " test cases.")
-
-    println(unhandled, " out of ", length(summaries)^2, " cases unhandled.")
-    println(unhandled_none[], " cases with no summaries.")
-    println(unhandled_single[], " cases with a single summary.")
-    println(unhandled_multiple[], " cases with multiple summaries.")
-end
-
-
-=#
