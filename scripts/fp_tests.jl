@@ -406,6 +406,9 @@ lookup_summaries(
 struct RangePusher
     e_min::Int
     e_max::Int
+
+    @inline RangePusher(::Type{T}) where {T} =
+        new(exponent(floatmin(T)), exponent(floatmax(T)))
 end
 
 
@@ -434,6 +437,27 @@ function (rp::RangePusher)(
 end
 
 
+function (rp::RangePusher)(
+    v::AbstractVector{MediumPairSummary},
+    (ss_range, es_range, fs_range), (se_range, ee_range, fe_range),
+)
+    for ss in _range_helper(rp, ss_range)
+        for es in _range_helper(rp, es_range)
+            for fs in _range_helper(rp, fs_range)
+                for se in _range_helper(rp, se_range)
+                    for ee in _range_helper(rp, ee_range)
+                        for fe in _range_helper(rp, fe_range)
+                            push!(v, ((ss, es, fs), (se, ee, fe)))
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return v
+end
+
+
 function main(
     ::Type{T},
     pos_zero::ShortFloatSummary,
@@ -443,9 +467,7 @@ function main(
 ) where {T}
 
     p = precision(T)
-    e_min = exponent(floatmin(T))
-    e_max = exponent(floatmax(T))
-    push_range! = RangePusher(e_min, e_max)
+    push_range! = RangePusher(T)
 
     case_0pp_count = 0
     case_0pn_count = 0
@@ -821,9 +843,7 @@ function main(
 ) where {T}
 
     p = precision(T)
-    e_min = exponent(floatmin(T))
-    e_max = exponent(floatmax(T))
-    push_range! = RangePusher(e_min, e_max)
+    push_range! = RangePusher(T)
 
     case_0pp_count = 0
     case_0pn_count = 0
@@ -833,6 +853,9 @@ function main(
     case_0y_count = 0
     case_1x_count = 0
     case_1y_count = 0
+    case_2xs_count = 0
+    case_2ys_count = 0
+    case_wip_count = 0
     unhandled_count = 0
 
     for rx in summaries
@@ -880,6 +903,24 @@ function main(
                 @assert only(s) == (ry, rx)
 
                 #===========================================
+                    CASE WIP: Work in progress.
+                ===========================================#
+
+            elseif (ex == ey + p + 1) & (sx == sy)
+                case_2xs_count += 1
+                @assert only(s) == (rx, ry)
+            elseif (ex + p + 1 == ey) & (sx == sy)
+                case_2ys_count += 1
+                @assert only(s) == (ry, rx)
+
+            elseif (ex == ey) & (sx == sy) & (fx != fy) & (fx + p > ex + 1) & (fy + p > ey + 1)
+                case_wip_count += 1
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex+1:ex+1, min(fx, fy)), pos_zero)
+                    @assert s == sort!(t)
+                end
+
+                #===========================================
                     CASE N+1: Unhandled inputs.
                 ===========================================#
 
@@ -896,6 +937,8 @@ function main(
 
     println("    Case 0:    ", (case_0x_count, case_0y_count))
     println("    Case 1:    ", (case_1x_count, case_1y_count))
+    println("    Case 2S:   ", (case_2xs_count, case_2ys_count))
+    println("    WIP:       ", case_wip_count)
     println("    Unhandled: ", unhandled_count)
 end
 
