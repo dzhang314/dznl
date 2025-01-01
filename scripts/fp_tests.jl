@@ -412,7 +412,7 @@ end
 @inline _range_helper(::RangePusher, r::UnitRange{Bool}) = r
 @inline _range_helper(::RangePusher, r::Bool) = UnitRange{Bool}(r, r)
 @inline _range_helper(rp::RangePusher, r::UnitRange{I}) where {I<:Integer} =
-    UnitRange{I}(max(rp.e_min, r.start), min(rp.e_max, r.stop))
+    UnitRange{I}(max(I(rp.e_min), r.start), min(I(rp.e_max), r.stop))
 @inline _range_helper(::RangePusher, r::I) where {I<:Integer} =
     UnitRange{I}(r, r)
 
@@ -438,8 +438,8 @@ function main(
     ::Type{T},
     pos_zero::ShortFloatSummary,
     neg_zero::ShortFloatSummary,
-    summaries::Vector{ShortFloatSummary},
-    two_sum_summaries::Vector{Tuple{ShortPairSummary,ShortPairSummary}},
+    summaries::AbstractVector{ShortFloatSummary},
+    two_sum_summaries::AbstractVector{Tuple{ShortPairSummary,ShortPairSummary}},
 ) where {T}
 
     p = precision(T)
@@ -812,7 +812,95 @@ function main(
 end
 
 
-println("\nFloat16:")
+function main(
+    ::Type{T},
+    pos_zero::MediumFloatSummary,
+    neg_zero::MediumFloatSummary,
+    summaries::AbstractVector{MediumFloatSummary},
+    two_sum_summaries::AbstractVector{Tuple{MediumPairSummary,MediumPairSummary}},
+) where {T}
+
+    p = precision(T)
+    e_min = exponent(floatmin(T))
+    e_max = exponent(floatmax(T))
+    push_range! = RangePusher(e_min, e_max)
+
+    case_0pp_count = 0
+    case_0pn_count = 0
+    case_0np_count = 0
+    case_0nn_count = 0
+    case_0x_count = 0
+    case_0y_count = 0
+    case_1x_count = 0
+    case_1y_count = 0
+    unhandled_count = 0
+
+    for rx in summaries
+        for ry in summaries
+
+            (sx, ex, fx) = rx
+            (sy, ey, fy) = ry
+            s = lookup_summaries(two_sum_summaries, rx, ry)
+
+            if false
+
+                #===========================================
+                    CASE 0: One or both inputs are zero.
+                ===========================================#
+
+            elseif (rx == pos_zero) & (ry == pos_zero)
+                case_0pp_count += 1
+                @assert only(s) == (pos_zero, pos_zero)
+            elseif (rx == pos_zero) & (ry == neg_zero)
+                case_0pn_count += 1
+                @assert only(s) == (pos_zero, pos_zero)
+            elseif (rx == neg_zero) & (ry == pos_zero)
+                case_0np_count += 1
+                @assert only(s) == (pos_zero, pos_zero)
+            elseif (rx == neg_zero) & (ry == neg_zero)
+                case_0nn_count += 1
+                @assert only(s) == (neg_zero, pos_zero)
+            elseif (ry == pos_zero) | (ry == neg_zero)
+                case_0x_count += 1
+                @assert only(s) == (rx, pos_zero)
+            elseif (rx == pos_zero) | (rx == neg_zero)
+                case_0y_count += 1
+                @assert only(s) == (ry, pos_zero)
+
+                #===========================================
+                    CASE 1: Both inputs are nonzero
+                    and separated by at least 2 bits.
+                ===========================================#
+
+            elseif ex > ey + p + 1
+                case_1x_count += 1
+                @assert only(s) == (rx, ry)
+            elseif ex + p + 1 < ey
+                case_1y_count += 1
+                @assert only(s) == (ry, rx)
+
+                #===========================================
+                    CASE N+1: Unhandled inputs.
+                ===========================================#
+
+            else
+                unhandled_count += 1
+            end
+        end
+    end
+
+    @assert isone(case_0pp_count)
+    @assert isone(case_0pn_count)
+    @assert isone(case_0np_count)
+    @assert isone(case_0nn_count)
+
+    println("    Case 0:    ", (case_0x_count, case_0y_count))
+    println("    Case 1:    ", (case_1x_count, case_1y_count))
+    println("    Unhandled: ", unhandled_count)
+end
+
+
+println("\nFloat16 (sign + exponent):")
 main(
     Float16,
     FLOAT16_POSITIVE_ZERO_SHORT_SUMMARY,
@@ -822,11 +910,31 @@ main(
 )
 
 
-println("\nBFloat16:")
+println("\nBFloat16 (sign + exponent):")
 main(
     BFloat16,
     BFLOAT16_POSITIVE_ZERO_SHORT_SUMMARY,
     BFLOAT16_NEGATIVE_ZERO_SHORT_SUMMARY,
     BFLOAT16_SHORT_SUMMARIES,
     BFLOAT16_SHORT_TWO_SUM_SUMMARIES,
+)
+
+
+println("\nFloat16 (sign + exponent + trailing zeros):")
+main(
+    Float16,
+    FLOAT16_POSITIVE_ZERO_MEDIUM_SUMMARY,
+    FLOAT16_NEGATIVE_ZERO_MEDIUM_SUMMARY,
+    FLOAT16_MEDIUM_SUMMARIES,
+    FLOAT16_MEDIUM_TWO_SUM_SUMMARIES,
+)
+
+
+println("\nBFloat16 (sign + exponent + trailing zeros):")
+main(
+    BFloat16,
+    BFLOAT16_POSITIVE_ZERO_MEDIUM_SUMMARY,
+    BFLOAT16_NEGATIVE_ZERO_MEDIUM_SUMMARY,
+    BFLOAT16_MEDIUM_SUMMARIES,
+    BFLOAT16_MEDIUM_TWO_SUM_SUMMARIES,
 )
