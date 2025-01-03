@@ -970,6 +970,50 @@ function main(
                 end
 
                 #===========================================
+                    CASE 3: Both inputs are nonzero
+                    and separated by exactly 0 bits.
+                ===========================================#
+
+            elseif (ex == ey + p) & (sx == sy) & (ex < fx + (p - 1)) & (ey > fy)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex, ex-(p-1):ex-(p-1)), (!sy, fy:ey-1, fy))
+                    @assert s == sort!(t)
+                end
+            elseif (ex + p == ey) & (sx == sy) & (ey < fy + (p - 1)) & (ex > fx)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey, ey-(p-1):ey-(p-1)), (!sx, fx:ex-1, fx))
+                    @assert s == sort!(t)
+                end
+            elseif (ex == ey + p) & (sx == sy) & (ex < fx + (p - 1)) & (ey == fy)
+                @assert only(s) == (rx, ry)
+            elseif (ex + p == ey) & (sx == sy) & (ey < fy + (p - 1)) & (ex == fx)
+                @assert only(s) == (ry, rx)
+            elseif (ex == ey + p) & (sx == sy) & (ex == fx + (p - 1)) & (ey > fy)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex, fx+1:ex-1), (!sy, fy:ey-1, fy))
+                    push_range!(t, (sx, ex+1:ex+1, ex+1:ex+1), (!sy, fy:ey-1, fy))
+                    @assert s == sort!(t)
+                end
+            elseif (ex + p == ey) & (sx == sy) & (ey == fy + (p - 1)) & (ex > fx)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey, fy+1:ey-1), (!sx, fx:ex-1, fx))
+                    push_range!(t, (sy, ey+1:ey+1, ey+1:ey+1), (!sx, fx:ex-1, fx))
+                    @assert s == sort!(t)
+                end
+            elseif (ex == ey + p) & (sx == sy) & (ex == fx + (p - 1)) & (ey == fy)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex, fx+1:ex-1), (!sy, ey, fy))
+                    push_range!(t, (sx, ex+1:ex+1, ex+1:ex+1), (!sy, ey, fy))
+                    @assert s == sort!(t)
+                end
+            elseif (ex + p == ey) & (sx == sy) & (ey == fy + (p - 1)) & (ex == fx)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey, fy+1:ey-1), (!sx, ex, fx))
+                    push_range!(t, (sy, ey+1:ey+1, ey+1:ey+1), (!sx, ex, fx))
+                    @assert s == sort!(t)
+                end
+
+                #===========================================
                     CASE WIP: Work in progress.
                 ===========================================#
 
