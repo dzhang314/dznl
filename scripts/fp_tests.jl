@@ -834,6 +834,28 @@ function main(
 end
 
 
+struct ReservoirSampler{T}
+    reservoir::Vector{T}
+    count::Array{Int,0}
+
+    ReservoirSampler{T}(k::Int) where {T} = new{T}(Vector{T}(undef, k), fill(0))
+end
+
+
+function Base.push!(rs::ReservoirSampler{T}, x::T) where {T}
+    rs.count[] += 1
+    if rs.count[] <= length(rs.reservoir)
+        rs.reservoir[rs.count[]] = x
+    else
+        i = rand(1:rs.count[])
+        if i <= length(rs.reservoir)
+            rs.reservoir[i] = x
+        end
+    end
+    return rs
+end
+
+
 function main(
     ::Type{T},
     pos_zero::MediumFloatSummary,
@@ -857,6 +879,7 @@ function main(
     case_2ys_count = 0
     case_wip_count = 0
     unhandled_count = 0
+    reservoir = ReservoirSampler{Any}(10)
 
     for rx in summaries
         for ry in summaries
@@ -903,7 +926,8 @@ function main(
                 @assert only(s) == (ry, rx)
 
                 #===========================================
-                    CASE WIP: Work in progress.
+                    CASE 2: Both inputs are nonzero
+                    and separated by exactly 1 bit.
                 ===========================================#
 
             elseif (ex == ey + p + 1) & (sx == sy)
@@ -913,6 +937,28 @@ function main(
                 case_2ys_count += 1
                 @assert only(s) == (ry, rx)
 
+                #===========================================
+                    CASE WIP: Work in progress.
+                ===========================================#
+
+            elseif (ex > ey) & (ex < fy + p) & (fx > ey) & ((sx == sy) | (ex > fx))
+                case_wip_count += 1
+                @assert only(s) == ((sx, ex, fy), pos_zero)
+            elseif (ex > ey) & (ex < fy + p) & (fx > ey + 1) & (sx != sy) & (ex == fx)
+                case_wip_count += 1
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex-1:ex-1, fy), pos_zero)
+                    @assert s == sort!(t)
+                end
+            elseif (ex < ey) & (fx + p > ey) & (ex < fy) & ((sx == sy) | (ey > fy))
+                case_wip_count += 1
+                @assert only(s) == ((sy, ey, fx), pos_zero)
+            elseif (ex < ey) & (fx + p > ey) & (ex + 1 < fy) & (sx != sy) & (ey == fy)
+                case_wip_count += 1
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey-1:ey-1, fx), pos_zero)
+                    @assert s == sort!(t)
+                end
             elseif (ex == ey) & (sx == sy) & (fx != fy) & (fx + p > ex + 1) & (fy + p > ey + 1)
                 case_wip_count += 1
                 let t = MediumPairSummary[]
@@ -926,6 +972,7 @@ function main(
 
             else
                 unhandled_count += 1
+                push!(reservoir, (rx, ry, s))
             end
         end
     end
@@ -940,6 +987,17 @@ function main(
     println("    Case 2S:   ", (case_2xs_count, case_2ys_count))
     println("    WIP:       ", case_wip_count)
     println("    Unhandled: ", unhandled_count)
+
+    println()
+    for i = 1:min(reservoir.count[], length(reservoir.reservoir))
+        (rx, ry, s) = reservoir.reservoir[i]
+        println(rx)
+        println(ry)
+        for item in s
+            println("    ", item)
+        end
+        println()
+    end
 end
 
 
