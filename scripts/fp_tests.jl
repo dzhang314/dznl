@@ -886,24 +886,8 @@ function main(
 
     p = precision(T)
     push_range! = RangePusher(T)
-
-    case_0pp_count = 0
-    case_0pn_count = 0
-    case_0np_count = 0
-    case_0nn_count = 0
-    case_0x_count = 0
-    case_0y_count = 0
-    case_1x_count = 0
-    case_1y_count = 0
-    case_2xs_count = 0
-    case_2ys_count = 0
-    case_2xdg_count = 0
-    case_2ydg_count = 0
-    case_2xds_count = 0
-    case_2yds_count = 0
-    case_wip_count = 0
-    unhandled_count = 0
     reservoir = ReservoirSampler{Any}(10)
+    unhandled_count = 0
 
     for rx in summaries
         for ry in summaries
@@ -912,84 +896,156 @@ function main(
             (sy, ey, fy) = ry
             s = lookup_summaries(two_sum_summaries, rx, ry)
 
-            if false
+            x_zero = (rx == pos_zero) | (rx == neg_zero)
+            y_zero = (ry == pos_zero) | (ry == neg_zero)
+            verified = 0
 
-                #===========================================
-                    CASE 0: One or both inputs are zero.
-                ===========================================#
-
-            elseif (rx == pos_zero) & (ry == pos_zero)
-                case_0pp_count += 1
+            if (rx == pos_zero) & (ry == pos_zero)
                 @assert only(s) == (pos_zero, pos_zero)
-            elseif (rx == pos_zero) & (ry == neg_zero)
-                case_0pn_count += 1
+                verified += 1
+            end
+            if (rx == pos_zero) & (ry == neg_zero)
                 @assert only(s) == (pos_zero, pos_zero)
-            elseif (rx == neg_zero) & (ry == pos_zero)
-                case_0np_count += 1
+                verified += 1
+            end
+            if (rx == neg_zero) & (ry == pos_zero)
                 @assert only(s) == (pos_zero, pos_zero)
-            elseif (rx == neg_zero) & (ry == neg_zero)
-                case_0nn_count += 1
+                verified += 1
+            end
+            if (rx == neg_zero) & (ry == neg_zero)
                 @assert only(s) == (neg_zero, pos_zero)
+                verified += 1
+            end
 
-            elseif (ry == pos_zero) | (ry == neg_zero)
-                case_0x_count += 1
+            if y_zero & !x_zero
                 @assert only(s) == (rx, pos_zero)
-            elseif (rx == pos_zero) | (rx == neg_zero)
-                case_0y_count += 1
+                verified += 1
+            end
+            if x_zero & !y_zero
                 @assert only(s) == (ry, pos_zero)
+                verified += 1
+            end
 
-                #===========================================
-                    CASE 1: Both inputs are nonzero
-                    and separated by at least 2 bits.
-                ===========================================#
-
-            elseif ex > ey + p + 1
-                case_1x_count += 1
+            if (ex > ey + p + 1) & !y_zero
                 @assert only(s) == (rx, ry)
-            elseif ex + p + 1 < ey
-                case_1y_count += 1
+                verified += 1
+            end
+            if (ex + p + 1 < ey) & !x_zero
                 @assert only(s) == (ry, rx)
+                verified += 1
+            end
 
-                #===========================================
-                    CASE 2: Both inputs are nonzero
-                    and separated by exactly 1 bit.
-                ===========================================#
-
-            elseif (ex == ey + p + 1) & (sx == sy)
-                case_2xs_count += 1
+            if (ex == ey + p + 1) & (sx == sy) & !y_zero
                 @assert only(s) == (rx, ry)
-            elseif (ex + p + 1 == ey) & (sx == sy)
-                case_2ys_count += 1
+                verified += 1
+            end
+            if (ex + p + 1 == ey) & (sx == sy) & !x_zero
                 @assert only(s) == (ry, rx)
+                verified += 1
+            end
 
-            elseif (ex == ey + p + 1) & (sx != sy) & ((ex > fx) | (ey == fy))
-                case_2xdg_count += 1
+            if (ex == ey + p + 1) & (sx != sy) & ((ex > fx) | (ey == fy)) & !y_zero
                 @assert only(s) == (rx, ry)
-            elseif (ex + p + 1 == ey) & (sx != sy) & ((ey > fy) | (ex == fx))
-                case_2ydg_count += 1
+                verified += 1
+            end
+            if (ex + p + 1 == ey) & (sx != sy) & ((ey > fy) | (ex == fx)) & !x_zero
                 @assert only(s) == (ry, rx)
-            elseif (ex == ey + p + 1) & (sx != sy) & (ex == fx) & (ey > fy)
-                case_2xds_count += 1
+                verified += 1
+            end
+            if (ex == ey + p + 1) & (sx != sy) & (ex == fx) & (ey > fy)
                 let t = MediumPairSummary[]
-                    push_range!(t, (sx, ex-1:ex-1, ex-p:ex-p),
-                        (!sy, fy:ey-1, fy))
+                    push_range!(t, (sx, ex-1:ex-1, ex-p:ex-p), (!sy, fy:ey-1, fy))
                     @assert s == sort!(t)
                 end
-            elseif (ex + p + 1 == ey) & (sx != sy) & (ey == fy) & (ex > fx)
-                case_2yds_count += 1
+                verified += 1
+            end
+            if (ex + p + 1 == ey) & (sx != sy) & (ey == fy) & (ex > fx)
                 let t = MediumPairSummary[]
-                    push_range!(t, (sy, ey-1:ey-1, ey-p:ey-p),
-                        (!sx, fx:ex-1, fx))
+                    push_range!(t, (sy, ey-1:ey-1, ey-p:ey-p), (!sx, fx:ex-1, fx))
                     @assert s == sort!(t)
                 end
-            elseif (ex == ey + p + 1) | (ex + p + 1 == ey)
-                @assert false
+                verified += 1
+            end
 
-                #===========================================
-                    CASE 3: Both inputs are nonzero
-                    and separated by exactly 0 bits.
-                ===========================================#
+            if (fy + p > ex > fx > ey) & !y_zero
+                @assert only(s) == ((sx, ex, fy), pos_zero)
+                verified += 1
+            end
+            if (fx + p > ey > fy > ex) & !x_zero
+                @assert only(s) == ((sy, ey, fx), pos_zero)
+                verified += 1
+            end
 
+            if (fy + p >= ex == fx > ey + 1) & (sx != sy) & !y_zero
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex-1:ex-1, fy), pos_zero)
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+            if (fx + p >= ey == fy > ex + 1) & (sx != sy) & !x_zero
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey-1:ey-1, fx), pos_zero)
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+
+            if (ex > fy + (p + 1)) & (fx < ey) & (sx != sy)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex-1:ex-1, ex-p:ey), (false:true, fy:ex-(p+2), fy))
+                    push_range!(t, (sx, ex, ex-(p-1):ex-1), (false:true, fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex, ex), (sy, fy:ex-(p+2), fy))
+                    push_range!(t, (sx, ex, ex), (!sy, fy:ex-(p+1), fy))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+            if (ey > fx + (p + 1)) & (fy < ex) & (sx != sy)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey-1:ey-1, ey-p:ex), (false:true, fx:ey-(p+2), fx))
+                    push_range!(t, (sy, ey, ey-(p-1):ey-1), (false:true, fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey, ey), (sx, fx:ey-(p+2), fx))
+                    push_range!(t, (sy, ey, ey), (!sx, fx:ey-(p+1), fx))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+
+            if (fx == ex - 1) & (ex < ey + p) & (fy < ex - (p + 1))
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex, ex-(p-1):ey-1), (false:true, fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex, ey), (sy, fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex, ey+1:ey+1), (!sy, fy:ex-(p+1), fy))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+            if (fy == ey - 1) & (ey < ex + p) & (fx < ey - (p + 1))
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey, ey-(p-1):ex-1), (false:true, fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey, ex), (sx, fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey, ex+1:ex+1), (!sx, fx:ey-(p+1), fx))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+
+            if (ex == ey) & (sx == sy) & (fx != fy) & (fx + p > ex + 1) & (fy + p > ey + 1)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex+1:ex+1, min(fx, fy)), pos_zero)
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+
+            @assert iszero(verified) | isone(verified)
+            if iszero(verified)
+                unhandled_count += 1
+                push!(reservoir, (rx, ry, s))
+            end
+
+            #=
             elseif (ex == ey + p) & (sx == sy) & (ex < fx + (p - 1)) & (ey > fy)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex, ex-(p-1):ex-(p-1)), (!sy, fy:ey-1, fy))
@@ -1095,59 +1151,10 @@ function main(
                     push_range!(t, (sy, ey, fy+1:ey), (!sx, ex, fx))
                     @assert s == sort!(t)
                 end
-            elseif (ex == ey + p) | (ex + p == ey)
-                @assert false
-
-                #===========================================
-                    CASE WIP: Work in progress.
-                ===========================================#
-
-            elseif (ex > ey) & (ex < fy + p) & (fx > ey) & ((sx == sy) | (ex > fx))
-                case_wip_count += 1
-                @assert only(s) == ((sx, ex, fy), pos_zero)
-            elseif (ex > ey) & (ex < fy + p) & (fx > ey + 1) & (sx != sy) & (ex == fx)
-                case_wip_count += 1
-                let t = MediumPairSummary[]
-                    push_range!(t, (sx, ex-1:ex-1, fy), pos_zero)
-                    @assert s == sort!(t)
-                end
-            elseif (ex < ey) & (fx + p > ey) & (ex < fy) & ((sx == sy) | (ey > fy))
-                case_wip_count += 1
-                @assert only(s) == ((sy, ey, fx), pos_zero)
-            elseif (ex < ey) & (fx + p > ey) & (ex + 1 < fy) & (sx != sy) & (ey == fy)
-                case_wip_count += 1
-                let t = MediumPairSummary[]
-                    push_range!(t, (sy, ey-1:ey-1, fx), pos_zero)
-                    @assert s == sort!(t)
-                end
-            elseif (ex == ey) & (sx == sy) & (fx != fy) & (fx + p > ex + 1) & (fy + p > ey + 1)
-                case_wip_count += 1
-                let t = MediumPairSummary[]
-                    push_range!(t, (sx, ex+1:ex+1, min(fx, fy)), pos_zero)
-                    @assert s == sort!(t)
-                end
-
-                #===========================================
-                    CASE N+1: Unhandled inputs.
-                ===========================================#
-
-            else
-                unhandled_count += 1
-                push!(reservoir, (rx, ry, s))
-            end
+            =#
         end
     end
 
-    @assert isone(case_0pp_count)
-    @assert isone(case_0pn_count)
-    @assert isone(case_0np_count)
-    @assert isone(case_0nn_count)
-
-    println("    Case 0:    ", (case_0x_count, case_0y_count))
-    println("    Case 1:    ", (case_1x_count, case_1y_count))
-    println("    Case 2:    ", (case_2xs_count, case_2ys_count,
-        case_2xdg_count, case_2ydg_count, case_2xds_count, case_2yds_count))
-    println("    WIP:       ", case_wip_count)
     println("    Unhandled: ", unhandled_count)
 
     println()
