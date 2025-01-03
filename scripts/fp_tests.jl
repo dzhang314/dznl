@@ -406,17 +406,27 @@ lookup_summaries(
 struct RangePusher
     e_min::Int
     e_max::Int
+    f_min::Int
+    f_max::Int
 
-    @inline RangePusher(::Type{T}) where {T} =
-        new(exponent(floatmin(T)), exponent(floatmax(T)))
+    @inline RangePusher(::Type{T}) where {T} = new(
+        exponent(floatmin(T)),
+        exponent(floatmax(T)),
+        exponent(floatmin(T)) - precision(T) + 1,
+        exponent(floatmax(T)),
+    )
 end
 
 
 @inline _range_helper(::RangePusher, r::UnitRange{Bool}) = r
 @inline _range_helper(::RangePusher, r::Bool) = UnitRange{Bool}(r, r)
-@inline _range_helper(rp::RangePusher, r::UnitRange{I}) where {I<:Integer} =
+@inline _range_helper_e(rp::RangePusher, r::UnitRange{I}) where {I<:Integer} =
     UnitRange{I}(max(I(rp.e_min), r.start), min(I(rp.e_max), r.stop))
-@inline _range_helper(::RangePusher, r::I) where {I<:Integer} =
+@inline _range_helper_e(::RangePusher, r::I) where {I<:Integer} =
+    UnitRange{I}(r, r)
+@inline _range_helper_f(rp::RangePusher, r::UnitRange{I}) where {I<:Integer} =
+    UnitRange{I}(max(I(rp.f_min), r.start), min(I(rp.f_max), r.stop))
+@inline _range_helper_f(::RangePusher, r::I) where {I<:Integer} =
     UnitRange{I}(r, r)
 
 
@@ -425,9 +435,9 @@ function (rp::RangePusher)(
     (ss_range, es_range), (se_range, ee_range),
 )
     for ss in _range_helper(rp, ss_range)
-        for es in _range_helper(rp, es_range)
+        for es in _range_helper_e(rp, es_range)
             for se in _range_helper(rp, se_range)
-                for ee in _range_helper(rp, ee_range)
+                for ee in _range_helper_e(rp, ee_range)
                     push!(v, ((ss, es), (se, ee)))
                 end
             end
@@ -442,11 +452,11 @@ function (rp::RangePusher)(
     (ss_range, es_range, fs_range), (se_range, ee_range, fe_range),
 )
     for ss in _range_helper(rp, ss_range)
-        for es in _range_helper(rp, es_range)
-            for fs in _range_helper(rp, fs_range)
+        for es in _range_helper_e(rp, es_range)
+            for fs in _range_helper_f(rp, fs_range)
                 for se in _range_helper(rp, se_range)
-                    for ee in _range_helper(rp, ee_range)
-                        for fe in _range_helper(rp, fe_range)
+                    for ee in _range_helper_e(rp, ee_range)
+                        for fe in _range_helper_f(rp, fe_range)
                             push!(v, ((ss, es, fs), (se, ee, fe)))
                         end
                     end
@@ -877,6 +887,10 @@ function main(
     case_1y_count = 0
     case_2xs_count = 0
     case_2ys_count = 0
+    case_2xdg_count = 0
+    case_2ydg_count = 0
+    case_2xds_count = 0
+    case_2yds_count = 0
     case_wip_count = 0
     unhandled_count = 0
     reservoir = ReservoirSampler{Any}(10)
@@ -936,6 +950,24 @@ function main(
             elseif (ex + p + 1 == ey) & (sx == sy)
                 case_2ys_count += 1
                 @assert only(s) == (ry, rx)
+            elseif (ex == ey + p + 1) & (sx != sy) & ((ex > fx) | (ey == fy))
+                case_2xdg_count += 1
+                @assert only(s) == (rx, ry)
+            elseif (ex + p + 1 == ey) & (sx != sy) & ((ey > fy) | (ex == fx))
+                case_2ydg_count += 1
+                @assert only(s) == (ry, rx)
+            elseif (ex == ey + p + 1) & (sx != sy) & (ex == fx) & (ey > fy)
+                case_2xds_count += 1
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex-1:ex-1, ex-p:ex-p), (!sy, fy:ey-1, fy))
+                    @assert s == sort!(t)
+                end
+            elseif (ex + p + 1 == ey) & (sx != sy) & (ey == fy) & (ex > fx)
+                case_2yds_count += 1
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey-1:ey-1, ey-p:ey-p), (!sx, fx:ex-1, fx))
+                    @assert s == sort!(t)
+                end
 
                 #===========================================
                     CASE WIP: Work in progress.
@@ -984,17 +1016,34 @@ function main(
 
     println("    Case 0:    ", (case_0x_count, case_0y_count))
     println("    Case 1:    ", (case_1x_count, case_1y_count))
-    println("    Case 2S:   ", (case_2xs_count, case_2ys_count))
+    println("    Case 2S:   ", (case_2xs_count, case_2ys_count,
+        case_2xdg_count, case_2ydg_count, case_2xds_count, case_2yds_count))
     println("    WIP:       ", case_wip_count)
     println("    Unhandled: ", unhandled_count)
 
     println()
     for i = 1:min(reservoir.count[], length(reservoir.reservoir))
-        (rx, ry, s) = reservoir.reservoir[i]
-        println(rx)
-        println(ry)
-        for item in s
-            println("    ", item)
+        data = reservoir.reservoir[i]
+        @assert data isa Tuple
+        if length(data) == 3
+            rx, ry, s = data
+            println(rx)
+            println(ry)
+            for item in s
+                println("    ", item)
+            end
+        elseif length(data) == 4
+            rx, ry, s, t = data
+            println(rx)
+            println(ry)
+            println("s:")
+            for item in s
+                println("    ", item)
+            end
+            println("t:")
+            for item in t
+                println("    ", item)
+            end
         end
         println()
     end
