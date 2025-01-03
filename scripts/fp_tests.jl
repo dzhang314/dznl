@@ -920,6 +920,7 @@ function main(
             elseif (rx == neg_zero) & (ry == neg_zero)
                 case_0nn_count += 1
                 @assert only(s) == (neg_zero, pos_zero)
+
             elseif (ry == pos_zero) | (ry == neg_zero)
                 case_0x_count += 1
                 @assert only(s) == (rx, pos_zero)
@@ -950,6 +951,7 @@ function main(
             elseif (ex + p + 1 == ey) & (sx == sy)
                 case_2ys_count += 1
                 @assert only(s) == (ry, rx)
+
             elseif (ex == ey + p + 1) & (sx != sy) & ((ex > fx) | (ey == fy))
                 case_2xdg_count += 1
                 @assert only(s) == (rx, ry)
@@ -968,6 +970,8 @@ function main(
                     push_range!(t, (sy, ey-1:ey-1, ey-p:ey-p), (!sx, fx:ex-1, fx))
                     @assert s == sort!(t)
                 end
+            elseif (ex == ey + p + 1) | (ex + p + 1 == ey)
+                @assert false
 
                 #===========================================
                     CASE 3: Both inputs are nonzero
@@ -1013,6 +1017,75 @@ function main(
                     @assert s == sort!(t)
                 end
 
+            elseif (ex == ey + p) & (sx != sy) & (ex > fx) & (ex < fx + (p - 1)) & (ey > fy)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex, ex-(p-1):ex-(p-1)), (!sy, fy:ey-1, fy))
+                    @assert s == sort!(t)
+                end
+            elseif (ex + p == ey) & (sx != sy) & (ey > fy) & (ey < fy + (p - 1)) & (ex > fx)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey, ey-(p-1):ey-(p-1)), (!sx, fx:ex-1, fx))
+                    @assert s == sort!(t)
+                end
+            elseif (ex == ey + p) & (sx != sy) & (ex > fx) & (ex < fx + (p - 1)) & (ey == fy)
+                @assert only(s) == (rx, ry)
+            elseif (ex + p == ey) & (sx != sy) & (ey > fy) & (ey < fy + (p - 1)) & (ex == fx)
+                @assert only(s) == (ry, rx)
+            elseif (ex == ey + p) & (sx != sy) & (ex == fx) & (ey > fy + 1)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex-1:ex-1, ex-p:ex-p), (sy, fy:ey-2, fy))
+                    push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ex-(p-1)), (!sy, fy:ey-2, fy))
+                    @assert s == sort!(t)
+                end
+            elseif (ex + p == ey) & (sx != sy) & (ey == fy) & (ex > fx + 1)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey-1:ey-1, ey-p:ey-p), (sx, fx:ex-2, fx))
+                    push_range!(t, (sy, ey-1:ey-1, ey-(p-1):ey-(p-1)), (!sx, fx:ex-2, fx))
+                    @assert s == sort!(t)
+                end
+            elseif (ex == ey + p) & (sx != sy) & (ex == fx) & (ey == fy + 1)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ex-(p-1)), (!sy, ey-1:ey-1, fy))
+                    @assert s == sort!(t)
+                end
+            elseif (ex + p == ey) & (sx != sy) & (ey == fy) & (ex == fx + 1)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey-1:ey-1, ey-(p-1):ey-(p-1)), (!sx, ex-1:ex-1, fx))
+                    @assert s == sort!(t)
+                end
+            elseif (ex == ey + p) & (sx != sy) & (ex == fx) & (ey == fy)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex-1:ex-1, ex-p:ex-p), pos_zero)
+                    @assert s == sort!(t)
+                end
+            elseif (ex + p == ey) & (sx != sy) & (ey == fy) & (ex == fx)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey-1:ey-1, ey-p:ey-p), pos_zero)
+                    @assert s == sort!(t)
+                end
+            elseif (ex == ey + p) & (sx != sy) & (ex == fx + (p - 1)) & (ey > fy)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex, fx+1:ex), (!sy, fy:ey-1, fy))
+                    @assert s == sort!(t)
+                end
+            elseif (ex + p == ey) & (sx != sy) & (ey == fy + (p - 1)) & (ex > fx)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey, fy+1:ey), (!sx, fx:ex-1, fx))
+                    @assert s == sort!(t)
+                end
+            elseif (ex == ey + p) & (sx != sy) & (ex == fx + (p - 1)) & (ey == fy)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex, fx+1:ex), (!sy, ey, fy))
+                    @assert s == sort!(t)
+                end
+            elseif (ex + p == ey) & (sx != sy) & (ey == fy + (p - 1)) & (ex == fx)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey, fy+1:ey), (!sx, ex, fx))
+                    @assert s == sort!(t)
+                end
+            elseif (ex == ey + p) | (ex + p == ey)
+                @assert false
+
                 #===========================================
                     CASE WIP: Work in progress.
                 ===========================================#
@@ -1048,7 +1121,7 @@ function main(
 
             else
                 unhandled_count += 1
-                push!(reservoir, (rx, ry, s))
+                # push!(reservoir, (rx, ry, s))
             end
         end
     end
@@ -1060,7 +1133,7 @@ function main(
 
     println("    Case 0:    ", (case_0x_count, case_0y_count))
     println("    Case 1:    ", (case_1x_count, case_1y_count))
-    println("    Case 2S:   ", (case_2xs_count, case_2ys_count,
+    println("    Case 2:    ", (case_2xs_count, case_2ys_count,
         case_2xdg_count, case_2ydg_count, case_2xds_count, case_2yds_count))
     println("    WIP:       ", case_wip_count)
     println("    Unhandled: ", unhandled_count)
