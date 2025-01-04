@@ -1071,29 +1071,6 @@ function main(
                 verified += 1
             end
 
-            if (ex == ey + 1) & (sx != sy) & (fx == fy) & !y_zero
-                let t = MediumPairSummary[]
-                    for k = max(fx + 1, exponent(floatmin(T))):ex-1
-                        push_range!(t, (sx, k, fx+1:k), pos_zero)
-                    end
-                    push_range!(t, (sx, ex, fx+1:ex-2), pos_zero)
-                    push!(t, ((sx, ex, ex), pos_zero))
-                    @assert s == sort!(t)
-                end
-                verified += 1
-            end
-            if (ex + 1 == ey) & (sx != sy) & (fx == fy) & !x_zero
-                let t = MediumPairSummary[]
-                    for k = max(fx + 1, exponent(floatmin(T))):ey-1
-                        push_range!(t, (sy, k, fy+1:k), pos_zero)
-                    end
-                    push_range!(t, (sy, ey, fy+1:ey-2), pos_zero)
-                    push!(t, ((sy, ey, ey), pos_zero))
-                    @assert s == sort!(t)
-                end
-                verified += 1
-            end
-
             if (ey + p > ex > fy + p) & (sx == sy) & (ex == fx)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex, ex-(p-1):ey-1), (false:true, fy:ex-(p+1), fy))
@@ -1182,21 +1159,6 @@ function main(
                 verified += 1
             end
 
-            if (ex > ey > fx > fy) & (sx == sy) & (ex < fy + (p - 1))
-                let t = MediumPairSummary[]
-                    push_range!(t, (sx, ex:ex+1, fy), pos_zero)
-                    @assert s == sort!(t)
-                end
-                verified += 1
-            end
-            if (ey > ex > fy > fx) & (sx == sy) & (ey < fx + (p - 1))
-                let t = MediumPairSummary[]
-                    push_range!(t, (sy, ey:ey+1, fx), pos_zero)
-                    @assert s == sort!(t)
-                end
-                verified += 1
-            end
-
             if (ex > ey + 1) & (sx == sy) & (fx == fy) & !y_zero
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex, fx+1:ex-1), pos_zero)
@@ -1230,6 +1192,127 @@ function main(
                 end
                 verified += 1
             end
+
+            if (ex > fy + (p + 1)) & (sx != sy) & (fx == ey)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex-1:ex-1, ex-p:fx-1), (false:true, fy:ex-(p+2), fy))
+                    push_range!(t, (sx, ex-1:ex-1, fx), (!sy, fy:ex-(p+2), fy))
+                    push_range!(t, (sx, ex, ex-(p-1):fx-1), (false:true, fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex, fx), (!sy, fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex, fx+1:ex-1), (sy, fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex, ex), (sy, fy:ex-(p+2), fy))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+            if (ey > fx + (p + 1)) & (sx != sy) & (fy == ex)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey-1:ey-1, ey-p:fy-1), (false:true, fx:ey-(p+2), fx))
+                    push_range!(t, (sy, ey-1:ey-1, fy), (!sx, fx:ey-(p+2), fx))
+                    push_range!(t, (sy, ey, ey-(p-1):fy-1), (false:true, fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey, fy), (!sx, fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey, fy+1:ey-1), (sx, fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey, ey), (sx, fx:ey-(p+2), fx))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+
+            if (sx == sy) & (ex < fx + (p - 1)) & (ex > fy + p) & (fx == ey)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex, ex-(p-1):fx-1), (false:true, fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex, fx), (!sy, fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex, fx+1:ex-1), (sy, fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex+1:ex+1, ex-(p-2):fx-1), (false:true, fy:ex-p, fy))
+                    push_range!(t, (sx, ex+1:ex+1, fx), (!sy, fy:ex-p, fy))
+                    push_range!(t, (sx, ex+1:ex+1, ex+1:ex+1), (sy, fy:ex-p, fy))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+            if (sx == sy) & (ey < fy + (p - 1)) & (ey > fx + p) & (fy == ex)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey, ey-(p-1):fy-1), (false:true, fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey, fy), (!sx, fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey, fy+1:ey-1), (sx, fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey+1:ey+1, ey-(p-2):fy-1), (false:true, fx:ey-p, fx))
+                    push_range!(t, (sy, ey+1:ey+1, fy), (!sx, fx:ey-p, fx))
+                    push_range!(t, (sy, ey+1:ey+1, ey+1:ey+1), (sx, fx:ey-p, fx))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+
+            if (ex == ey + p) & (sx == sy) & (ex < fx + (p - 1)) & (ey > fy)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex, ey+1:ey+1), (!sy, fy:ey-1, fy))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+            if (ex + p == ey) & (sx == sy) & (ey < fy + (p - 1)) & (ex > fx)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey, ex+1:ex+1), (!sx, fx:ex-1, fx))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+
+            if ((ex > ey > fx > fy) | (ex > ey + 1 > fx > fy)) & (sx == sy) & (ex < fy + (p - 1))
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex:ex+1, fy), pos_zero)
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+            if ((ey > ex > fy > fx) | (ey > ex + 1 > fy > fx)) & (sx == sy) & (ey < fx + (p - 1))
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey:ey+1, fx), pos_zero)
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+
+            # The following two theorems have overlapping domains. I wonder
+            # if they can be combined into a single more general statement.
+
+            # if (ex > ey == fx == fy) & (sx != sy) & !y_zero
+            #     let t = MediumPairSummary[]
+            #         push_range!(t, (sx, ex, fx+1:ex), pos_zero)
+            #         @assert s == sort!(t)
+            #     end
+            #     verified += 1
+            # end
+            # if (ey > ex == fy == fx) & (sx != sy) & !x_zero
+            #     let t = MediumPairSummary[]
+            #         push_range!(t, (sy, ey, fy+1:ey), pos_zero)
+            #         @assert s == sort!(t)
+            #     end
+            #     verified += 1
+            # end
+
+            # if (ex == ey + 1) & (sx != sy) & (fx == fy) & !y_zero
+            #     let t = MediumPairSummary[]
+            #         for k = max(fx + 1, exponent(floatmin(T))):ex-1
+            #             push_range!(t, (sx, k, fx+1:k), pos_zero)
+            #         end
+            #         push_range!(t, (sx, ex, fx+1:ex-2), pos_zero)
+            #         push!(t, ((sx, ex, ex), pos_zero))
+            #         @assert s == sort!(t)
+            #     end
+            #     verified += 1
+            # end
+            # if (ex + 1 == ey) & (sx != sy) & (fx == fy) & !x_zero
+            #     let t = MediumPairSummary[]
+            #         for k = max(fx + 1, exponent(floatmin(T))):ey-1
+            #             push_range!(t, (sy, k, fy+1:k), pos_zero)
+            #         end
+            #         push_range!(t, (sy, ey, fy+1:ey-2), pos_zero)
+            #         push!(t, ((sy, ey, ey), pos_zero))
+            #         @assert s == sort!(t)
+            #     end
+            #     verified += 1
+            # end
 
             if (ex == ey) & (sx != sy) & (fx != fy) & (fx + 1 < ex) & (fy + 1 < ey)
                 let t = MediumPairSummary[]
