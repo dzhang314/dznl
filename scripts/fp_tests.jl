@@ -1636,6 +1636,25 @@ function main(
                 verified += 1
             end
 
+            if diff_sign & (ex == fy + p) & (ey > fy + 2) & (fx > ey + 1) & !x_pow2
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex, fy+2:ey-1), (false:true, fy:ex-p, fy))
+                    push_range!(t, (sx, ex, ey), (sy, fy:ex-p, fy))
+                    push_range!(t, (sx, ex, ey + 1), (!sy, fy:ex-p, fy))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+            if diff_sign & (ey == fx + p) & (ex > fx + 2) & (fy > ex + 1) & !y_pow2
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey, fx+2:ex-1), (false:true, fx:ey-p, fx))
+                    push_range!(t, (sy, ey, ex), (sx, fx:ey-p, fx))
+                    push_range!(t, (sy, ey, ex + 1), (!sx, fx:ey-p, fx))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+
             ########################################## THEOREMS WITH FOUR RANGES
 
             if same_sign & (ex > fy + p) & (fx < ey)
@@ -1701,6 +1720,31 @@ function main(
                 verified += 1
             end
 
+            ########################################## THEOREMS WITH FIVE RANGES
+
+            if diff_sign & x_full & (fx == ey) & (ey > fy + 2)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex-1:ex-1, fx-1:fx-1), (false:true, fy:ex-(p+2), fy))
+                    push_range!(t, (sx, ex-1:ex-1, fx), (!sy, fy:ex-(p+2), fy))
+                    push_range!(t, (sx, ex, fx), (!sy, fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex, fx+1:ex-1), (sy, fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex, ex), (sy, fy:ex-(p+2), fy))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+            if diff_sign & y_full & (fy == ex) & (ex > fx + 2)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey-1:ey-1, fy-1:fy-1), (false:true, fx:ey-(p+2), fx))
+                    push_range!(t, (sy, ey-1:ey-1, fy), (!sx, fx:ey-(p+2), fx))
+                    push_range!(t, (sy, ey, fy), (!sx, fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey, fy+1:ey-1), (sx, fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey, ey), (sx, fx:ey-(p+2), fx))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+
             ########################################### THEOREMS WITH SIX RANGES
 
             if diff_sign & (ex > ey) & (fx == ey) & (ex > fy + (p + 1)) & !x_full
@@ -1752,6 +1796,19 @@ function main(
                 end
                 verified += 1
             end
+
+            # if same_sign & (ex == 9) & (2 <= fx == ey <= 4) & (ex == fy + p)
+            #     let t = MediumPairSummary[]
+            #         push_range!(t, (sx, ex, ex-(p-2):fx-1), (false:true, fy, fy))
+            #         push_range!(t, (sx, ex, fx), (!sy, fy, fy))
+            #         push_range!(t, (sx, ex, fx+1:ex-1), (sy, fy, fy))
+            #         push_range!(t, (sx, ex+1:ex+1, ex-(p-2):fx-1), (false:true, fy, fy))
+            #         push_range!(t, (sx, ex+1:ex+1, fx), (!sy, fy, fy))
+            #         push_range!(t, (sx, ex+1:ex+1, ex+1:ex+1), (sy, fy, fy))
+            #         @assert s == sort!(t)
+            #     end
+            #     verified += 1
+            # end
 
             # The following two theorems have overlapping domains. I wonder
             # if they can be combined into a single more general statement.
