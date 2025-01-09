@@ -1151,27 +1151,62 @@ function main(
                 verified += 1
             end
 
+            # All hypotheses are strictly necessary.
+            if (ex < ey + p) & (ex > fy + p) & (fx > ey + 1) & (ex > fx)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex, ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex, ey           ), (sy , fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex, ey + 1       ), (!sy, fy:ex-(p+1), fy))
+                    @assert s == t
+                end
+                verified += 1
+            end
+            if (ey < ex + p) & (ey > fx + p) & (fy > ex + 1) & (ey > fy)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey, ey-(p-1):ex-1), (±  , fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey, ex           ), (sx , fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey, ex + 1       ), (!sx, fx:ey-(p+1), fx))
+                    @assert s == t
+                end
+                verified += 1
+            end
+
+            # This is a degenerate case of the preceding theorem.
+            # All hypotheses are strictly necessary.
+            if (ex == ey + p) & (ex > fy + p) & (fx > ey + 1) & same_sign
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex, ey + 1       ), (!sy, fy:ex-(p+1), fy))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+            if (ey == ex + p) & (ey > fx + p) & (fy > ex + 1) & same_sign
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey, ex + 1       ), (!sx, fx:ey-(p+1), fx))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+
             # Inequalities cannot be weakened.
             if (ex < ey + p) & (ex > fy + p) & (
                     ((ex == fx + 1) & (ex > fy + (p + 1))) |
-                    ((fx > ey + 1) & !x_pow2) |
                     (same_sign & x_pow2))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex, ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
                     push_range!(t, (sx, ex, ey           ), (sy , fy:ex-(p+1), fy))
-                    push_range!(t, (sx, ex, ey+1:ey+1    ), (!sy, fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex, ey + 1       ), (!sy, fy:ex-(p+1), fy))
                     @assert s == t
                 end
                 verified += 1
             end
             if (ey < ex + p) & (ey > fx + p) & (
                     ((ey == fy + 1) & (ey > fx + (p + 1))) |
-                    ((fy > ex + 1) & !y_pow2) |
                     (same_sign & y_pow2))
                 let t = MediumPairSummary[]
                     push_range!(t, (sy, ey, ey-(p-1):ex-1), (±  , fx:ey-(p+1), fx))
                     push_range!(t, (sy, ey, ex           ), (sx , fx:ey-(p+1), fx))
-                    push_range!(t, (sy, ey, ex+1:ex+1    ), (!sx, fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey, ex + 1       ), (!sx, fx:ey-(p+1), fx))
                     @assert s == t
                 end
                 verified += 1
@@ -1182,8 +1217,8 @@ function main(
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ex-(p-1):ex-1), (±  , fy:ex-(p+1), fy))
                     push_range!(t, (sx, ex+1:ex+1, ex-(p-2):ey  ), (±  , fy:ex-p    , fy))
-                    push_range!(t, (sx, ex+1:ex+1, ex+1:ex+1    ), (!sy, fy:ex-(p+1), fy))
-                    push_range!(t, (sx, ex+1:ex+1, ex+1:ex+1    ), (sy , fy:ex-p    , fy))
+                    push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (!sy, fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-p    , fy))
                     @assert s == sort!(t)
                 end
                 verified += 1
@@ -1192,8 +1227,8 @@ function main(
                 let t = MediumPairSummary[]
                     push_range!(t, (sy, ey       , ey-(p-1):ey-1), (±  , fx:ey-(p+1), fx))
                     push_range!(t, (sy, ey+1:ey+1, ey-(p-2):ex  ), (±  , fx:ey-p    , fx))
-                    push_range!(t, (sy, ey+1:ey+1, ey+1:ey+1    ), (!sx, fx:ey-(p+1), fx))
-                    push_range!(t, (sy, ey+1:ey+1, ey+1:ey+1    ), (sx , fx:ey-p    , fx))
+                    push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (!sx, fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-p    , fx))
                     @assert s == sort!(t)
                 end
                 verified += 1
@@ -1226,14 +1261,14 @@ function main(
             # same sign, zero error
 
             # Inequalities cannot be weakened.
-            if same_sign & (ex == fx + 1) & (fx == ey) & (ex < fy + (p - 1)) & !y_pow2
+            if same_sign & (fx == ey) & (ex == fx + 1) & (ex < fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex+1:ex+1, fy), pos_zero)
                     @assert s == sort!(t)
                 end
                 verified += 1
             end
-            if same_sign & (ey == fy + 1) & (fy == ex) & (ey < fx + (p - 1)) & !x_pow2
+            if same_sign & (fy == ex) & (ey == fy + 1) & (ey < fx + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sy, ey+1:ey+1, fx), pos_zero)
                     @assert s == sort!(t)
@@ -1241,28 +1276,10 @@ function main(
                 verified += 1
             end
 
-            # 5400 / 21336
-            if same_sign & (ex == ey) & (fx != fy) & !(x_full | y_full)
+            # Inequalities cannot be weakened.
+            if same_sign & (ex == ey) & (ex < fx + (p - 1)) & (ey < fy + (p - 1)) & (fx != fy)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex+1:ex+1, min(fx, fy)), pos_zero)
-                    @assert s == sort!(t)
-                end
-                verified += 1
-            end
-
-            # same sign, nonzero error
-
-            # Inequalities cannot be weakened.
-            if same_sign & (ex == ey + p) & !(x_full | y_pow2)
-                let t = MediumPairSummary[]
-                    push_range!(t, (sx, ex, ey+1:ey+1), (!sy, fy:ey-1, fy))
-                    @assert s == sort!(t)
-                end
-                verified += 1
-            end
-            if same_sign & (ex + p == ey) & !(y_full | x_pow2)
-                let t = MediumPairSummary[]
-                    push_range!(t, (sy, ey, ex+1:ex+1), (!sx, fx:ex-1, fx))
                     @assert s == sort!(t)
                 end
                 verified += 1
@@ -2141,6 +2158,7 @@ function main(
 
             ###################################### THEOREMS WITH FIVE RANGES (1)
 
+            # All hypotheses are strictly necessary.
             if diff_sign & (fx == ey) & (ex == fy + (p + 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
@@ -2164,9 +2182,9 @@ function main(
                 verified += 1
             end
 
-            ##################################### THEOREMS WITH SIX RANGES (3+5)
+            ##################################### THEOREMS WITH SIX RANGES (3+2)
 
-            # Inequalities cannot be weakened.
+            # All hypotheses are strictly necessary.
             if same_sign & (fx == ey) & (ex < fx + (p - 1)) & (ex > fy + p)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
@@ -2192,28 +2210,7 @@ function main(
                 verified += 1
             end
 
-            # This is a simplification of the preceding theorem with three ranges collapsed.
-            if same_sign & (fx == ey) & (ex == fx + 1) & (ex == fy + p)
-                let t = MediumPairSummary[]
-                    push_range!(t, (sx, ex+1:ex+1, ex-(p-2):ey-1), (±  , fy:ex-p    , fy))
-                    push_range!(t, (sx, ex+1:ex+1, ey           ), (!sy, fy:ex-p    , fy))
-                    push_range!(t, (sx, ex+1:ex+1, ex+1:ex+1    ), (sy , fy:ex-p    , fy))
-                    @assert s == sort!(t)
-                end
-                verified += 1
-            end
-            if same_sign & (fy == ex) & (ey == fy + 1) & (ey == fx + p)
-                let t = MediumPairSummary[]
-                    push_range!(t, (sy, ey+1:ey+1, ey-(p-2):ex-1), (±  , fx:ey-p    , fx))
-                    push_range!(t, (sy, ey+1:ey+1, ex           ), (!sx, fx:ey-p    , fx))
-                    push_range!(t, (sy, ey+1:ey+1, ey+1:ey+1    ), (sx , fx:ey-p    , fx))
-                    @assert s == sort!(t)
-                end
-                verified += 1
-            end
-
-            # Inequalities cannot be weakened.
-            # This is another simplification of the preceding theorem with three ranges collapsed.
+            # This is a degenerate case of the preceding theorem.
             if same_sign & (fx == ey) & (ex == fx + (p - 1)) & (ex > fy + p)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ey           ), (!sy, fy:ex-(p+1), fy))
@@ -2233,7 +2230,27 @@ function main(
                 verified += 1
             end
 
-            # Inequalities cannot be weakened.
+            # This is a degenerate case of the preceding theorem.
+            if same_sign & (fx == ey) & (ex == fx + 1) & (ex == fy + p)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex+1:ex+1, ex-(p-2):ey-1), (±  , fy:ex-p    , fy))
+                    push_range!(t, (sx, ex+1:ex+1, ey           ), (!sy, fy:ex-p    , fy))
+                    push_range!(t, (sx, ex+1:ex+1, ex+1:ex+1    ), (sy , fy:ex-p    , fy))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+            if same_sign & (fy == ex) & (ey == fy + 1) & (ey == fx + p)
+                let t = MediumPairSummary[]
+                    push_range!(t, (sy, ey+1:ey+1, ey-(p-2):ex-1), (±  , fx:ey-p    , fx))
+                    push_range!(t, (sy, ey+1:ey+1, ex           ), (!sx, fx:ey-p    , fx))
+                    push_range!(t, (sy, ey+1:ey+1, ey+1:ey+1    ), (sx , fx:ey-p    , fx))
+                    @assert s == sort!(t)
+                end
+                verified += 1
+            end
+
+            # All hypotheses are strictly necessary.
             if same_sign & (fx == ey) & (ex == fy + p) & (ex < fx + (p - 1)) & (ey < fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ex-(p-2):ey-1), (±  , fy:ex-p, fy))
@@ -2259,7 +2276,7 @@ function main(
                 verified += 1
             end
 
-            # Inequalities cannot be weakened.
+            # All hypotheses are strictly necessary.
             if diff_sign & (fx == ey) & (ex > fy + (p + 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, ex-p:ey-1    ), (±  , fy:ex-(p+2), fy))
