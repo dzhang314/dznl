@@ -237,31 +237,551 @@ def two_sum_lemmas(
         conditions.append(e_pos_zero)
         return z3.And(*conditions)
 
-    ############################################################################
+    ############################################################# LEMMA FAMILY 2
+
+    # # Lemma 2
+    # if same_sign & (ex > fy + p) & (fx < ey)
+    #         push_range!(t, (sx, ex       , ex-(p-1):ex-1), (±  , fy:ex-(p+1), fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex-(p-2):ey  ), (±  , fy:ex-p    , fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (!sy, fy:ex-(p+1), fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-p    , fy))
+    # if same_sign & (ey > fx + p) & (fy < ex)
+    #         push_range!(t, (sy, ey       , ey-(p-1):ey-1), (±  , fx:ey-(p+1), fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey-(p-2):ex  ), (±  , fx:ey-p    , fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (!sx, fx:ey-(p+1), fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-p    , fx))
+    result["TwoSum-2-X"] = z3.Implies(
+        z3.And(same_sign, ex > fy + p, fx < ey),
+        z3.Or(
+            x_case(ex, (ex - (p - one), ex - one), None, 1),
+            x_case(ex + one, (ex - (p - two), ey), None, 0),
+            x_case(ex + one, ex + one, False, 1),
+            x_case(ex + one, ex + one, True, 0),
+        ),
+    )
+    result["TwoSum-2-Y"] = z3.Implies(
+        z3.And(same_sign, ey > fx + p, fy < ex),
+        z3.Or(
+            y_case(ey, (ey - (p - one), ey - one), None, 1),
+            y_case(ey + one, (ey - (p - two), ex), None, 0),
+            y_case(ey + one, ey + one, False, 1),
+            y_case(ey + one, ey + one, True, 0),
+        ),
+    )
+
+    # # Lemma 2A.G
+    # if same_sign & (ex == fy + p) & (fx < ey) & (ey < fy + (p - 1))
+    #         push_range!(t, (sx, ex       , ex-(p-2):ex-1), (±, fy:ex-p, fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex-(p-2):ey  ), (±, fy:ex-p, fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (±, fy:ex-p, fy))
+    # if same_sign & (ey == fx + p) & (fy < ex) & (ex < fx + (p - 1))
+    #         push_range!(t, (sy, ey       , ey-(p-2):ey-1), (±, fx:ey-p, fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey-(p-2):ex  ), (±, fx:ey-p, fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (±, fx:ey-p, fx))
+    result["TwoSum-2A-G-X"] = z3.Implies(
+        z3.And(same_sign, ex == fy + p, fx < ey, ey < fy + (p - one)),
+        z3.Or(
+            x_case(ex, (ex - (p - two), ex - one), None, 0),
+            x_case(ex + one, (ex - (p - two), ey), None, 0),
+            x_case(ex + one, ex + one, None, 0),
+        ),
+    )
+    result["TwoSum-2A-G-Y"] = z3.Implies(
+        z3.And(same_sign, ey == fx + p, fy < ex, ex < fx + (p - one)),
+        z3.Or(
+            y_case(ey, (ey - (p - two), ey - one), None, 0),
+            y_case(ey + one, (ey - (p - two), ex), None, 0),
+            y_case(ey + one, ey + one, None, 0),
+        ),
+    )
+
+    # # Lemma 2A.1
+    # if same_sign & (ex == fy + p) & (fx + 1 < ey) & (ey == fy + (p - 1))
+    #         push_range!(t, (sx, ex       , ex-(p-2):ex-2), (±, fy:ex-p, fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex-(p-2):ey  ), (±, fy:ex-p, fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (±, fy:ex-p, fy))
+    # if same_sign & (ey == fx + p) & (fy + 1 < ex) & (ex == fx + (p - 1))
+    #         push_range!(t, (sy, ey       , ey-(p-2):ey-2), (±, fx:ey-p, fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey-(p-2):ex  ), (±, fx:ey-p, fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (±, fx:ey-p, fx))
+    result["TwoSum-2A-1-X"] = z3.Implies(
+        z3.And(same_sign, ex == fy + p, fx + one < ey, ey == fy + (p - one)),
+        z3.Or(
+            x_case(ex, (ex - (p - two), ex - two), None, 0),
+            x_case(ex + one, (ex - (p - two), ey), None, 0),
+            x_case(ex + one, ex + one, None, 0),
+        ),
+    )
+    result["TwoSum-2A-1-Y"] = z3.Implies(
+        z3.And(same_sign, ey == fx + p, fy + one < ex, ex == fx + (p - one)),
+        z3.Or(
+            y_case(ey, (ey - (p - two), ey - two), None, 0),
+            y_case(ey + one, (ey - (p - two), ex), None, 0),
+            y_case(ey + one, ey + one, None, 0),
+        ),
+    )
+
+    # # Lemma 2A.2
+    # if same_sign & (ex == fy + p) & (fx + 1 == ey) & (ey == fy + (p - 1))
+    #         push_range!(t, (sx, ex       , ex-(p-2):ey-2), (± , fy:ex-p, fy))
+    #         push_range!(t, (sx, ex       , ey - 1       ), (sy, fy:ex-p, fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex-(p-2):ey  ), (± , fy:ex-p, fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (± , fy:ex-p, fy))
+    # if same_sign & (ey == fx + p) & (fy + 1 == ex) & (ex == fx + (p - 1))
+    #         push_range!(t, (sy, ey       , ey-(p-2):ex-2), (± , fx:ey-p, fx))
+    #         push_range!(t, (sy, ey       , ex - 1       ), (sx, fx:ey-p, fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey-(p-2):ex  ), (± , fx:ey-p, fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (± , fx:ey-p, fx))
+    result["TwoSum-2A-2-X"] = z3.Implies(
+        z3.And(same_sign, ex == fy + p, fx + one == ey, ey == fy + (p - one)),
+        z3.Or(
+            x_case(ex, (ex - (p - two), ey - two), None, 0),
+            x_case(ex, ey - one, True, 0),
+            x_case(ex + one, (ex - (p - two), ey), None, 0),
+            x_case(ex + one, ex + one, None, 0),
+        ),
+    )
+    result["TwoSum-2A-2-Y"] = z3.Implies(
+        z3.And(same_sign, ey == fx + p, fy + one == ex, ex == fx + (p - one)),
+        z3.Or(
+            y_case(ey, (ey - (p - two), ex - two), None, 0),
+            y_case(ey, ex - one, True, 0),
+            y_case(ey + one, (ey - (p - two), ex), None, 0),
+            y_case(ey + one, ey + one, None, 0),
+        ),
+    )
+
+    # # Lemma 2B.G
+    # if same_sign & (ex > fy + p) & (fx == ey) & (ex < fx + (p - 1))
+    #         push_range!(t, (sx, ex       , ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
+    #         push_range!(t, (sx, ex       , ey           ), (!sy, fy:ex-(p+1), fy))
+    #         push_range!(t, (sx, ex       , ey+1:ex-1    ), (sy , fy:ex-(p+1), fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex-(p-2):ey-1), (±  , fy:ex-p    , fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ey           ), (!sy, fy:ex-p    , fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-p    , fy))
+    # if same_sign & (ey > fx + p) & (fy == ex) & (ey < fy + (p - 1))
+    #         push_range!(t, (sy, ey       , ey-(p-1):ex-1), (±  , fx:ey-(p+1), fx))
+    #         push_range!(t, (sy, ey       , ex           ), (!sx, fx:ey-(p+1), fx))
+    #         push_range!(t, (sy, ey       , ex+1:ey-1    ), (sx , fx:ey-(p+1), fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey-(p-2):ex-1), (±  , fx:ey-p    , fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ex           ), (!sx, fx:ey-p    , fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-p    , fx))
+    result["TwoSum-2B-G-X"] = z3.Implies(
+        z3.And(same_sign, ex > fy + p, fx == ey, ex < fx + (p - one)),
+        z3.Or(
+            x_case(ex, (ex - (p - one), ey - one), None, 1),
+            x_case(ex, ey, False, 1),
+            x_case(ex, (ey + one, ex - one), True, 1),
+            x_case(ex + one, (ex - (p - two), ey - one), None, 0),
+            x_case(ex + one, ey, False, 0),
+            x_case(ex + one, ex + one, True, 0),
+        ),
+    )
+    result["TwoSum-2B-G-Y"] = z3.Implies(
+        z3.And(same_sign, ey > fx + p, fy == ex, ey < fy + (p - one)),
+        z3.Or(
+            y_case(ey, (ey - (p - one), ex - one), None, 1),
+            y_case(ey, ex, False, 1),
+            y_case(ey, (ex + one, ey - one), True, 1),
+            y_case(ey + one, (ey - (p - two), ex - one), None, 0),
+            y_case(ey + one, ex, False, 0),
+            y_case(ey + one, ey + one, True, 0),
+        ),
+    )
+
+    # # Lemma 2B.1
+    # if same_sign & (ex > fy + p) & (fx == ey) & (ex == fx + (p - 1))
+    #         push_range!(t, (sx, ex       , ey           ), (!sy, fy:ex-(p+1), fy))
+    #         push_range!(t, (sx, ex       , ey+1:ex-1    ), (sy , fy:ex-(p+1), fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-p    , fy))
+    # if same_sign & (ey > fx + p) & (fy == ex) & (ey == fy + (p - 1))
+    #         push_range!(t, (sy, ey       , ex           ), (!sx, fx:ey-(p+1), fx))
+    #         push_range!(t, (sy, ey       , ex+1:ey-1    ), (sx , fx:ey-(p+1), fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-p    , fx))
+    result["TwoSum-2B-1-X"] = z3.Implies(
+        z3.And(same_sign, ex > fy + p, fx == ey, ex == fx + (p - one)),
+        z3.Or(
+            x_case(ex, ey, False, 1),
+            x_case(ex, (ey + one, ex - one), True, 1),
+            x_case(ex + one, ex + one, True, 0),
+        ),
+    )
+    result["TwoSum-2B-1-Y"] = z3.Implies(
+        z3.And(same_sign, ey > fx + p, fy == ex, ey == fy + (p - one)),
+        z3.Or(
+            y_case(ey, ex, False, 1),
+            y_case(ey, (ex + one, ey - one), True, 1),
+            y_case(ey + one, ey + one, True, 0),
+        ),
+    )
+
+    # # Lemma 2C.G
+    # if same_sign & (ex == fy + (p - 1)) & (fx < ey) & (ex < fx + (p - 1)) & (ey < fy + (p - 1))
+    #         push_range!(t, (sx, ex       , fy), pos_zero)
+    #         push_range!(t, (sx, ex+1:ex+1, ex-(p-3):ey), (± , fy:ex-(p-1), fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1     ), (sy, fy:ex-(p-1), fy))
+    # if same_sign & (ey == fx + (p - 1)) & (fy < ex) & (ey < fy + (p - 1)) & (ex < fx + (p - 1))
+    #         push_range!(t, (sy, ey       , fx), pos_zero)
+    #         push_range!(t, (sy, ey+1:ey+1, ey-(p-3):ex), (± , fx:ey-(p-1), fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1     ), (sx, fx:ey-(p-1), fx))
+    result["TwoSum-2C-G-X"] = z3.Implies(
+        z3.And(
+            same_sign,
+            ex == fy + (p - one),
+            fx < ey,
+            ex < fx + (p - one),
+            ey < fy + (p - one),
+        ),
+        z3.Or(
+            x_case_zero(ex, fy),
+            x_case(ex + one, (ex - (p - three), ey), None, -1),
+            x_case(ex + one, ex + one, True, -1),
+        ),
+    )
+    result["TwoSum-2C-G-Y"] = z3.Implies(
+        z3.And(
+            same_sign,
+            ey == fx + (p - one),
+            fy < ex,
+            ey < fy + (p - one),
+            ex < fx + (p - one),
+        ),
+        z3.Or(
+            y_case_zero(ey, fx),
+            y_case(ey + one, (ey - (p - three), ex), None, -1),
+            y_case(ey + one, ey + one, True, -1),
+        ),
+    )
+
+    # # Lemma 2C.1
+    # if same_sign & (ex == fy + (p - 1)) & (fx < ey) & (ex < fx + (p - 1)) & (ey == fy + (p - 1))
+    #         push_range!(t, (sx, ex+1:ex+1, ex-(p-3):ey), (± , fy:ex-(p-1), fy))
+    # if same_sign & (ey == fx + (p - 1)) & (fy < ex) & (ey < fy + (p - 1)) & (ex == fx + (p - 1))
+    #         push_range!(t, (sy, ey+1:ey+1, ey-(p-3):ex), (± , fx:ey-(p-1), fx))
+    result["TwoSum-2C-1-X"] = z3.Implies(
+        z3.And(
+            same_sign,
+            ex == fy + (p - one),
+            fx < ey,
+            ex < fx + (p - one),
+            ey == fy + (p - one),
+        ),
+        x_case(ex + one, (ex - (p - three), ey), None, -1),
+    )
+    result["TwoSum-2C-1-Y"] = z3.Implies(
+        z3.And(
+            same_sign,
+            ey == fx + (p - one),
+            fy < ex,
+            ey < fy + (p - one),
+            ex == fx + (p - one),
+        ),
+        y_case(ey + one, (ey - (p - three), ex), None, -1),
+    )
+
+    # # Lemma 2D.G
+    # if same_sign & (ex > fy + p) & (fx == ey + 1) & (ex < fx + (p - 1))
+    #         push_range!(t, (sx, ex       , ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
+    #         push_range!(t, (sx, ex       , ey           ), (sy , fy:ex-(p+1), fy))
+    #         push_range!(t, (sx, ex       , ey+2:ex-1    ), (!sy, fy:ex-(p+1), fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (!sy, fy:ex-(p+1), fy))
+    # if same_sign & (ey > fx + p) & (fy == ex + 1) & (ey < fy + (p - 1))
+    #         push_range!(t, (sy, ey       , ey-(p-1):ex-1), (±  , fx:ey-(p+1), fx))
+    #         push_range!(t, (sy, ey       , ex           ), (sx , fx:ey-(p+1), fx))
+    #         push_range!(t, (sy, ey       , ex+2:ey-1    ), (!sx, fx:ey-(p+1), fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (!sx, fx:ey-(p+1), fx))
+    result["TwoSum-2D-G-X"] = z3.Implies(
+        z3.And(same_sign, ex > fy + p, fx == ey + one, ex < fx + (p - one)),
+        z3.Or(
+            x_case(ex, (ex - (p - one), ey - one), None, 1),
+            x_case(ex, ey, True, 1),
+            x_case(ex, (ey + two, ex - one), False, 1),
+            x_case(ex + one, ex + one, False, 1),
+        ),
+    )
+    result["TwoSum-2D-G-Y"] = z3.Implies(
+        z3.And(same_sign, ey > fx + p, fy == ex + one, ey < fy + (p - one)),
+        z3.Or(
+            y_case(ey, (ey - (p - one), ex - one), None, 1),
+            y_case(ey, ex, True, 1),
+            y_case(ey, (ex + two, ey - one), False, 1),
+            y_case(ey + one, ey + one, False, 1),
+        ),
+    )
+
+    # # Lemma 2D.1
+    # if same_sign & (ex > fy + p) & (fx == ey + 1) & (ex == fx + (p - 1))
+    #         push_range!(t, (sx, ex       , ey+2:ex-1    ), (!sy, fy:ex-(p+1), fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (!sy, fy:ex-(p+1), fy))
+    # if same_sign & (ey > fx + p) & (fy == ex + 1) & (ey == fy + (p - 1))
+    #         push_range!(t, (sy, ey       , ex+2:ey-1    ), (!sx, fx:ey-(p+1), fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (!sx, fx:ey-(p+1), fx))
+    result["TwoSum-2D-1-X"] = z3.Implies(
+        z3.And(same_sign, ex > fy + p, fx == ey + one, ex == fx + (p - one)),
+        z3.Or(
+            x_case(ex, (ey + two, ex - one), False, 1),
+            x_case(ex + one, ex + one, False, 1),
+        ),
+    )
+    result["TwoSum-2D-1-Y"] = z3.Implies(
+        z3.And(same_sign, ey > fx + p, fy == ex + one, ey == fy + (p - one)),
+        z3.Or(
+            y_case(ey, (ex + two, ey - one), False, 1),
+            y_case(ey + one, ey + one, False, 1),
+        ),
+    )
+
+    # # Lemma 2AB.G
+    # if same_sign & (ex == fy + p) & (fx == ey) & (ex < fx + (p - 1)) & (ey < fy + (p - 1))
+    #         push_range!(t, (sx, ex       , ex-(p-2):ey-1), (±  , fy:ex-p, fy))
+    #         push_range!(t, (sx, ex       , ey           ), (!sy, fy:ex-p, fy))
+    #         push_range!(t, (sx, ex       , ey+1:ex-1    ), (sy , fy:ex-p, fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex-(p-2):ey-1), (±  , fy:ex-p, fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ey           ), (!sy, fy:ex-p, fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-p, fy))
+    # if same_sign & (ey == fx + p) & (fy == ex) & (ey < fy + (p - 1)) & (ex < fx + (p - 1))
+    #         push_range!(t, (sy, ey       , ey-(p-2):ex-1), (±  , fx:ey-p, fx))
+    #         push_range!(t, (sy, ey       , ex           ), (!sx, fx:ey-p, fx))
+    #         push_range!(t, (sy, ey       , ex+1:ey-1    ), (sx , fx:ey-p, fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey-(p-2):ex-1), (±  , fx:ey-p, fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ex           ), (!sx, fx:ey-p, fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-p, fx))
+    result["TwoSum-2AB-G-X"] = z3.Implies(
+        z3.And(
+            same_sign,
+            ex == fy + p,
+            fx == ey,
+            ex < fx + (p - one),
+            ey < fy + (p - one),
+        ),
+        z3.Or(
+            x_case(ex, (ex - (p - two), ey - one), None, 0),
+            x_case(ex, ey, False, 0),
+            x_case(ex, (ey + one, ex - one), True, 0),
+            x_case(ex + one, (ex - (p - two), ey - one), None, 0),
+            x_case(ex + one, ey, False, 0),
+            x_case(ex + one, ex + one, True, 0),
+        ),
+    )
+    result["TwoSum-2AB-G-Y"] = z3.Implies(
+        z3.And(
+            same_sign,
+            ey == fx + p,
+            fy == ex,
+            ey < fy + (p - one),
+            ex < fx + (p - one),
+        ),
+        z3.Or(
+            y_case(ey, (ey - (p - two), ex - one), None, 0),
+            y_case(ey, ex, False, 0),
+            y_case(ey, (ex + one, ey - one), True, 0),
+            y_case(ey + one, (ey - (p - two), ex - one), None, 0),
+            y_case(ey + one, ex, False, 0),
+            y_case(ey + one, ey + one, True, 0),
+        ),
+    )
+
+    # # Lemma 2AB.1
+    # if same_sign & (ex == fy + p) & (fx == ey) & (ex == fx + (p - 1))
+    #         push_range!(t, (sx, ex       , ey+1:ex-1    ), (sy , fy:ex-p, fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-p, fy))
+    # if same_sign & (ey == fx + p) & (fy == ex) & (ey == fy + (p - 1))
+    #         push_range!(t, (sy, ey       , ex+1:ey-1    ), (sx , fx:ey-p, fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-p, fx))
+    result["TwoSum-2AB-1-X"] = z3.Implies(
+        z3.And(same_sign, ex == fy + p, fx == ey, ex == fx + (p - one)),
+        z3.Or(
+            x_case(ex, (ey + one, ex - one), True, 0),
+            x_case(ex + one, ex + one, True, 0),
+        ),
+    )
+    result["TwoSum-2AB-1-Y"] = z3.Implies(
+        z3.And(same_sign, ey == fx + p, fy == ex, ey == fy + (p - one)),
+        z3.Or(
+            y_case(ey, (ex + one, ey - one), True, 0),
+            y_case(ey + one, ey + one, True, 0),
+        ),
+    )
+
+    # # Lemma 2AB.2
+    # if same_sign & (ex == fy + p) & (fx == ey) & (ey == fy + (p - 1))
+    #         push_range!(t, (sx, ex+1:ex+1, ex-(p-2):ey-1), (±  , fy:ex-p, fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ey           ), (!sy, fy:ex-p, fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-p, fy))
+    # if same_sign & (ey == fx + p) & (fy == ex) & (ex == fx + (p - 1))
+    #         push_range!(t, (sy, ey+1:ey+1, ey-(p-2):ex-1), (±  , fx:ey-p, fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ex           ), (!sx, fx:ey-p, fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-p, fx))
+    result["TwoSum-2AB-2-X"] = z3.Implies(
+        z3.And(same_sign, ex == fy + p, fx == ey, ey == fy + (p - one)),
+        z3.Or(
+            x_case(ex + one, (ex - (p - two), ey - one), None, 0),
+            x_case(ex + one, ey, False, 0),
+            x_case(ex + one, ex + one, True, 0),
+        ),
+    )
+    result["TwoSum-2AB-2-Y"] = z3.Implies(
+        z3.And(same_sign, ey == fx + p, fy == ex, ex == fx + (p - one)),
+        z3.Or(
+            y_case(ey + one, (ey - (p - two), ex - one), None, 0),
+            y_case(ey + one, ex, False, 0),
+            y_case(ey + one, ey + one, True, 0),
+        ),
+    )
+
+    # # Lemma 2BC.G
+    # if same_sign & (ex == fy + (p - 1)) & (fx == ey) & (ey > fy + 1) & (ey < fy + (p - 2))
+    #         push_range!(t, (sx, ex       , fy), pos_zero)
+    #         push_range!(t, (sx, ex+1:ex+1, ex-(p-3):ey-1), (±  , fy:ex-(p-1), fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ey           ), (!sy, fy:ex-(p-1), fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-(p-1), fy))
+    # if same_sign & (ey == fx + (p - 1)) & (fy == ex) & (ex > fx + 1) & (ex < fx + (p - 2))
+    #         push_range!(t, (sy, ey       , fx), pos_zero)
+    #         push_range!(t, (sy, ey+1:ey+1, ey-(p-3):ex-1), (±  , fx:ey-(p-1), fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ex           ), (!sx, fx:ey-(p-1), fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-(p-1), fx))
+    result["TwoSum-2BC-G-X"] = z3.Implies(
+        z3.And(
+            same_sign,
+            ex == fy + (p - one),
+            fx == ey,
+            ey > fy + one,
+            ey < fy + (p - two),
+        ),
+        z3.Or(
+            x_case_zero(ex, fy),
+            x_case(ex + one, (ex - (p - three), ey - one), None, -1),
+            x_case(ex + one, ey, False, -1),
+            x_case(ex + one, ex + one, True, -1),
+        ),
+    )
+    result["TwoSum-2BC-G-Y"] = z3.Implies(
+        z3.And(
+            same_sign,
+            ey == fx + (p - one),
+            fy == ex,
+            ex > fx + one,
+            ex < fx + (p - two),
+        ),
+        z3.Or(
+            y_case_zero(ey, fx),
+            y_case(ey + one, (ey - (p - three), ex - one), None, -1),
+            y_case(ey + one, ex, False, -1),
+            y_case(ey + one, ey + one, True, -1),
+        ),
+    )
+
+    # # Lemma 2BC.1
+    # if same_sign & (ex == fy + (p - 1)) & (fx == ey) & (ey > fy + (p - 3))
+    #         push_range!(t, (sx, ex+1:ex+1, ex-(p-3):ey-1), (±  , fy:ex-(p-1), fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ey           ), (!sy, fy:ex-(p-1), fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-(p-1), fy))
+    # if same_sign & (ey == fx + (p - 1)) & (fy == ex) & (ex > fx + (p - 3))
+    #         push_range!(t, (sy, ey+1:ey+1, ey-(p-3):ex-1), (±  , fx:ey-(p-1), fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ex           ), (!sx, fx:ey-(p-1), fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-(p-1), fx))
+    result["TwoSum-2BC-1-X"] = z3.Implies(
+        z3.And(same_sign, ex == fy + (p - one), fx == ey, ey > fy + (p - three)),
+        z3.Or(
+            x_case(ex + one, (ex - (p - three), ey - one), None, -1),
+            x_case(ex + one, ey, False, -1),
+            x_case(ex + one, ex + one, True, -1),
+        ),
+    )
+    result["TwoSum-2BC-1-Y"] = z3.Implies(
+        z3.And(same_sign, ey == fx + (p - one), fy == ex, ex > fx + (p - three)),
+        z3.Or(
+            y_case(ey + one, (ey - (p - three), ex - one), None, -1),
+            y_case(ey + one, ex, False, -1),
+            y_case(ey + one, ey + one, True, -1),
+        ),
+    )
+
+    # # Lemma 2BC.2
+    # if same_sign & (ex == fy + (p - 1)) & (fx == ey) & (ey == fy + 1)
+    #         push_range!(t, (sx, ex       , fy), pos_zero)
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-(p-1), fy))
+    # if same_sign & (ey == fx + (p - 1)) & (fy == ex) & (ex == fx + 1)
+    #         push_range!(t, (sy, ey       , fx), pos_zero)
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-(p-1), fx))
+    result["TwoSum-2BC-2-X"] = z3.Implies(
+        z3.And(same_sign, ex == fy + (p - one), fx == ey, ey == fy + one),
+        z3.Or(x_case_zero(ex, fy), x_case(ex + one, ex + one, True, -1)),
+    )
+    result["TwoSum-2BC-2-Y"] = z3.Implies(
+        z3.And(same_sign, ey == fx + (p - one), fy == ex, ex == fx + one),
+        z3.Or(y_case_zero(ey, fx), y_case(ey + one, ey + one, True, -1)),
+    )
+
+    # # Lemma 2AD.G
+    # if same_sign & (ex == fy + p) & (fx == ey + 1) & (ex < fx + (p - 2))
+    #         push_range!(t, (sx, ex       , ex-(p-2):ey-1), (±  , fy:ex-p, fy))
+    #         push_range!(t, (sx, ex       , ey           ), (sy , fy:ex-p, fy))
+    #         push_range!(t, (sx, ex       , ey+2:ex-1    ), (!sy, fy:ex-p, fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (!sy, fy:ex-p, fy))
+    # if same_sign & (ey == fx + p) & (fy == ex + 1) & (ey < fy + (p - 2))
+    #         push_range!(t, (sy, ey       , ey-(p-2):ex-1), (±  , fx:ey-p, fx))
+    #         push_range!(t, (sy, ey       , ex           ), (sx , fx:ey-p, fx))
+    #         push_range!(t, (sy, ey       , ex+2:ey-1    ), (!sx, fx:ey-p, fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (!sx, fx:ey-p, fx))
+    result["TwoSum-2AD-G-X"] = z3.Implies(
+        z3.And(same_sign, ex == fy + p, fx == ey + one, ex < fx + (p - two)),
+        z3.Or(
+            x_case(ex, (ex - (p - two), ey - one), None, 0),
+            x_case(ex, ey, True, 0),
+            x_case(ex, (ey + two, ex - one), False, 0),
+            x_case(ex + one, ex + one, False, 0),
+        ),
+    )
+    result["TwoSum-2AD-G-Y"] = z3.Implies(
+        z3.And(same_sign, ey == fx + p, fy == ex + one, ey < fy + (p - two)),
+        z3.Or(
+            y_case(ey, (ey - (p - two), ex - one), None, 0),
+            y_case(ey, ex, True, 0),
+            y_case(ey, (ex + two, ey - one), False, 0),
+            y_case(ey + one, ey + one, False, 0),
+        ),
+    )
+
+    # # Lemma 2AD.1
+    # if same_sign & (ex == fy + p) & (fx == ey + 1) & (ex > fx + (p - 3))
+    #         push_range!(t, (sx, ex       , ey+2:ex-1    ), (!sy, fy:ex-p, fy))
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (!sy, fy:ex-p, fy))
+    # if same_sign & (ey == fx + p) & (fy == ex + 1) & (ey > fy + (p - 3))
+    #         push_range!(t, (sy, ey       , ex+2:ey-1    ), (!sx, fx:ey-p, fx))
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (!sx, fx:ey-p, fx))
+    result["TwoSum-2AD-1-X"] = z3.Implies(
+        z3.And(
+            xy_nonzero, same_sign, ex == fy + p, fx == ey + one, ex > fx + (p - three)
+        ),
+        z3.Or(
+            x_case(ex, (ey + two, ex - one), False, 0),
+            x_case(ex + one, ex + one, False, 0),
+        ),
+    )
+    result["TwoSum-2AD-1-Y"] = z3.Implies(
+        z3.And(
+            xy_nonzero, same_sign, ey == fx + p, fy == ex + one, ey > fy + (p - three)
+        ),
+        z3.Or(
+            y_case(ey, (ex + two, ey - one), False, 0),
+            y_case(ey + one, ey + one, False, 0),
+        ),
+    )
+
+    ############################################################# LEMMA FAMILY 3
 
     # # Lemma 3
     # if diff_sign & (ex > fy + (p + 1)) & (fx < ey)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex-1:ex-1, ex-p:ey      ), (±  , fy:ex-(p+2), fy))
     #         push_range!(t, (sx, ex       , ex-(p-1):ex-1), (±  , fy:ex-(p+1), fy))
     #         push_range!(t, (sx, ex       , ex           ), (sy , fy:ex-(p+2), fy))
     #         push_range!(t, (sx, ex       , ex           ), (!sy, fy:ex-(p+1), fy))
-    #         @assert s == sort!(t)
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey > fx + (p + 1)) & (fy < ex)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey-1:ey-1, ey-p:ex      ), (±  , fx:ey-(p+2), fx))
     #         push_range!(t, (sy, ey       , ey-(p-1):ey-1), (±  , fx:ey-(p+1), fx))
     #         push_range!(t, (sy, ey       , ey           ), (sx , fx:ey-(p+2), fx))
     #         push_range!(t, (sy, ey       , ey           ), (!sx, fx:ey-(p+1), fx))
-    #         @assert s == sort!(t)
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-3-X"] = z3.Implies(
         z3.And(diff_sign, ex > fy + (p + one), fx < ey),
         z3.Or(
@@ -283,23 +803,11 @@ def two_sum_lemmas(
 
     # # Lemma 3A
     # if diff_sign & (ex == fy + (p + 1)) & (fx < ey)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ey), (±, fy:ex-(p+1), fy))
     #         push_range!(t, (sx, ex       , ex-(p-1):ex), (±, fy:ex-(p+1), fy))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey == fx + (p + 1)) & (fy < ex)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey-1:ey-1, ey-(p-1):ex), (±, fx:ey-(p+1), fx))
     #         push_range!(t, (sy, ey       , ey-(p-1):ey), (±, fx:ey-(p+1), fx))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-3A-X"] = z3.Implies(
         z3.And(diff_sign, ex == fy + (p + one), fx < ey),
         z3.Or(
@@ -317,31 +825,19 @@ def two_sum_lemmas(
 
     # # Lemma 3B
     # if diff_sign & (ex > fy + (p + 1)) & (fx == ey)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex-1:ex-1, ex-p:ey-1    ), (±  , fy:ex-(p+2), fy))
     #         push_range!(t, (sx, ex-1:ex-1, ey           ), (!sy, fy:ex-(p+2), fy))
     #         push_range!(t, (sx, ex       , ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
     #         push_range!(t, (sx, ex       , ey           ), (!sy, fy:ex-(p+1), fy))
     #         push_range!(t, (sx, ex       , ey+1:ex-1    ), (sy , fy:ex-(p+1), fy))
     #         push_range!(t, (sx, ex       , ex           ), (sy , fy:ex-(p+2), fy))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey > fx + (p + 1)) & (fy == ex)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey-1:ey-1, ey-p:ex-1    ), (±  , fx:ey-(p+2), fx))
     #         push_range!(t, (sy, ey-1:ey-1, ex           ), (!sx, fx:ey-(p+2), fx))
     #         push_range!(t, (sy, ey       , ey-(p-1):ex-1), (±  , fx:ey-(p+1), fx))
     #         push_range!(t, (sy, ey       , ex           ), (!sx, fx:ey-(p+1), fx))
     #         push_range!(t, (sy, ey       , ex+1:ey-1    ), (sx , fx:ey-(p+1), fx))
     #         push_range!(t, (sy, ey       , ey           ), (sx , fx:ey-(p+2), fx))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-3B-X"] = z3.Implies(
         z3.And(diff_sign, ex > fy + (p + one), fx == ey),
         z3.Or(
@@ -367,25 +863,13 @@ def two_sum_lemmas(
 
     # # Lemma 3C.G
     # if diff_sign & (ex == fy + p) & (fx < ey) & (ey < fy + (p - 1))
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex-1:ex-1, fy), pos_zero)
     #         push_range!(t, (sx, ex       , ex-(p-2):ex-1), (±  , fy:ex-p, fy))
     #         push_range!(t, (sx, ex       , ex           ), (!sy, fy:ex-p, fy))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey == fx + p) & (fy < ex) & (ex < fx + (p - 1))
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey-1:ey-1, fx), pos_zero)
     #         push_range!(t, (sy, ey       , ey-(p-2):ey-1), (±  , fx:ey-p, fx))
     #         push_range!(t, (sy, ey       , ey           ), (!sx, fx:ey-p, fx))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-3C-G-X"] = z3.Implies(
         z3.And(diff_sign, ex == fy + p, fx < ey, ey < fy + (p - one)),
         z3.Or(
@@ -405,25 +889,13 @@ def two_sum_lemmas(
 
     # # Lemma 3C.1
     # if diff_sign & (ex == fy + p) & (fx + 1 < ey) & (ey == fy + (p - 1))
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, fx:ex-1, fy), pos_zero)
     #         push_range!(t, (sx, ex     , ex-(p-2):ex-2), (±  , fy:ex-p, fy))
     #         push_range!(t, (sx, ex     , ex           ), (!sy, fy:ex-p, fy))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey == fx + p) & (fy + 1 < ex) & (ex == fx + (p - 1))
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, fy:ey-1, fx), pos_zero)
     #         push_range!(t, (sy, ey     , ey-(p-2):ey-2), (±  , fx:ey-p, fx))
     #         push_range!(t, (sy, ey     , ey           ), (!sx, fx:ey-p, fx))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-3C-1-X"] = z3.Implies(
         z3.And(diff_sign, ex == fy + p, fx + one < ey, ey == fy + (p - one)),
         z3.Or(
@@ -443,27 +915,15 @@ def two_sum_lemmas(
 
     # # Lemma 3C.2
     # if diff_sign & (ex == fy + p) & (fx + 1 == ey) & (ey == fy + (p - 1))
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex-2:ex-1, fy), pos_zero)
     #         push_range!(t, (sx, ex       , ex-(p-2):ey-2), (±  , fy:ex-p, fy))
     #         push_range!(t, (sx, ex       , ey - 1       ), (sy , fy:ex-p, fy))
     #         push_range!(t, (sx, ex       , ex           ), (!sy, fy:ex-p, fy))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey == fx + p) & (fy + 1 == ex) & (ex == fx + (p - 1))
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey-2:ey-1, fx), pos_zero)
     #         push_range!(t, (sy, ey       , ey-(p-2):ex-2), (±  , fx:ey-p, fx))
     #         push_range!(t, (sy, ey       , ex - 1       ), (sx , fx:ey-p, fx))
     #         push_range!(t, (sy, ey       , ey           ), (!sx, fx:ey-p, fx))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-3C-2-X"] = z3.Implies(
         z3.And(diff_sign, ex == fy + p, fx + one == ey, ey == fy + (p - one)),
         z3.Or(
@@ -485,25 +945,13 @@ def two_sum_lemmas(
 
     # # Lemma 3D.G
     # if diff_sign & (ex > fy + p) & (fx == ey + 1) & (ex < fx + (p - 1))
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex, ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
     #         push_range!(t, (sx, ex, ey           ), (sy , fy:ex-(p+1), fy))
     #         push_range!(t, (sx, ex, ey+2:ex      ), (!sy, fy:ex-(p+1), fy))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey > fx + p) & (fy == ex + 1) & (ey < fy + (p - 1))
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey, ey-(p-1):ex-1), (±  , fx:ey-(p+1), fx))
     #         push_range!(t, (sy, ey, ex           ), (sx , fx:ey-(p+1), fx))
     #         push_range!(t, (sy, ey, ex+2:ey      ), (!sx, fx:ey-(p+1), fx))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-3D-G-X"] = z3.Implies(
         z3.And(diff_sign, ex > fy + p, fx == ey + one, ex < fx + (p - one)),
         z3.Or(
@@ -523,21 +971,9 @@ def two_sum_lemmas(
 
     # # Lemma 3D.1
     # if diff_sign & (ex > fy + p) & (fx == ey + 1) & (ex == fx + (p - 1))
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex, ey+2:ex      ), (!sy, fy:ex-(p+1), fy))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey > fx + p) & (fy == ex + 1) & (ey == fy + (p - 1))
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey, ex+2:ey      ), (!sx, fx:ey-(p+1), fx))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-3D-1-X"] = z3.Implies(
         z3.And(diff_sign, ex > fy + p, fx == ey + one, ex == fx + (p - one)),
         x_case(ex, (ey + two, ex), False, 1),
@@ -549,29 +985,17 @@ def two_sum_lemmas(
 
     # # Lemma 3AB
     # if diff_sign & (ex == fy + (p + 1)) & (fx == ey)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
     #         push_range!(t, (sx, ex-1:ex-1, ey           ), (!sy, fy:ex-(p+1), fy))
     #         push_range!(t, (sx, ex       , ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
     #         push_range!(t, (sx, ex       , ey           ), (!sy, fy:ex-(p+1), fy))
     #         push_range!(t, (sx, ex       , ey+1:ex      ), (sy , fy:ex-(p+1), fy))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey == fx + (p + 1)) & (fy == ex)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey-1:ey-1, ey-(p-1):ex-1), (±  , fx:ey-(p+1), fx))
     #         push_range!(t, (sy, ey-1:ey-1, ex           ), (!sx, fx:ey-(p+1), fx))
     #         push_range!(t, (sy, ey       , ey-(p-1):ex-1), (±  , fx:ey-(p+1), fx))
     #         push_range!(t, (sy, ey       , ex           ), (!sx, fx:ey-(p+1), fx))
     #         push_range!(t, (sy, ey       , ex+1:ey      ), (sx , fx:ey-(p+1), fx))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-3AB-X"] = z3.Implies(
         z3.And(diff_sign, ex == fy + (p + one), fx == ey),
         z3.Or(
@@ -595,27 +1019,15 @@ def two_sum_lemmas(
 
     # # Lemma 3BC.G
     # if diff_sign & (ex == fy + p) & (fx == ey) & (ex > fx + 1) & (ey > fy + 1)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex-1:ex-1, fy), pos_zero)
     #         push_range!(t, (sx, ex       , ex-(p-2):ey-1), (±  , fy:ex-p, fy))
     #         push_range!(t, (sx, ex       , ey           ), (!sy, fy:ex-p, fy))
     #         push_range!(t, (sx, ex       , ey+1:ex-1    ), (sy , fy:ex-p, fy))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey == fx + p) & (fy == ex) & (ey > fy + 1) & (ex > fx + 1)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey-1:ey-1, fx), pos_zero)
     #         push_range!(t, (sy, ey       , ey-(p-2):ex-1), (±  , fx:ey-p, fx))
     #         push_range!(t, (sy, ey       , ex           ), (!sx, fx:ey-p, fx))
     #         push_range!(t, (sy, ey       , ex+1:ey-1    ), (sx , fx:ey-p, fx))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-3BC-G-X"] = z3.Implies(
         z3.And(diff_sign, ex == fy + p, fx == ey, ex > fx + one, ey > fy + one),
         z3.Or(
@@ -637,23 +1049,11 @@ def two_sum_lemmas(
 
     # # Lemma 3BC.1
     # if diff_sign & (ex == fy + p) & (fx == ey) & (ey == fy + 1)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex-1:ex-1, fy), pos_zero)
     #         push_range!(t, (sx, ex       , ey+1:ex-1    ), (sy , fy:ex-p, fy))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey == fx + p) & (fy == ex) & (ex == fx + 1)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey-1:ey-1, fx), pos_zero)
     #         push_range!(t, (sy, ey       , ex+1:ey-1    ), (sx , fx:ey-p, fx))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-3BC-1-X"] = z3.Implies(
         z3.And(diff_sign, ex == fy + p, fx == ey, ey == fy + one),
         z3.Or(
@@ -671,25 +1071,13 @@ def two_sum_lemmas(
 
     # # Lemma 3CD.G
     # if diff_sign & (ex == fy + p) & (fx == ey + 1) & (ex > fx) & (ey > fy + 1)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex, ex-(p-2):ey-1), (±  , fy:ex-p, fy))
     #         push_range!(t, (sx, ex, ey           ), (sy , fy:ex-p, fy))
     #         push_range!(t, (sx, ex, ey+2:ex      ), (!sy, fy:ex-p, fy))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey == fx + p) & (fy == ex + 1) & (ey > fy) & (ex > fx + 1)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey, ey-(p-2):ex-1), (±  , fx:ey-p, fx))
     #         push_range!(t, (sy, ey, ex           ), (sx , fx:ey-p, fx))
     #         push_range!(t, (sy, ey, ex+2:ey      ), (!sx, fx:ey-p, fx))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-3CD-G-X"] = z3.Implies(
         z3.And(diff_sign, ex == fy + p, fx == ey + one, ex > fx, ey > fy + one),
         z3.Or(
@@ -709,21 +1097,9 @@ def two_sum_lemmas(
 
     # # Lemma 3CD.1
     # if diff_sign & (ex == fy + p) & (fx == ey + 1) & (ey < fy + 2)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex, ey+2:ex      ), (!sy, fy:ex-p, fy))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey == fx + p) & (fy == ex + 1) & (ex < fx + 2)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey, ex+2:ey      ), (!sx, fx:ey-p, fx))
-    #         @assert s == t
-    #     end
-    #     lemma_3_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-3CD-1-X"] = z3.Implies(
         z3.And(xy_nonzero, diff_sign, ex == fy + p, fx == ey + one, ey < fy + two),
         x_case(ex, (ey + two, ex), False, 0),
@@ -733,29 +1109,17 @@ def two_sum_lemmas(
         y_case(ey, (ex + two, ey), False, 0),
     )
 
-    ############################################################################
+    ############################################################# LEMMA FAMILY 4
 
     # # Lemma 4
     # if diff_sign & (ex > fy + (p + 1)) & (fx < ey + (p + 1)) & (ex == fx)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex-1:ex-1, ex-p:ey-1), (±  , fy:ex-(p+2), fy))
     #         push_range!(t, (sx, ex-1:ex-1, ey       ), (sy , fy:ex-(p+2), fy))
     #         push_range!(t, (sx, ex-1:ex-1, ey + 1   ), (!sy, fy:ex-(p+2), fy))
-    #         @assert s == t
-    #     end
-    #     lemma_4_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey > fx + (p + 1)) & (fy < ex + (p + 1)) & (ey == fy)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey-1:ey-1, ey-p:ex-1), (±  , fx:ey-(p+2), fx))
     #         push_range!(t, (sy, ey-1:ey-1, ex       ), (sx , fx:ey-(p+2), fx))
     #         push_range!(t, (sy, ey-1:ey-1, ex + 1   ), (!sx, fx:ey-(p+2), fx))
-    #         @assert s == t
-    #     end
-    #     lemma_4_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-4-X"] = z3.Implies(
         z3.And(diff_sign, ex > fy + (p + one), fx < ey + (p + one), ex == fx),
         z3.Or(
@@ -775,25 +1139,13 @@ def two_sum_lemmas(
 
     # # Lemma 4A.G
     # if diff_sign & (ex == fy + (p + 1)) & (fx < ey + p) & (ex == fx)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
     #         push_range!(t, (sx, ex-1:ex-1, ey           ), (sy , fy:ex-(p+1), fy))
     #         push_range!(t, (sx, ex-1:ex-1, ey + 1       ), (!sy, fy:ex-(p+1), fy))
-    #         @assert s == t
-    #     end
-    #     lemma_4_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey == fx + (p + 1)) & (fy < ex + p) & (ey == fy)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey-1:ey-1, ey-(p-1):ex-1), (±  , fx:ey-(p+1), fx))
     #         push_range!(t, (sy, ey-1:ey-1, ex           ), (sx , fx:ey-(p+1), fx))
     #         push_range!(t, (sy, ey-1:ey-1, ex + 1       ), (!sx, fx:ey-(p+1), fx))
-    #         @assert s == t
-    #     end
-    #     lemma_4_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-4A-G-X"] = z3.Implies(
         z3.And(diff_sign, ex == fy + (p + one), fx < ey + p, ex == fx),
         z3.Or(
@@ -813,21 +1165,9 @@ def two_sum_lemmas(
 
     # # Lemma 4A.1
     # if diff_sign & (ex == fy + (p + 1)) & (fx == ey + p) & (ex == fx)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ey+1), (!sy, fy:ex-(p+1), fy))
-    #         @assert s == t
-    #     end
-    #     lemma_4_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey == fx + (p + 1)) & (fy == ex + p) & (ey == fy)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey-1:ey-1, ey-(p-1):ex+1), (!sx, fx:ey-(p+1), fx))
-    #         @assert s == t
-    #     end
-    #     lemma_4_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-4A-1-X"] = z3.Implies(
         z3.And(diff_sign, ex == fy + (p + one), fx == ey + p, ex == fx),
         x_case(ex - one, (ex - (p - one), ey + one), False, 1),
@@ -839,21 +1179,9 @@ def two_sum_lemmas(
 
     # # Lemma 4B
     # if diff_sign & (ex > fy + (p + 1)) & (fx == ey + (p + 1)) & (ex == fx)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sx, ex-1:ex-1, ex-p:ey+1), (!sy, fy:ex-(p+2), fy))
-    #         @assert s == t
-    #     end
-    #     lemma_4_count += 1
-    #     verified += 1
-    # end
     # if diff_sign & (ey > fx + (p + 1)) & (fy == ex + (p + 1)) & (ey == fy)
-    #     let t = MediumPairSummary[]
     #         push_range!(t, (sy, ey-1:ey-1, ey-p:ex+1), (!sx, fx:ey-(p+2), fx))
-    #         @assert s == t
-    #     end
-    #     lemma_4_count += 1
-    #     verified += 1
-    # end
     result["TwoSum-4B-X"] = z3.Implies(
         z3.And(diff_sign, ex > fy + (p + one), fx == ey + (p + one), ex == fx),
         x_case(ex - one, (ex - p, ey + one), False, 2),
