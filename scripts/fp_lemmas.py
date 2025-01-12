@@ -159,6 +159,7 @@ def two_sum_lemmas(
             conditions.append(ee <= ex - (p - two))
         else:
             assert False
+        conditions.append(fe == fy)
         return z3.And(*conditions)
 
     def x_case_zero(
@@ -216,6 +217,7 @@ def two_sum_lemmas(
             conditions.append(ee <= ey - (p - two))
         else:
             assert False
+        conditions.append(fe == fx)
         return z3.And(*conditions)
 
     def y_case_zero(
@@ -237,6 +239,8 @@ def two_sum_lemmas(
         conditions.append(e_pos_zero)
         return z3.And(*conditions)
 
+    # fmt: off
+
     ############################################################# LEMMA FAMILY 2
 
     # # Lemma 2
@@ -253,19 +257,19 @@ def two_sum_lemmas(
     result["TwoSum-2-X"] = z3.Implies(
         z3.And(same_sign, ex > fy + p, fx < ey),
         z3.Or(
-            x_case(ex, (ex - (p - one), ex - one), None, 1),
-            x_case(ex + one, (ex - (p - two), ey), None, 0),
-            x_case(ex + one, ex + one, False, 1),
-            x_case(ex + one, ex + one, True, 0),
+            x_case(ex    , (ex-(p-one), ex-one), None , 1),
+            x_case(ex+one, (ex-(p-two), ey)    , None , 0),
+            x_case(ex+one, ex+one              , False, 1),
+            x_case(ex+one, ex+one              , True , 0),
         ),
     )
     result["TwoSum-2-Y"] = z3.Implies(
         z3.And(same_sign, ey > fx + p, fy < ex),
         z3.Or(
-            y_case(ey, (ey - (p - one), ey - one), None, 1),
-            y_case(ey + one, (ey - (p - two), ex), None, 0),
-            y_case(ey + one, ey + one, False, 1),
-            y_case(ey + one, ey + one, True, 0),
+            y_case(ey    , (ey-(p-one), ey-one), None , 1),
+            y_case(ey+one, (ey-(p-two), ex)    , None , 0),
+            y_case(ey+one, ey+one              , False, 1),
+            y_case(ey+one, ey+one              , True , 0),
         ),
     )
 
@@ -281,17 +285,17 @@ def two_sum_lemmas(
     result["TwoSum-2A-G-X"] = z3.Implies(
         z3.And(same_sign, ex == fy + p, fx < ey, ey < fy + (p - one)),
         z3.Or(
-            x_case(ex, (ex - (p - two), ex - one), None, 0),
-            x_case(ex + one, (ex - (p - two), ey), None, 0),
-            x_case(ex + one, ex + one, None, 0),
+            x_case(ex    , (ex-(p-two), ex-one), None, 0),
+            x_case(ex+one, (ex-(p-two), ey)    , None, 0),
+            x_case(ex+one, ex+one              , None, 0),
         ),
     )
     result["TwoSum-2A-G-Y"] = z3.Implies(
         z3.And(same_sign, ey == fx + p, fy < ex, ex < fx + (p - one)),
         z3.Or(
-            y_case(ey, (ey - (p - two), ey - one), None, 0),
-            y_case(ey + one, (ey - (p - two), ex), None, 0),
-            y_case(ey + one, ey + one, None, 0),
+            y_case(ey    , (ey-(p-two), ey-one), None, 0),
+            y_case(ey+one, (ey-(p-two), ex)    , None, 0),
+            y_case(ey+one, ey+one              , None, 0),
         ),
     )
 
@@ -307,17 +311,17 @@ def two_sum_lemmas(
     result["TwoSum-2A-1-X"] = z3.Implies(
         z3.And(same_sign, ex == fy + p, fx + one < ey, ey == fy + (p - one)),
         z3.Or(
-            x_case(ex, (ex - (p - two), ex - two), None, 0),
-            x_case(ex + one, (ex - (p - two), ey), None, 0),
-            x_case(ex + one, ex + one, None, 0),
+            x_case(ex    , (ex-(p-two), ex-two), None, 0),
+            x_case(ex+one, (ex-(p-two), ey)    , None, 0),
+            x_case(ex+one, ex+one              , None, 0),
         ),
     )
     result["TwoSum-2A-1-Y"] = z3.Implies(
         z3.And(same_sign, ey == fx + p, fy + one < ex, ex == fx + (p - one)),
         z3.Or(
-            y_case(ey, (ey - (p - two), ey - two), None, 0),
-            y_case(ey + one, (ey - (p - two), ex), None, 0),
-            y_case(ey + one, ey + one, None, 0),
+            y_case(ey    , (ey-(p-two), ey-two), None, 0),
+            y_case(ey+one, (ey-(p-two), ex)    , None, 0),
+            y_case(ey+one, ey+one              , None, 0),
         ),
     )
 
@@ -335,19 +339,19 @@ def two_sum_lemmas(
     result["TwoSum-2A-2-X"] = z3.Implies(
         z3.And(same_sign, ex == fy + p, fx + one == ey, ey == fy + (p - one)),
         z3.Or(
-            x_case(ex, (ex - (p - two), ey - two), None, 0),
-            x_case(ex, ey - one, True, 0),
-            x_case(ex + one, (ex - (p - two), ey), None, 0),
-            x_case(ex + one, ex + one, None, 0),
+            x_case(ex    , (ex-(p-two), ey-two), None, 0),
+            x_case(ex    , ey-one              , True, 0),
+            x_case(ex+one, (ex-(p-two), ey)    , None, 0),
+            x_case(ex+one, ex+one              , None, 0),
         ),
     )
     result["TwoSum-2A-2-Y"] = z3.Implies(
         z3.And(same_sign, ey == fx + p, fy + one == ex, ex == fx + (p - one)),
         z3.Or(
-            y_case(ey, (ey - (p - two), ex - two), None, 0),
-            y_case(ey, ex - one, True, 0),
-            y_case(ey + one, (ey - (p - two), ex), None, 0),
-            y_case(ey + one, ey + one, None, 0),
+            y_case(ey    , (ey-(p-two), ex-two), None, 0),
+            y_case(ey    , ex-one              , True, 0),
+            y_case(ey+one, (ey-(p-two), ex)    , None, 0),
+            y_case(ey+one, ey+one              , None, 0),
         ),
     )
 
@@ -369,23 +373,23 @@ def two_sum_lemmas(
     result["TwoSum-2B-G-X"] = z3.Implies(
         z3.And(same_sign, ex > fy + p, fx == ey, ex < fx + (p - one)),
         z3.Or(
-            x_case(ex, (ex - (p - one), ey - one), None, 1),
-            x_case(ex, ey, False, 1),
-            x_case(ex, (ey + one, ex - one), True, 1),
-            x_case(ex + one, (ex - (p - two), ey - one), None, 0),
-            x_case(ex + one, ey, False, 0),
-            x_case(ex + one, ex + one, True, 0),
+            x_case(ex    , (ex-(p-one), ey-one), None , 1),
+            x_case(ex    , ey                  , False, 1),
+            x_case(ex    , (ey+one, ex-one)    , True , 1),
+            x_case(ex+one, (ex-(p-two), ey-one), None , 0),
+            x_case(ex+one, ey                  , False, 0),
+            x_case(ex+one, ex+one              , True , 0),
         ),
     )
     result["TwoSum-2B-G-Y"] = z3.Implies(
         z3.And(same_sign, ey > fx + p, fy == ex, ey < fy + (p - one)),
         z3.Or(
-            y_case(ey, (ey - (p - one), ex - one), None, 1),
-            y_case(ey, ex, False, 1),
-            y_case(ey, (ex + one, ey - one), True, 1),
-            y_case(ey + one, (ey - (p - two), ex - one), None, 0),
-            y_case(ey + one, ex, False, 0),
-            y_case(ey + one, ey + one, True, 0),
+            y_case(ey    , (ey-(p-one), ex-one), None , 1),
+            y_case(ey    , ex                  , False, 1),
+            y_case(ey    , (ex+one, ey-one)    , True , 1),
+            y_case(ey+one, (ey-(p-two), ex-one), None , 0),
+            y_case(ey+one, ex                  , False, 0),
+            y_case(ey+one, ey+one              , True , 0),
         ),
     )
 
@@ -401,17 +405,17 @@ def two_sum_lemmas(
     result["TwoSum-2B-1-X"] = z3.Implies(
         z3.And(same_sign, ex > fy + p, fx == ey, ex == fx + (p - one)),
         z3.Or(
-            x_case(ex, ey, False, 1),
-            x_case(ex, (ey + one, ex - one), True, 1),
-            x_case(ex + one, ex + one, True, 0),
+            x_case(ex    , ey              , False, 1),
+            x_case(ex    , (ey+one, ex-one), True , 1),
+            x_case(ex+one, ex+one          , True , 0),
         ),
     )
     result["TwoSum-2B-1-Y"] = z3.Implies(
         z3.And(same_sign, ey > fx + p, fy == ex, ey == fy + (p - one)),
         z3.Or(
-            y_case(ey, ex, False, 1),
-            y_case(ey, (ex + one, ey - one), True, 1),
-            y_case(ey + one, ey + one, True, 0),
+            y_case(ey    , ex              , False, 1),
+            y_case(ey    , (ex+one, ey-one), True , 1),
+            y_case(ey+one, ey+one          , True , 0),
         ),
     )
 
@@ -425,31 +429,19 @@ def two_sum_lemmas(
     #         push_range!(t, (sy, ey+1:ey+1, ey-(p-3):ex), (± , fx:ey-(p-1), fx))
     #         push_range!(t, (sy, ey+1:ey+1, ey + 1     ), (sx, fx:ey-(p-1), fx))
     result["TwoSum-2C-G-X"] = z3.Implies(
-        z3.And(
-            same_sign,
-            ex == fy + (p - one),
-            fx < ey,
-            ex < fx + (p - one),
-            ey < fy + (p - one),
-        ),
+        z3.And(same_sign, ex == fy + (p - one), fx < ey, ex < fx + (p - one), ey < fy + (p - one)),
         z3.Or(
             x_case_zero(ex, fy),
-            x_case(ex + one, (ex - (p - three), ey), None, -1),
-            x_case(ex + one, ex + one, True, -1),
+            x_case(ex+one, (ex-(p-three), ey), None, -1),
+            x_case(ex+one, ex+one            , True, -1),
         ),
     )
     result["TwoSum-2C-G-Y"] = z3.Implies(
-        z3.And(
-            same_sign,
-            ey == fx + (p - one),
-            fy < ex,
-            ey < fy + (p - one),
-            ex < fx + (p - one),
-        ),
+        z3.And(same_sign, ey == fx + (p - one), fy < ex, ey < fy + (p - one), ex < fx + (p - one)),
         z3.Or(
             y_case_zero(ey, fx),
-            y_case(ey + one, (ey - (p - three), ex), None, -1),
-            y_case(ey + one, ey + one, True, -1),
+            y_case(ey+one, (ey-(p-three), ex), None, -1),
+            y_case(ey+one, ey+one            , True, -1),
         ),
     )
 
@@ -459,24 +451,12 @@ def two_sum_lemmas(
     # if same_sign & (ey == fx + (p - 1)) & (fy < ex) & (ey < fy + (p - 1)) & (ex == fx + (p - 1))
     #         push_range!(t, (sy, ey+1:ey+1, ey-(p-3):ex), (± , fx:ey-(p-1), fx))
     result["TwoSum-2C-1-X"] = z3.Implies(
-        z3.And(
-            same_sign,
-            ex == fy + (p - one),
-            fx < ey,
-            ex < fx + (p - one),
-            ey == fy + (p - one),
-        ),
-        x_case(ex + one, (ex - (p - three), ey), None, -1),
+        z3.And(same_sign, ex == fy + (p - one), fx < ey, ex < fx + (p - one), ey == fy + (p - one)),
+        x_case(ex+one, (ex-(p-three), ey), None, -1),
     )
     result["TwoSum-2C-1-Y"] = z3.Implies(
-        z3.And(
-            same_sign,
-            ey == fx + (p - one),
-            fy < ex,
-            ey < fy + (p - one),
-            ex == fx + (p - one),
-        ),
-        y_case(ey + one, (ey - (p - three), ex), None, -1),
+        z3.And(same_sign, ey == fx + (p - one), fy < ex, ey < fy + (p - one), ex == fx + (p - one)),
+        y_case(ey+one, (ey-(p-three), ex), None, -1),
     )
 
     # # Lemma 2D.G
@@ -493,19 +473,19 @@ def two_sum_lemmas(
     result["TwoSum-2D-G-X"] = z3.Implies(
         z3.And(same_sign, ex > fy + p, fx == ey + one, ex < fx + (p - one)),
         z3.Or(
-            x_case(ex, (ex - (p - one), ey - one), None, 1),
-            x_case(ex, ey, True, 1),
-            x_case(ex, (ey + two, ex - one), False, 1),
-            x_case(ex + one, ex + one, False, 1),
+            x_case(ex    , (ex-(p-one), ey-one), None , 1),
+            x_case(ex    , ey                  , True , 1),
+            x_case(ex    , (ey+two, ex-one)    , False, 1),
+            x_case(ex+one, ex+one              , False, 1),
         ),
     )
     result["TwoSum-2D-G-Y"] = z3.Implies(
         z3.And(same_sign, ey > fx + p, fy == ex + one, ey < fy + (p - one)),
         z3.Or(
-            y_case(ey, (ey - (p - one), ex - one), None, 1),
-            y_case(ey, ex, True, 1),
-            y_case(ey, (ex + two, ey - one), False, 1),
-            y_case(ey + one, ey + one, False, 1),
+            y_case(ey    , (ey-(p-one), ex-one), None , 1),
+            y_case(ey    , ex                  , True , 1),
+            y_case(ey    , (ex+two, ey-one)    , False, 1),
+            y_case(ey+one, ey+one              , False, 1),
         ),
     )
 
@@ -519,15 +499,15 @@ def two_sum_lemmas(
     result["TwoSum-2D-1-X"] = z3.Implies(
         z3.And(same_sign, ex > fy + p, fx == ey + one, ex == fx + (p - one)),
         z3.Or(
-            x_case(ex, (ey + two, ex - one), False, 1),
-            x_case(ex + one, ex + one, False, 1),
+            x_case(ex    , (ey+two, ex-one), False, 1),
+            x_case(ex+one, ex+one          , False, 1),
         ),
     )
     result["TwoSum-2D-1-Y"] = z3.Implies(
         z3.And(same_sign, ey > fx + p, fy == ex + one, ey == fy + (p - one)),
         z3.Or(
-            y_case(ey, (ex + two, ey - one), False, 1),
-            y_case(ey + one, ey + one, False, 1),
+            y_case(ey    , (ex+two, ey-one), False, 1),
+            y_case(ey+one, ey+one          , False, 1),
         ),
     )
 
@@ -547,37 +527,25 @@ def two_sum_lemmas(
     #         push_range!(t, (sy, ey+1:ey+1, ex           ), (!sx, fx:ey-p, fx))
     #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-p, fx))
     result["TwoSum-2AB-G-X"] = z3.Implies(
-        z3.And(
-            same_sign,
-            ex == fy + p,
-            fx == ey,
-            ex < fx + (p - one),
-            ey < fy + (p - one),
-        ),
+        z3.And(same_sign, ex == fy + p, fx == ey, ex < fx + (p - one), ey < fy + (p - one)),
         z3.Or(
-            x_case(ex, (ex - (p - two), ey - one), None, 0),
-            x_case(ex, ey, False, 0),
-            x_case(ex, (ey + one, ex - one), True, 0),
-            x_case(ex + one, (ex - (p - two), ey - one), None, 0),
-            x_case(ex + one, ey, False, 0),
-            x_case(ex + one, ex + one, True, 0),
+            x_case(ex    , (ex-(p-two), ey-one), None , 0),
+            x_case(ex    , ey                  , False, 0),
+            x_case(ex    , (ey+one, ex-one)    , True , 0),
+            x_case(ex+one, (ex-(p-two), ey-one), None , 0),
+            x_case(ex+one, ey                  , False, 0),
+            x_case(ex+one, ex+one              , True , 0),
         ),
     )
     result["TwoSum-2AB-G-Y"] = z3.Implies(
-        z3.And(
-            same_sign,
-            ey == fx + p,
-            fy == ex,
-            ey < fy + (p - one),
-            ex < fx + (p - one),
-        ),
+        z3.And(same_sign, ey == fx + p, fy == ex, ey < fy + (p - one), ex < fx + (p - one)),
         z3.Or(
-            y_case(ey, (ey - (p - two), ex - one), None, 0),
-            y_case(ey, ex, False, 0),
-            y_case(ey, (ex + one, ey - one), True, 0),
-            y_case(ey + one, (ey - (p - two), ex - one), None, 0),
-            y_case(ey + one, ex, False, 0),
-            y_case(ey + one, ey + one, True, 0),
+            y_case(ey    , (ey-(p-two), ex-one), None , 0),
+            y_case(ey    , ex                  , False, 0),
+            y_case(ey    , (ex+one, ey-one)    , True , 0),
+            y_case(ey+one, (ey-(p-two), ex-one), None , 0),
+            y_case(ey+one, ex                  , False, 0),
+            y_case(ey+one, ey+one              , True , 0),
         ),
     )
 
@@ -591,15 +559,15 @@ def two_sum_lemmas(
     result["TwoSum-2AB-1-X"] = z3.Implies(
         z3.And(same_sign, ex == fy + p, fx == ey, ex == fx + (p - one)),
         z3.Or(
-            x_case(ex, (ey + one, ex - one), True, 0),
-            x_case(ex + one, ex + one, True, 0),
+            x_case(ex    , (ey+one, ex-one), True, 0),
+            x_case(ex+one, ex+one          , True, 0),
         ),
     )
     result["TwoSum-2AB-1-Y"] = z3.Implies(
         z3.And(same_sign, ey == fx + p, fy == ex, ey == fy + (p - one)),
         z3.Or(
-            y_case(ey, (ex + one, ey - one), True, 0),
-            y_case(ey + one, ey + one, True, 0),
+            y_case(ey    , (ex+one, ey-one), True, 0),
+            y_case(ey+one, ey+one          , True, 0),
         ),
     )
 
@@ -615,17 +583,17 @@ def two_sum_lemmas(
     result["TwoSum-2AB-2-X"] = z3.Implies(
         z3.And(same_sign, ex == fy + p, fx == ey, ey == fy + (p - one)),
         z3.Or(
-            x_case(ex + one, (ex - (p - two), ey - one), None, 0),
-            x_case(ex + one, ey, False, 0),
-            x_case(ex + one, ex + one, True, 0),
+            x_case(ex+one, (ex-(p-two), ey-one), None , 0),
+            x_case(ex+one, ey                  , False, 0),
+            x_case(ex+one, ex+one              , True , 0),
         ),
     )
     result["TwoSum-2AB-2-Y"] = z3.Implies(
         z3.And(same_sign, ey == fx + p, fy == ex, ex == fx + (p - one)),
         z3.Or(
-            y_case(ey + one, (ey - (p - two), ex - one), None, 0),
-            y_case(ey + one, ex, False, 0),
-            y_case(ey + one, ey + one, True, 0),
+            y_case(ey+one, (ey-(p-two), ex-one), None , 0),
+            y_case(ey+one, ex                  , False, 0),
+            y_case(ey+one, ey+one              , True , 0),
         ),
     )
 
@@ -641,33 +609,21 @@ def two_sum_lemmas(
     #         push_range!(t, (sy, ey+1:ey+1, ex           ), (!sx, fx:ey-(p-1), fx))
     #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-(p-1), fx))
     result["TwoSum-2BC-G-X"] = z3.Implies(
-        z3.And(
-            same_sign,
-            ex == fy + (p - one),
-            fx == ey,
-            ey > fy + one,
-            ey < fy + (p - two),
-        ),
+        z3.And(same_sign, ex == fy + (p - one), fx == ey, ey > fy + one, ey < fy + (p - two)),
         z3.Or(
             x_case_zero(ex, fy),
-            x_case(ex + one, (ex - (p - three), ey - one), None, -1),
-            x_case(ex + one, ey, False, -1),
-            x_case(ex + one, ex + one, True, -1),
+            x_case(ex+one, (ex-(p-three), ey-one), None , -1),
+            x_case(ex+one, ey                    , False, -1),
+            x_case(ex+one, ex+one                , True , -1),
         ),
     )
     result["TwoSum-2BC-G-Y"] = z3.Implies(
-        z3.And(
-            same_sign,
-            ey == fx + (p - one),
-            fy == ex,
-            ex > fx + one,
-            ex < fx + (p - two),
-        ),
+        z3.And(same_sign, ey == fx + (p - one), fy == ex, ex > fx + one, ex < fx + (p - two)),
         z3.Or(
             y_case_zero(ey, fx),
-            y_case(ey + one, (ey - (p - three), ex - one), None, -1),
-            y_case(ey + one, ex, False, -1),
-            y_case(ey + one, ey + one, True, -1),
+            y_case(ey+one, (ey-(p-three), ex-one), None , -1),
+            y_case(ey+one, ex                    , False, -1),
+            y_case(ey+one, ey+one                , True , -1),
         ),
     )
 
@@ -683,17 +639,17 @@ def two_sum_lemmas(
     result["TwoSum-2BC-1-X"] = z3.Implies(
         z3.And(same_sign, ex == fy + (p - one), fx == ey, ey > fy + (p - three)),
         z3.Or(
-            x_case(ex + one, (ex - (p - three), ey - one), None, -1),
-            x_case(ex + one, ey, False, -1),
-            x_case(ex + one, ex + one, True, -1),
+            x_case(ex+one, (ex-(p-three), ey-one), None , -1),
+            x_case(ex+one, ey                    , False, -1),
+            x_case(ex+one, ex+one                , True , -1),
         ),
     )
     result["TwoSum-2BC-1-Y"] = z3.Implies(
         z3.And(same_sign, ey == fx + (p - one), fy == ex, ex > fx + (p - three)),
         z3.Or(
-            y_case(ey + one, (ey - (p - three), ex - one), None, -1),
-            y_case(ey + one, ex, False, -1),
-            y_case(ey + one, ey + one, True, -1),
+            y_case(ey+one, (ey-(p-three), ex-one), None , -1),
+            y_case(ey+one, ex                    , False, -1),
+            y_case(ey+one, ey+one                , True , -1),
         ),
     )
 
@@ -706,11 +662,17 @@ def two_sum_lemmas(
     #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-(p-1), fx))
     result["TwoSum-2BC-2-X"] = z3.Implies(
         z3.And(same_sign, ex == fy + (p - one), fx == ey, ey == fy + one),
-        z3.Or(x_case_zero(ex, fy), x_case(ex + one, ex + one, True, -1)),
+        z3.Or(
+            x_case_zero(ex, fy),
+            x_case(ex+one, ex+one, True, -1),
+        ),
     )
     result["TwoSum-2BC-2-Y"] = z3.Implies(
         z3.And(same_sign, ey == fx + (p - one), fy == ex, ex == fx + one),
-        z3.Or(y_case_zero(ey, fx), y_case(ey + one, ey + one, True, -1)),
+        z3.Or(
+            y_case_zero(ey, fx),
+            y_case(ey+one, ey+one, True, -1),
+        ),
     )
 
     # # Lemma 2AD.G
@@ -727,19 +689,19 @@ def two_sum_lemmas(
     result["TwoSum-2AD-G-X"] = z3.Implies(
         z3.And(same_sign, ex == fy + p, fx == ey + one, ex < fx + (p - two)),
         z3.Or(
-            x_case(ex, (ex - (p - two), ey - one), None, 0),
-            x_case(ex, ey, True, 0),
-            x_case(ex, (ey + two, ex - one), False, 0),
-            x_case(ex + one, ex + one, False, 0),
+            x_case(ex    , (ex-(p-two), ey-one), None , 0),
+            x_case(ex    , ey                  , True , 0),
+            x_case(ex    , (ey+two, ex-one)    , False, 0),
+            x_case(ex+one, ex+one              , False, 0),
         ),
     )
     result["TwoSum-2AD-G-Y"] = z3.Implies(
         z3.And(same_sign, ey == fx + p, fy == ex + one, ey < fy + (p - two)),
         z3.Or(
-            y_case(ey, (ey - (p - two), ex - one), None, 0),
-            y_case(ey, ex, True, 0),
-            y_case(ey, (ex + two, ey - one), False, 0),
-            y_case(ey + one, ey + one, False, 0),
+            y_case(ey    , (ey-(p-two), ex-one), None , 0),
+            y_case(ey    , ex                  , True , 0),
+            y_case(ey    , (ex+two, ey-one)    , False, 0),
+            y_case(ey+one, ey+one              , False, 0),
         ),
     )
 
@@ -751,21 +713,17 @@ def two_sum_lemmas(
     #         push_range!(t, (sy, ey       , ex+2:ey-1    ), (!sx, fx:ey-p, fx))
     #         push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (!sx, fx:ey-p, fx))
     result["TwoSum-2AD-1-X"] = z3.Implies(
-        z3.And(
-            xy_nonzero, same_sign, ex == fy + p, fx == ey + one, ex > fx + (p - three)
-        ),
+        z3.And(xy_nonzero, same_sign, ex == fy + p, fx == ey + one, ex > fx + (p - three)),
         z3.Or(
-            x_case(ex, (ey + two, ex - one), False, 0),
-            x_case(ex + one, ex + one, False, 0),
+            x_case(ex    , (ey+two, ex-one), False, 0),
+            x_case(ex+one, ex+one          , False, 0),
         ),
     )
     result["TwoSum-2AD-1-Y"] = z3.Implies(
-        z3.And(
-            xy_nonzero, same_sign, ey == fx + p, fy == ex + one, ey > fy + (p - three)
-        ),
+        z3.And(xy_nonzero, same_sign, ey == fx + p, fy == ex + one, ey > fy + (p - three)),
         z3.Or(
-            y_case(ey, (ex + two, ey - one), False, 0),
-            y_case(ey + one, ey + one, False, 0),
+            y_case(ey    , (ex+two, ey-one), False, 0),
+            y_case(ey+one, ey+one          , False, 0),
         ),
     )
 
@@ -1192,6 +1150,8 @@ def two_sum_lemmas(
     )
 
     ############################################################################
+
+    # fmt: on
 
     """
     result["TwoSum-AXS"] = z3.Implies(z3.And(sx == sy, lzx, ex > ey + one), es == ex)
