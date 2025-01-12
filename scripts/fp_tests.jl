@@ -863,6 +863,19 @@ function main(
     println("    Case 7: ",
         (case_7xs_count, case_7ys_count, case_7xd_count, case_7yd_count))
     println("    Case 8: ", (case_8s_count, case_8d_count))
+
+    @assert (
+        case_0pp_count + case_0pn_count + case_0np_count + case_0nn_count +
+        case_0x_count + case_0y_count +
+        case_1x_count + case_1y_count +
+        case_2xs_count + case_2ys_count + case_2xd_count + case_2yd_count +
+        case_3xs_count + case_3ys_count + case_3xd_count + case_3yd_count +
+        case_4xs_count + case_4ys_count + case_4xd_count + case_4yd_count +
+        case_5xs_count + case_5ys_count + case_5xd_count + case_5yd_count +
+        case_6xs_count + case_6ys_count + case_6xd_count + case_6yd_count +
+        case_7xs_count + case_7ys_count + case_7xd_count + case_7yd_count +
+        case_8s_count + case_8d_count
+    ) == length(summaries)^2
 end
 
 
@@ -900,6 +913,16 @@ function main(
     p = precision(T)
     push_range! = RangePusher(T)
 
+    lemma_z_count = 0
+    lemma_i_count = 0
+    lemma_f_count = 0
+    lemma_e_count = 0
+    lemma_o_count = 0
+    lemma_1_count = 0
+    lemma_2_count = 0
+    lemma_3_count = 0
+    lemma_4_count = 0
+
     for rx in summaries, ry in summaries
         s = lookup_summaries(two_sum_summaries, rx, ry)
         (sx, ex, fx) = rx
@@ -919,28 +942,34 @@ function main(
             # Lemma Z1: Both addends are zero.
             if (rx == pos_zero) & (ry == pos_zero)
                 @assert only(s) == (pos_zero, pos_zero)
+                lemma_z_count += 1
                 verified += 1
             end
             if (rx == pos_zero) & (ry == neg_zero)
                 @assert only(s) == (pos_zero, pos_zero)
+                lemma_z_count += 1
                 verified += 1
             end
             if (rx == neg_zero) & (ry == pos_zero)
                 @assert only(s) == (pos_zero, pos_zero)
+                lemma_z_count += 1
                 verified += 1
             end
             if (rx == neg_zero) & (ry == neg_zero)
                 @assert only(s) == (neg_zero, pos_zero)
+                lemma_z_count += 1
                 verified += 1
             end
 
             # Lemma Z2: One addend is zero.
             if y_zero & !x_zero
                 @assert only(s) == (rx, pos_zero)
+                lemma_z_count += 1
                 verified += 1
             end
             if x_zero & !y_zero
                 @assert only(s) == (ry, pos_zero)
+                lemma_z_count += 1
                 verified += 1
             end
 
@@ -959,12 +988,14 @@ function main(
                 ((ex == ey + (p + 1)) & ((ey == fy) | same_sign | (ex > fx))) |
                 ((ex == ey + p) & (ey == fy) & (same_sign | (ex > fx)) & (ex < fx + (p - 1))))
                 @assert only(s) == (rx, ry)
+                lemma_i_count += 1
                 verified += 1
             end
             if ((ey > ex + (p + 1)) |
                 ((ey == ex + (p + 1)) & ((ex == fx) | same_sign | (ey > fy))) |
                 ((ey == ex + p) & (ex == fx) & (same_sign | (ey > fy)) & (ey < fy + (p - 1))))
                 @assert only(s) == (ry, rx)
+                lemma_i_count += 1
                 verified += 1
             end
 
@@ -982,6 +1013,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1), pos_zero)
                     @assert s == t
                 end
+                lemma_f_count += 1
                 verified += 1
             end
 
@@ -991,6 +1023,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, fx+1:ex), pos_zero)
                     @assert s == t
                 end
+                lemma_f_count += 1
                 verified += 1
             end
 
@@ -1002,6 +1035,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1   ), pos_zero)
                     @assert s == t
                 end
+                lemma_f_count += 1
                 verified += 1
             end
             if same_sign & (fx == fy) & (ey == ex + 1)
@@ -1011,6 +1045,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1   ), pos_zero)
                     @assert s == t
                 end
+                lemma_f_count += 1
                 verified += 1
             end
 
@@ -1022,6 +1057,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1   ), pos_zero)
                     @assert s == t
                 end
+                lemma_f_count += 1
                 verified += 1
             end
             if same_sign & (fx == fy) & (ey > ex + 1)
@@ -1031,6 +1067,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1   ), pos_zero)
                     @assert s == t
                 end
+                lemma_f_count += 1
                 verified += 1
             end
 
@@ -1043,6 +1080,7 @@ function main(
                     end
                     @assert s == sort!(t)
                 end
+                lemma_f_count += 1
                 verified += 1
             end
 
@@ -1056,6 +1094,7 @@ function main(
                     push!(t, ((sx, ex, ex), pos_zero))
                     @assert s == t
                 end
+                lemma_f_count += 1
                 verified += 1
             end
             if diff_sign & (fx == fy) & (ey == ex + 1)
@@ -1067,6 +1106,7 @@ function main(
                     push!(t, ((sy, ey, ey), pos_zero))
                     @assert s == t
                 end
+                lemma_f_count += 1
                 verified += 1
             end
 
@@ -1077,6 +1117,7 @@ function main(
                     push_range!(t, (sx, ex       , fx+1:ex), pos_zero)
                     @assert s == t
                 end
+                lemma_f_count += 1
                 verified += 1
             end
             if diff_sign & (fx == fy) & (ey > ex + 1)
@@ -1085,6 +1126,7 @@ function main(
                     push_range!(t, (sy, ey       , fy+1:ey), pos_zero)
                     @assert s == t
                 end
+                lemma_f_count += 1
                 verified += 1
             end
 
@@ -1106,6 +1148,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, fx), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
             if same_sign & (ex == ey) & (fx > fy) & (ex < fx + (p - 1)) & (ey < fy + (p - 1))
@@ -1113,6 +1156,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, fy), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
 
@@ -1122,6 +1166,7 @@ function main(
                     push_range!(t, (±, fx:ex-1, fx), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
             if diff_sign & (ex == ey) & (fx > fy) & (ex > fx + 1) & (ey > fy + 1)
@@ -1129,6 +1174,7 @@ function main(
                     push_range!(t, (±, fy:ey-1, fy), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
 
@@ -1138,6 +1184,7 @@ function main(
                     push_range!(t, (±, fx:ex-2, fx), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
             if diff_sign & (ex == ey) & (ex == fx + 1) & (ey > fy + 1)
@@ -1145,16 +1192,19 @@ function main(
                     push_range!(t, (±, fy:ex-2, fy), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
 
             # Lemma E3: Addends do not overlap.
             if (same_sign | (ex > fx)) & (fx > ey) & (ex < fy + p)
                 @assert only(s) == ((sx, ex, fy), pos_zero)
+                lemma_e_count += 1
                 verified += 1
             end
             if (same_sign | (ey > fy)) & (fy > ex) & (ey < fx + p)
                 @assert only(s) == ((sy, ey, fx), pos_zero)
+                lemma_e_count += 1
                 verified += 1
             end
 
@@ -1166,6 +1216,7 @@ function main(
                     push_range!(t, (sx, ex-1:ex-1, fy), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
             if diff_sign & (
@@ -1175,6 +1226,7 @@ function main(
                     push_range!(t, (sy, ey-1:ey-1, fx), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
 
@@ -1184,6 +1236,7 @@ function main(
                     push_range!(t, (sx, ex:ex+1, fy), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
             if same_sign & ((ey > ex > fy > fx) | (ey > ex + 1 > fy > fx)) & (ey < fx + (p - 1))
@@ -1191,6 +1244,7 @@ function main(
                     push_range!(t, (sy, ey:ey+1, fx), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
 
@@ -1200,6 +1254,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, fy), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
             if same_sign & (ey == ex + 1) & (ex == fy > fx) & (ey < fx + (p - 1))
@@ -1207,6 +1262,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, fx), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
 
@@ -1216,6 +1272,7 @@ function main(
                     push_range!(t, (sx, ex-1:ex, fy), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
             if diff_sign & (ey > ex + 1 > fy > fx) & (ey < fx + p)
@@ -1223,6 +1280,7 @@ function main(
                     push_range!(t, (sy, ey-1:ey, fx), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
 
@@ -1232,6 +1290,7 @@ function main(
                     push_range!(t, (sx, fx:ex, fy), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
             if diff_sign & (ey == ex + 1) & (ex > fy > fx) & (ey < fx + p)
@@ -1239,6 +1298,7 @@ function main(
                     push_range!(t, (sy, fy:ey, fx), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
 
@@ -1248,6 +1308,7 @@ function main(
                     push_range!(t, (sx, fy:ex-2, fy), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
             if diff_sign & (ey == ex + 1 == fy) & (fy > fx + 1)
@@ -1255,6 +1316,7 @@ function main(
                     push_range!(t, (sy, fx:ey-2, fx), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
 
@@ -1264,6 +1326,7 @@ function main(
                     push_range!(t, (sx, fy:ex-1, fy), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
             if diff_sign & (ey == ex + 1 == fy == fx + 1)
@@ -1271,6 +1334,7 @@ function main(
                     push_range!(t, (sy, fx:ey-1, fx), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
 
@@ -1280,6 +1344,7 @@ function main(
                     push_range!(t, (sx, ex:ex+1, fx), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
             if same_sign & (ey > ex) & (fy < fx) & (ey < fy + (p - 1))
@@ -1287,6 +1352,7 @@ function main(
                     push_range!(t, (sy, ey:ey+1, fy), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
 
@@ -1297,6 +1363,7 @@ function main(
                     push_range!(t, (sx, ex-1:ex, fx), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
             if diff_sign & (ey > ex + 1) & (fy < fx)
@@ -1304,6 +1371,7 @@ function main(
                     push_range!(t, (sy, ey-1:ey, fy), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
 
@@ -1314,6 +1382,7 @@ function main(
                     push_range!(t, (sx, fy:ex, fx), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
             if diff_sign & (ey == ex + 1) & (fy < fx)
@@ -1321,6 +1390,7 @@ function main(
                     push_range!(t, (sy, fx:ey, fy), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
 
@@ -1330,6 +1400,7 @@ function main(
                     push_range!(t, (sx, fx:ex-1, fx), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
             if diff_sign & (ey == ex == fx) & (fy < fx)
@@ -1337,6 +1408,7 @@ function main(
                     push_range!(t, (sy, fy:ey-1, fy), pos_zero)
                     @assert s == t
                 end
+                lemma_e_count += 1
                 verified += 1
             end
 
@@ -1353,6 +1425,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fx:ex-(p-1), fx))
                     @assert s == t
                 end
+                lemma_o_count += 1
                 verified += 1
             end
             if same_sign & (ey == fy + (p - 1)) & (ey > ex > fx > fy)
@@ -1362,6 +1435,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fy:ey-(p-1), fy))
                     @assert s == t
                 end
+                lemma_o_count += 1
                 verified += 1
             end
 
@@ -1374,6 +1448,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fx:ex-(p-1), fx))
                     @assert s == t
                 end
+                lemma_o_count += 1
                 verified += 1
             end
             if same_sign & (ey == fy + (p - 1)) & (ey > ex == fx > fy + 1)
@@ -1384,6 +1459,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fy:ey-(p-1), fy))
                     @assert s == t
                 end
+                lemma_o_count += 1
                 verified += 1
             end
 
@@ -1394,6 +1470,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fx:ex-(p-1), fx))
                     @assert s == t
                 end
+                lemma_o_count += 1
                 verified += 1
             end
             if same_sign & (ey == fy + (p - 1)) & (ex == fx == fy + 1)
@@ -1402,6 +1479,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fy:ey-(p-1), fy))
                     @assert s == t
                 end
+                lemma_o_count += 1
                 verified += 1
             end
 
@@ -1422,6 +1500,7 @@ function main(
                     push_range!(t, (sx, ex, ey + 1       ), (!sy, fy:ex-(p+1), fy))
                     @assert s == t
                 end
+                lemma_1_count += 1
                 verified += 1
             end
             if (ey < ex + p) & (ey > fx + p) & (fy > ex + 1) & ((ey > fy) | same_sign)
@@ -1431,6 +1510,7 @@ function main(
                     push_range!(t, (sy, ey, ex + 1       ), (!sx, fx:ey-(p+1), fx))
                     @assert s == t
                 end
+                lemma_1_count += 1
                 verified += 1
             end
 
@@ -1440,6 +1520,7 @@ function main(
                     push_range!(t, (sx, ex, ey + 1       ), (!sy, fy:ex-(p+1), fy))
                     @assert s == t
                 end
+                lemma_1_count += 1
                 verified += 1
             end
             if (ey == ex + p) & (ey > fx + p) & (fy > ex + 1) & ((ey > fy) | same_sign)
@@ -1447,6 +1528,7 @@ function main(
                     push_range!(t, (sy, ey, ex + 1       ), (!sx, fx:ey-(p+1), fx))
                     @assert s == t
                 end
+                lemma_1_count += 1
                 verified += 1
             end
 
@@ -1458,6 +1540,7 @@ function main(
                     push_range!(t, (sx, ex, ey + 1       ), (!sy, fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_1_count += 1
                 verified += 1
             end
             if (ey < ex + (p - 1)) & (ey == fx + p) & (fy > ex + 1) & ((ey > fy) | same_sign)
@@ -1467,6 +1550,7 @@ function main(
                     push_range!(t, (sy, ey, ex + 1       ), (!sx, fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_1_count += 1
                 verified += 1
             end
 
@@ -1476,6 +1560,7 @@ function main(
                     push_range!(t, (sx, ex, ey + 1       ), (!sy, fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_1_count += 1
                 verified += 1
             end
             if (ey == ex + (p - 1)) & (ey == fx + p) & (fy > ex + 1) & ((ey > fy) | same_sign)
@@ -1483,6 +1568,7 @@ function main(
                     push_range!(t, (sy, ey, ex + 1       ), (!sx, fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_1_count += 1
                 verified += 1
             end
 
@@ -1497,6 +1583,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-p    , fy))
                     @assert s == sort!(t)
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey > fx + p) & (fy < ex)
@@ -1507,6 +1594,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-p    , fx))
                     @assert s == sort!(t)
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1518,6 +1606,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (±, fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey == fx + p) & (fy < ex) & (ex < fx + (p - 1))
@@ -1527,6 +1616,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (±, fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1538,6 +1628,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (±, fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey == fx + p) & (fy + 1 < ex) & (ex == fx + (p - 1))
@@ -1547,6 +1638,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (±, fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1559,6 +1651,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (± , fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey == fx + p) & (fy + 1 == ex) & (ex == fx + (p - 1))
@@ -1569,6 +1662,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (± , fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1583,6 +1677,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-p    , fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey > fx + p) & (fy == ex) & (ey < fy + (p - 1))
@@ -1595,6 +1690,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-p    , fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1606,6 +1702,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-p    , fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey > fx + p) & (fy == ex) & (ey == fy + (p - 1))
@@ -1615,6 +1712,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-p    , fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1626,6 +1724,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1     ), (sy, fy:ex-(p-1), fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey == fx + (p - 1)) & (fy < ex) & (ey < fy + (p - 1)) & (ex < fx + (p - 1))
@@ -1635,6 +1734,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1     ), (sx, fx:ey-(p-1), fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1644,6 +1744,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex-(p-3):ey), (± , fy:ex-(p-1), fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey == fx + (p - 1)) & (fy < ex) & (ey < fy + (p - 1)) & (ex == fx + (p - 1))
@@ -1651,6 +1752,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey-(p-3):ex), (± , fx:ey-(p-1), fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1663,6 +1765,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (!sy, fy:ex-(p+1), fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey > fx + p) & (fy == ex + 1) & (ey < fy + (p - 1))
@@ -1673,6 +1776,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (!sx, fx:ey-(p+1), fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1683,6 +1787,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (!sy, fy:ex-(p+1), fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey > fx + p) & (fy == ex + 1) & (ey == fy + (p - 1))
@@ -1691,6 +1796,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (!sx, fx:ey-(p+1), fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1705,6 +1811,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey == fx + p) & (fy == ex) & (ey < fy + (p - 1)) & (ex < fx + (p - 1))
@@ -1717,6 +1824,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1727,6 +1835,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey == fx + p) & (fy == ex) & (ey == fy + (p - 1))
@@ -1735,6 +1844,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1746,6 +1856,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey == fx + p) & (fy == ex) & (ex == fx + (p - 1))
@@ -1755,6 +1866,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1767,6 +1879,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-(p-1), fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey == fx + (p - 1)) & (fy == ex) & (ex > fx + 1) & (ex < fx + (p - 2))
@@ -1777,6 +1890,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-(p-1), fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1788,6 +1902,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-(p-1), fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey == fx + (p - 1)) & (fy == ex) & (ex > fx + (p - 3))
@@ -1797,6 +1912,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-(p-1), fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1807,6 +1923,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (sy , fy:ex-(p-1), fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey == fx + (p - 1)) & (fy == ex) & (ex == fx + 1)
@@ -1815,6 +1932,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (sx , fx:ey-(p-1), fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1827,6 +1945,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (!sy, fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey == fx + p) & (fy == ex + 1) & (ey < fy + (p - 2))
@@ -1837,6 +1956,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (!sx, fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1847,6 +1967,7 @@ function main(
                     push_range!(t, (sx, ex+1:ex+1, ex + 1       ), (!sy, fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
             if same_sign & (ey == fx + p) & (fy == ex + 1) & (ey > fy + (p - 3))
@@ -1855,6 +1976,7 @@ function main(
                     push_range!(t, (sy, ey+1:ey+1, ey + 1       ), (!sx, fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_2_count += 1
                 verified += 1
             end
 
@@ -1869,6 +1991,7 @@ function main(
                     push_range!(t, (sx, ex       , ex           ), (!sy, fy:ex-(p+1), fy))
                     @assert s == sort!(t)
                 end
+                lemma_3_count += 1
                 verified += 1
             end
             if diff_sign & (ey > fx + (p + 1)) & (fy < ex)
@@ -1879,6 +2002,7 @@ function main(
                     push_range!(t, (sy, ey       , ey           ), (!sx, fx:ey-(p+1), fx))
                     @assert s == sort!(t)
                 end
+                lemma_3_count += 1
                 verified += 1
             end
 
@@ -1889,6 +2013,7 @@ function main(
                     push_range!(t, (sx, ex       , ex-(p-1):ex), (±, fy:ex-(p+1), fy))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
             if diff_sign & (ey == fx + (p + 1)) & (fy < ex)
@@ -1897,6 +2022,7 @@ function main(
                     push_range!(t, (sy, ey       , ey-(p-1):ey), (±, fx:ey-(p+1), fx))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
 
@@ -1911,6 +2037,7 @@ function main(
                     push_range!(t, (sx, ex       , ex           ), (sy , fy:ex-(p+2), fy))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
             if diff_sign & (ey > fx + (p + 1)) & (fy == ex)
@@ -1923,6 +2050,7 @@ function main(
                     push_range!(t, (sy, ey       , ey           ), (sx , fx:ey-(p+2), fx))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
 
@@ -1934,6 +2062,7 @@ function main(
                     push_range!(t, (sx, ex       , ex           ), (!sy, fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
             if diff_sign & (ey == fx + p) & (fy < ex) & (ex < fx + (p - 1))
@@ -1943,6 +2072,7 @@ function main(
                     push_range!(t, (sy, ey       , ey           ), (!sx, fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
 
@@ -1954,6 +2084,7 @@ function main(
                     push_range!(t, (sx, ex     , ex           ), (!sy, fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
             if diff_sign & (ey == fx + p) & (fy + 1 < ex) & (ex == fx + (p - 1))
@@ -1963,6 +2094,7 @@ function main(
                     push_range!(t, (sy, ey     , ey           ), (!sx, fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
 
@@ -1976,6 +2108,7 @@ function main(
                     push_range!(t, (sx, ex       , ex           ), (!sy, fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
             if diff_sign & (ey == fx + p) & (fy + 1 == ex) & (ex == fx + (p - 1))
@@ -1986,6 +2119,7 @@ function main(
                     push_range!(t, (sy, ey       , ey           ), (!sx, fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
 
@@ -1997,6 +2131,7 @@ function main(
                     push_range!(t, (sx, ex, ey+2:ex      ), (!sy, fy:ex-(p+1), fy))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
             if diff_sign & (ey > fx + p) & (fy == ex + 1) & (ey < fy + (p - 1))
@@ -2006,6 +2141,7 @@ function main(
                     push_range!(t, (sy, ey, ex+2:ey      ), (!sx, fx:ey-(p+1), fx))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
 
@@ -2015,6 +2151,7 @@ function main(
                     push_range!(t, (sx, ex, ey+2:ex      ), (!sy, fy:ex-(p+1), fy))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
             if diff_sign & (ey > fx + p) & (fy == ex + 1) & (ey == fy + (p - 1))
@@ -2022,6 +2159,7 @@ function main(
                     push_range!(t, (sy, ey, ex+2:ey      ), (!sx, fx:ey-(p+1), fx))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
 
@@ -2035,6 +2173,7 @@ function main(
                     push_range!(t, (sx, ex       , ey+1:ex      ), (sy , fy:ex-(p+1), fy))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
             if diff_sign & (ey == fx + (p + 1)) & (fy == ex)
@@ -2046,6 +2185,7 @@ function main(
                     push_range!(t, (sy, ey       , ex+1:ey      ), (sx , fx:ey-(p+1), fx))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
 
@@ -2058,6 +2198,7 @@ function main(
                     push_range!(t, (sx, ex       , ey+1:ex-1    ), (sy , fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
             if diff_sign & (ey == fx + p) & (fy == ex) & (ey > fy + 1) & (ex > fx + 1)
@@ -2068,6 +2209,7 @@ function main(
                     push_range!(t, (sy, ey       , ex+1:ey-1    ), (sx , fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
 
@@ -2078,6 +2220,7 @@ function main(
                     push_range!(t, (sx, ex       , ey+1:ex-1    ), (sy , fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
             if diff_sign & (ey == fx + p) & (fy == ex) & (ex == fx + 1)
@@ -2086,6 +2229,7 @@ function main(
                     push_range!(t, (sy, ey       , ex+1:ey-1    ), (sx , fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
 
@@ -2097,6 +2241,7 @@ function main(
                     push_range!(t, (sx, ex, ey+2:ex      ), (!sy, fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
             if diff_sign & (ey == fx + p) & (fy == ex + 1) & (ey > fy) & (ex > fx + 1)
@@ -2106,6 +2251,7 @@ function main(
                     push_range!(t, (sy, ey, ex+2:ey      ), (!sx, fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
 
@@ -2115,6 +2261,7 @@ function main(
                     push_range!(t, (sx, ex, ey+2:ex      ), (!sy, fy:ex-p, fy))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
             if diff_sign & (ey == fx + p) & (fy == ex + 1) & (ex < fx + 2)
@@ -2122,6 +2269,7 @@ function main(
                     push_range!(t, (sy, ey, ex+2:ey      ), (!sx, fx:ey-p, fx))
                     @assert s == t
                 end
+                lemma_3_count += 1
                 verified += 1
             end
 
@@ -2135,6 +2283,7 @@ function main(
                     push_range!(t, (sx, ex-1:ex-1, ey + 1   ), (!sy, fy:ex-(p+2), fy))
                     @assert s == t
                 end
+                lemma_4_count += 1
                 verified += 1
             end
             if diff_sign & (ey > fx + (p + 1)) & (fy < ex + (p + 1)) & (ey == fy)
@@ -2144,6 +2293,7 @@ function main(
                     push_range!(t, (sy, ey-1:ey-1, ex + 1   ), (!sx, fx:ey-(p+2), fx))
                     @assert s == t
                 end
+                lemma_4_count += 1
                 verified += 1
             end
 
@@ -2155,6 +2305,7 @@ function main(
                     push_range!(t, (sx, ex-1:ex-1, ey + 1       ), (!sy, fy:ex-(p+1), fy))
                     @assert s == t
                 end
+                lemma_4_count += 1
                 verified += 1
             end
             if diff_sign & (ey == fx + (p + 1)) & (fy < ex + p) & (ey == fy)
@@ -2164,6 +2315,7 @@ function main(
                     push_range!(t, (sy, ey-1:ey-1, ex + 1       ), (!sx, fx:ey-(p+1), fx))
                     @assert s == t
                 end
+                lemma_4_count += 1
                 verified += 1
             end
 
@@ -2173,6 +2325,7 @@ function main(
                     push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ey+1), (!sy, fy:ex-(p+1), fy))
                     @assert s == t
                 end
+                lemma_4_count += 1
                 verified += 1
             end
             if diff_sign & (ey == fx + (p + 1)) & (fy == ex + p) & (ey == fy)
@@ -2180,6 +2333,7 @@ function main(
                     push_range!(t, (sy, ey-1:ey-1, ey-(p-1):ex+1), (!sx, fx:ey-(p+1), fx))
                     @assert s == t
                 end
+                lemma_4_count += 1
                 verified += 1
             end
 
@@ -2189,6 +2343,7 @@ function main(
                     push_range!(t, (sx, ex-1:ex-1, ex-p:ey+1), (!sy, fy:ex-(p+2), fy))
                     @assert s == t
                 end
+                lemma_4_count += 1
                 verified += 1
             end
             if diff_sign & (ey > fx + (p + 1)) & (fy == ex + (p + 1)) & (ey == fy)
@@ -2196,12 +2351,29 @@ function main(
                     push_range!(t, (sy, ey-1:ey-1, ey-p:ex+1), (!sx, fx:ey-(p+2), fx))
                     @assert s == t
                 end
+                lemma_4_count += 1
                 verified += 1
             end
 
         end
         @assert isone(verified)
     end
+
+    println("    Lemma Z: ", lemma_z_count)
+    println("    Lemma I: ", lemma_i_count)
+    println("    Lemma F: ", lemma_f_count)
+    println("    Lemma E: ", lemma_e_count)
+    println("    Lemma O: ", lemma_o_count)
+    println("    Lemma 1: ", lemma_1_count)
+    println("    Lemma 2: ", lemma_2_count)
+    println("    Lemma 3: ", lemma_3_count)
+    println("    Lemma 4: ", lemma_4_count)
+
+    @assert (
+        lemma_z_count + lemma_i_count +
+        lemma_f_count + lemma_e_count + lemma_o_count +
+        lemma_1_count + lemma_2_count + lemma_3_count + lemma_4_count
+    ) == length(summaries)^2
 end
 
 
