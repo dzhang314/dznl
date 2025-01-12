@@ -239,7 +239,185 @@ def two_sum_lemmas(
         conditions.append(e_pos_zero)
         return z3.And(*conditions)
 
+    ############################################################# LEMMA FAMILY Z
+
+    result["TwoSum-Z1-PP"] = z3.Implies(
+        z3.And(x_pos_zero, y_pos_zero),
+        z3.And(s_pos_zero, e_pos_zero),
+    )
+    result["TwoSum-Z1-PN"] = z3.Implies(
+        z3.And(x_pos_zero, y_neg_zero),
+        z3.And(s_pos_zero, e_pos_zero),
+    )
+    result["TwoSum-Z1-NP"] = z3.Implies(
+        z3.And(x_neg_zero, y_pos_zero),
+        z3.And(s_pos_zero, e_pos_zero),
+    )
+    result["TwoSum-Z1-NN"] = z3.Implies(
+        z3.And(x_neg_zero, y_neg_zero),
+        z3.And(s_neg_zero, e_pos_zero),
+    )
+
+    result["TwoSum-Z2-X"] = z3.Implies(
+        z3.And(z3.Not(x_zero), y_zero),
+        z3.And(s_equals_x, e_pos_zero),
+    )
+    result["TwoSum-Z2-Y"] = z3.Implies(
+        z3.And(x_zero, z3.Not(y_zero)),
+        z3.And(s_equals_y, e_pos_zero),
+    )
+
+    ############################################################# LEMMA FAMILY I
+
     # fmt: off
+
+    result["TwoSum-I-X"] = z3.Implies(z3.And(xy_nonzero, z3.Or(
+                   ex >  ey + (p+one),
+            z3.And(ex == ey + (p+one), z3.Or(ey == fy,       same_sign, ex > fx)),
+            z3.And(ex == ey + p      ,       ey == fy, z3.Or(same_sign, ex > fx), ex < fx + (p-one)),
+        )),
+        z3.And(s_equals_x, e_equals_y),
+    )
+    result["TwoSum-I-Y"] = z3.Implies(z3.And(xy_nonzero, z3.Or(
+                   ey >  ex + (p+one),
+            z3.And(ey == ex + (p+one), z3.Or(ex == fx,       same_sign, ey > fy)),
+            z3.And(ey == ex + p      ,       ex == fx, z3.Or(same_sign, ey > fy), ey < fy + (p-one)),
+        )),
+        z3.And(s_equals_y, e_equals_x),
+    )
+
+    ############################################################# LEMMA FAMILY F
+
+    # # Lemma F1
+    # if same_sign & (fx == fy) & (ex == ey) & (ex == fx)
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1), pos_zero)
+    result["TwoSum-F1"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, fx == fy, ex == ey, ex == fx),
+        x_case_zero(ex+one, ex+one),
+    )
+
+    # # Lemma F2
+    # if same_sign & (fx == fy) & (ex == ey) & (ex > fx)
+    #         push_range!(t, (sx, ex+1:ex+1, fx+1:ex), pos_zero)
+    result["TwoSum-F2"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, fx == fy, ex == ey, ex > fx),
+        x_case_zero(ex+one, (fx+one, ex)),
+    )
+
+    # # Lemma F3
+    # if same_sign & (fx == fy) & (ex == ey + 1)
+    #         push_range!(t, (sx, ex       , fx+1:ex-2), pos_zero)
+    #         push_range!(t, (sx, ex+1:ex+1, fx+1:ey  ), pos_zero)
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1   ), pos_zero)
+    # if same_sign & (fx == fy) & (ey == ex + 1)
+    #         push_range!(t, (sy, ey       , fy+1:ey-2), pos_zero)
+    #         push_range!(t, (sy, ey+1:ey+1, fy+1:ex  ), pos_zero)
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1   ), pos_zero)
+    result["TwoSum-F3-X"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, fx == fy, ex == ey + one),
+        z3.Or(
+            x_case_zero(ex    , (fx+one, ex-two)),
+            x_case_zero(ex+one, (fx+one, ey)    ),
+            x_case_zero(ex+one, ex+one          ),
+        ),
+    )
+    result["TwoSum-F3-Y"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, fx == fy, ey == ex + one),
+        z3.Or(
+            y_case_zero(ey    , (fy+one, ey-two)),
+            y_case_zero(ey+one, (fy+one, ex)    ),
+            y_case_zero(ey+one, ey+one          ),
+        ),
+    )
+
+    # # Lemma F4
+    # if same_sign & (fx == fy) & (ex > ey + 1)
+    #         push_range!(t, (sx, ex       , fx+1:ex-1), pos_zero)
+    #         push_range!(t, (sx, ex+1:ex+1, fx+1:ey  ), pos_zero)
+    #         push_range!(t, (sx, ex+1:ex+1, ex + 1   ), pos_zero)
+    # if same_sign & (fx == fy) & (ey > ex + 1)
+    #         push_range!(t, (sy, ey       , fy+1:ey-1), pos_zero)
+    #         push_range!(t, (sy, ey+1:ey+1, fy+1:ex  ), pos_zero)
+    #         push_range!(t, (sy, ey+1:ey+1, ey + 1   ), pos_zero)
+    result["TwoSum-F4-X"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, fx == fy, ex > ey + one),
+        z3.Or(
+            x_case_zero(ex    , (fx+one, ex-one)),
+            x_case_zero(ex+one, (fx+one, ey)    ),
+            x_case_zero(ex+one, ex+one          ),
+        ),
+    )
+    result["TwoSum-F4-Y"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, fx == fy, ey > ex + one),
+        z3.Or(
+            y_case_zero(ey    , (fy+one, ey-one)),
+            y_case_zero(ey+one, (fy+one, ex)    ),
+            y_case_zero(ey+one, ey+one          ),
+        ),
+    )
+
+    # # Lemma F5
+    # if diff_sign & (fx == fy) & (ex == ey)
+    #         push!(t, (pos_zero, pos_zero))
+    #         for k = fx+1:ex-1
+    #             push_range!(t, (±, k:k, fx+1:k), pos_zero)
+    result["TwoSum-F5"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, fx == fy, ex == ey),
+        z3.Or(
+            z3.And(s_pos_zero, e_pos_zero),
+            z3.And(es >= fx+one, es <= ex-one, fs >= fx+one, fs <= es, e_pos_zero)
+        ),
+    )
+
+    # # Lemma F6
+    # if diff_sign & (fx == fy) & (ex == ey + 1)
+    #         for k = fx+1:ex-1
+    #             push_range!(t, (sx, k:k, fx+1:k), pos_zero)
+    #         push_range!(t, (sx, ex, fx+1:ex-2), pos_zero)
+    #         push!(t, ((sx, ex, ex), pos_zero))
+    # if diff_sign & (fx == fy) & (ey == ex + 1)
+    #         for k = fy+1:ey-1
+    #             push_range!(t, (sy, k:k, fy+1:k), pos_zero)
+    #         push_range!(t, (sy, ey, fy+1:ey-2), pos_zero)
+    #         push!(t, ((sy, ey, ey), pos_zero))
+    result["TwoSum-F6-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, fx == fy, ex == ey + one),
+        z3.Or(
+            z3.And(ss == sx, es >= fx+one, es <= ex-one, fs >= fx+one, fs <= es    , e_pos_zero),
+            z3.And(ss == sx, es == ex                  , fs >= fx+one, fs <= ex-two, e_pos_zero),
+            z3.And(ss == sx, es == ex                  , fs == ex                  , e_pos_zero)
+        ),
+    )
+    result["TwoSum-F6-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, fx == fy, ey == ex + one),
+        z3.Or(
+            z3.And(ss == sy, es >= fy+one, es <= ey-one, fs >= fy+one, fs <= es    , e_pos_zero),
+            z3.And(ss == sy, es == ey                  , fs >= fy+one, fs <= ey-two, e_pos_zero),
+            z3.And(ss == sy, es == ey                  , fs == ey                  , e_pos_zero)
+        ),
+    )
+
+    # # Lemma F7
+    # if diff_sign & (fx == fy) & (ex > ey + 1)
+    #         push_range!(t, (sx, ex-1:ex-1, fx+1:ey), pos_zero)
+    #         push_range!(t, (sx, ex       , fx+1:ex), pos_zero)
+    # if diff_sign & (fx == fy) & (ey > ex + 1)
+    #         push_range!(t, (sy, ey-1:ey-1, fy+1:ex), pos_zero)
+    #         push_range!(t, (sy, ey       , fy+1:ey), pos_zero)
+    result["TwoSum-F7-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, fx == fy, ex > ey + one),
+        z3.Or(
+            x_case_zero(ex-one, (fx+one, ey)),
+            x_case_zero(ex    , (fx+one, ex)),
+        )
+    )
+    result["TwoSum-F7-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, fx == fy, ey > ex + one),
+        z3.Or(
+            y_case_zero(ey-one, (fy+one, ex)),
+            y_case_zero(ey    , (fy+one, ey)),
+        )
+    )
 
     ############################################################# LEMMA FAMILY 2
 
