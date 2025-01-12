@@ -1686,84 +1686,56 @@ def two_sum_lemmas(
 
     ############################################################# LEMMA FAMILY 4
 
-    # # Lemma 4
-    # if diff_sign & (ex > fy + (p + 1)) & (fx < ey + (p + 1)) & (ex == fx)
-    #         push_range!(t, (sx, ex-1:ex-1, ex-p:ey-1), (±  , fy:ex-(p+2), fy))
-    #         push_range!(t, (sx, ex-1:ex-1, ey       ), (sy , fy:ex-(p+2), fy))
-    #         push_range!(t, (sx, ex-1:ex-1, ey + 1   ), (!sy, fy:ex-(p+2), fy))
-    # if diff_sign & (ey > fx + (p + 1)) & (fy < ex + (p + 1)) & (ey == fy)
-    #         push_range!(t, (sy, ey-1:ey-1, ey-p:ex-1), (±  , fx:ey-(p+2), fx))
-    #         push_range!(t, (sy, ey-1:ey-1, ex       ), (sx , fx:ey-(p+2), fx))
-    #         push_range!(t, (sy, ey-1:ey-1, ex + 1   ), (!sx, fx:ey-(p+2), fx))
     result["TwoSum-4-X"] = z3.Implies(
-        z3.And(diff_sign, ex > fy + (p + one), fx < ey + (p + one), ex == fx),
+        z3.And(diff_sign, ex > fy + (p+one), fx < ey + (p+one), ex == fx),
         z3.Or(
-            x_case(ex - one, (ex - p, ey - one), None, 2),
-            x_case(ex - one, ey, True, 2),
-            x_case(ex - one, ey + one, False, 2),
+            x_case(ex-one, (ex-p,ey-one), None , 2),
+            x_case(ex-one, ey           , True , 2),
+            x_case(ex-one, ey+one       , False, 2),
         ),
     )
     result["TwoSum-4-Y"] = z3.Implies(
-        z3.And(diff_sign, ey > fx + (p + one), fy < ex + (p + one), ey == fy),
+        z3.And(diff_sign, ey > fx + (p+one), fy < ex + (p+one), ey == fy),
         z3.Or(
-            y_case(ey - one, (ey - p, ex - one), None, 2),
-            y_case(ey - one, ex, True, 2),
-            y_case(ey - one, ex + one, False, 2),
+            y_case(ey-one, (ey-p,ex-one), None , 2),
+            y_case(ey-one, ex           , True , 2),
+            y_case(ey-one, ex+one       , False, 2),
         ),
     )
 
-    # # Lemma 4A.G
-    # if diff_sign & (ex == fy + (p + 1)) & (fx < ey + p) & (ex == fx)
-    #         push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
-    #         push_range!(t, (sx, ex-1:ex-1, ey           ), (sy , fy:ex-(p+1), fy))
-    #         push_range!(t, (sx, ex-1:ex-1, ey + 1       ), (!sy, fy:ex-(p+1), fy))
-    # if diff_sign & (ey == fx + (p + 1)) & (fy < ex + p) & (ey == fy)
-    #         push_range!(t, (sy, ey-1:ey-1, ey-(p-1):ex-1), (±  , fx:ey-(p+1), fx))
-    #         push_range!(t, (sy, ey-1:ey-1, ex           ), (sx , fx:ey-(p+1), fx))
-    #         push_range!(t, (sy, ey-1:ey-1, ex + 1       ), (!sx, fx:ey-(p+1), fx))
     result["TwoSum-4A-G-X"] = z3.Implies(
-        z3.And(diff_sign, ex == fy + (p + one), fx < ey + p, ex == fx),
+        z3.And(diff_sign, ex == fy + (p+one), fx < ey + p, ex == fx),
         z3.Or(
-            x_case(ex - one, (ex - (p - one), ey - one), None, 1),
-            x_case(ex - one, ey, True, 1),
-            x_case(ex - one, ey + one, False, 1),
+            x_case(ex-one, (ex-(p-one),ey-one), None , 1),
+            x_case(ex-one, ey                 , True , 1),
+            x_case(ex-one, ey+one             , False, 1),
         ),
     )
     result["TwoSum-4A-G-Y"] = z3.Implies(
-        z3.And(diff_sign, ey == fx + (p + one), fy < ex + p, ey == fy),
+        z3.And(diff_sign, ey == fx + (p+one), fy < ex + p, ey == fy),
         z3.Or(
-            y_case(ey - one, (ey - (p - one), ex - one), None, 1),
-            y_case(ey - one, ex, True, 1),
-            y_case(ey - one, ex + one, False, 1),
+            y_case(ey-one, (ey-(p-one),ex-one), None , 1),
+            y_case(ey-one, ex                 , True , 1),
+            y_case(ey-one, ex+one             , False, 1),
         ),
     )
 
-    # # Lemma 4A.1
-    # if diff_sign & (ex == fy + (p + 1)) & (fx == ey + p) & (ex == fx)
-    #         push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ey+1), (!sy, fy:ex-(p+1), fy))
-    # if diff_sign & (ey == fx + (p + 1)) & (fy == ex + p) & (ey == fy)
-    #         push_range!(t, (sy, ey-1:ey-1, ey-(p-1):ex+1), (!sx, fx:ey-(p+1), fx))
     result["TwoSum-4A-1-X"] = z3.Implies(
-        z3.And(diff_sign, ex == fy + (p + one), fx == ey + p, ex == fx),
-        x_case(ex - one, (ex - (p - one), ey + one), False, 1),
+        z3.And(diff_sign, ex == fy + (p+one), fx == ey + p, ex == fx),
+        x_case(ex-one, (ex-(p-one),ey+one), False, 1),
     )
     result["TwoSum-4A-1-Y"] = z3.Implies(
-        z3.And(diff_sign, ey == fx + (p + one), fy == ex + p, ey == fy),
-        y_case(ey - one, (ey - (p - one), ex + one), False, 1),
+        z3.And(diff_sign, ey == fx + (p+one), fy == ex + p, ey == fy),
+        y_case(ey-one, (ey-(p-one),ex+one), False, 1),
     )
 
-    # # Lemma 4B
-    # if diff_sign & (ex > fy + (p + 1)) & (fx == ey + (p + 1)) & (ex == fx)
-    #         push_range!(t, (sx, ex-1:ex-1, ex-p:ey+1), (!sy, fy:ex-(p+2), fy))
-    # if diff_sign & (ey > fx + (p + 1)) & (fy == ex + (p + 1)) & (ey == fy)
-    #         push_range!(t, (sy, ey-1:ey-1, ey-p:ex+1), (!sx, fx:ey-(p+2), fx))
     result["TwoSum-4B-X"] = z3.Implies(
-        z3.And(diff_sign, ex > fy + (p + one), fx == ey + (p + one), ex == fx),
-        x_case(ex - one, (ex - p, ey + one), False, 2),
+        z3.And(diff_sign, ex > fy + (p+one), fx == ey + (p+one), ex == fx),
+        x_case(ex-one, (ex-p,ey+one), False, 2),
     )
     result["TwoSum-4B-Y"] = z3.Implies(
-        z3.And(diff_sign, ey > fx + (p + one), fy == ex + (p + one), ey == fy),
-        y_case(ey - one, (ey - p, ex + one), False, 2),
+        z3.And(diff_sign, ey > fx + (p+one), fy == ex + (p+one), ey == fy),
+        y_case(ey-one, (ey-p,ex+one), False, 2),
     )
 
     # fmt: on

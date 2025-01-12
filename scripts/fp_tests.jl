@@ -2276,21 +2276,21 @@ function main(
             ################################################# LEMMA FAMILY 4 (4)
 
             # Lemma 4
-            if diff_sign & (ex > fy + (p + 1)) & (fx < ey + (p + 1)) & (ex == fx)
+            if diff_sign & (ex > fy + (p+1)) & (fx < ey + (p+1)) & (ex == fx)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, ex-p:ey-1), (±  , fy:ex-(p+2), fy))
                     push_range!(t, (sx, ex-1:ex-1, ey       ), (sy , fy:ex-(p+2), fy))
-                    push_range!(t, (sx, ex-1:ex-1, ey + 1   ), (!sy, fy:ex-(p+2), fy))
+                    push_range!(t, (sx, ex-1:ex-1, ey+1     ), (!sy, fy:ex-(p+2), fy))
                     @assert s == t
                 end
                 lemma_4_count += 1
                 verified += 1
             end
-            if diff_sign & (ey > fx + (p + 1)) & (fy < ex + (p + 1)) & (ey == fy)
+            if diff_sign & (ey > fx + (p+1)) & (fy < ex + (p+1)) & (ey == fy)
                 let t = MediumPairSummary[]
                     push_range!(t, (sy, ey-1:ey-1, ey-p:ex-1), (±  , fx:ey-(p+2), fx))
                     push_range!(t, (sy, ey-1:ey-1, ex       ), (sx , fx:ey-(p+2), fx))
-                    push_range!(t, (sy, ey-1:ey-1, ex + 1   ), (!sx, fx:ey-(p+2), fx))
+                    push_range!(t, (sy, ey-1:ey-1, ex+1     ), (!sx, fx:ey-(p+2), fx))
                     @assert s == t
                 end
                 lemma_4_count += 1
@@ -2298,21 +2298,21 @@ function main(
             end
 
             # Lemma 4A.G
-            if diff_sign & (ex == fy + (p + 1)) & (fx < ey + p) & (ex == fx)
+            if diff_sign & (ex == fy + (p+1)) & (fx < ey + p) & (ex == fx)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
                     push_range!(t, (sx, ex-1:ex-1, ey           ), (sy , fy:ex-(p+1), fy))
-                    push_range!(t, (sx, ex-1:ex-1, ey + 1       ), (!sy, fy:ex-(p+1), fy))
+                    push_range!(t, (sx, ex-1:ex-1, ey+1         ), (!sy, fy:ex-(p+1), fy))
                     @assert s == t
                 end
                 lemma_4_count += 1
                 verified += 1
             end
-            if diff_sign & (ey == fx + (p + 1)) & (fy < ex + p) & (ey == fy)
+            if diff_sign & (ey == fx + (p+1)) & (fy < ex + p) & (ey == fy)
                 let t = MediumPairSummary[]
                     push_range!(t, (sy, ey-1:ey-1, ey-(p-1):ex-1), (±  , fx:ey-(p+1), fx))
                     push_range!(t, (sy, ey-1:ey-1, ex           ), (sx , fx:ey-(p+1), fx))
-                    push_range!(t, (sy, ey-1:ey-1, ex + 1       ), (!sx, fx:ey-(p+1), fx))
+                    push_range!(t, (sy, ey-1:ey-1, ex+1         ), (!sx, fx:ey-(p+1), fx))
                     @assert s == t
                 end
                 lemma_4_count += 1
@@ -2320,7 +2320,7 @@ function main(
             end
 
             # Lemma 4A.1
-            if diff_sign & (ex == fy + (p + 1)) & (fx == ey + p) & (ex == fx)
+            if diff_sign & (ex == fy + (p+1)) & (fx == ey + p) & (ex == fx)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ey+1), (!sy, fy:ex-(p+1), fy))
                     @assert s == t
@@ -2328,7 +2328,7 @@ function main(
                 lemma_4_count += 1
                 verified += 1
             end
-            if diff_sign & (ey == fx + (p + 1)) & (fy == ex + p) & (ey == fy)
+            if diff_sign & (ey == fx + (p+1)) & (fy == ex + p) & (ey == fy)
                 let t = MediumPairSummary[]
                     push_range!(t, (sy, ey-1:ey-1, ey-(p-1):ex+1), (!sx, fx:ey-(p+1), fx))
                     @assert s == t
@@ -2338,7 +2338,7 @@ function main(
             end
 
             # Lemma 4B
-            if diff_sign & (ex > fy + (p + 1)) & (fx == ey + (p + 1)) & (ex == fx)
+            if diff_sign & (ex > fy + (p+1)) & (fx == ey + (p+1)) & (ex == fx)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, ex-p:ey+1), (!sy, fy:ex-(p+2), fy))
                     @assert s == t
@@ -2346,7 +2346,7 @@ function main(
                 lemma_4_count += 1
                 verified += 1
             end
-            if diff_sign & (ey > fx + (p + 1)) & (fy == ex + (p + 1)) & (ey == fy)
+            if diff_sign & (ey > fx + (p+1)) & (fy == ex + (p+1)) & (ey == fy)
                 let t = MediumPairSummary[]
                     push_range!(t, (sy, ey-1:ey-1, ey-p:ex+1), (!sx, fx:ey-(p+2), fx))
                     @assert s == t
