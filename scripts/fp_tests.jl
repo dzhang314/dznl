@@ -911,12 +911,12 @@ function main(
 
         verified = 0
 
-        if x_zero | y_zero ################################ THEOREM FAMILY Z (2)
+        if x_zero | y_zero ################################## LEMMA FAMILY Z (2)
 
-            # Theorems in Family Z (for "zero") apply to
+            # Lemmas in Family Z (for "zero") apply to
             # trivial cases where one or both addends are zero.
 
-            # Theorem Z1: Both addends are zero.
+            # Lemma Z1: Both addends are zero.
             if (rx == pos_zero) & (ry == pos_zero)
                 @assert only(s) == (pos_zero, pos_zero)
                 verified += 1
@@ -934,7 +934,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem Z2: One addend is zero.
+            # Lemma Z2: One addend is zero.
             if y_zero & !x_zero
                 @assert only(s) == (rx, pos_zero)
                 verified += 1
@@ -944,17 +944,17 @@ function main(
                 verified += 1
             end
 
-        else ################################################## NONZERO THEOREMS
+        else #################################################### NONZERO LEMMAS
 
-            # From this point forward, all theorem statements carry
+            # From this point forward, all lemma statements carry
             # an implicit assumption that both addends are nonzero.
 
-            ############################################### THEOREM FAMILY I (1)
+            ################################################# LEMMA FAMILY I (1)
 
-            # Theorems in Family I (for "identical") apply to addends
+            # Lemmas in Family I (for "identical") apply to addends
             # that are returned unchanged by the TwoSum algorithm.
 
-            # Theorem I
+            # Lemma I
             if ((ex > ey + (p + 1)) |
                 ((ex == ey + (p + 1)) & ((ey == fy) | same_sign | (ex > fx))) |
                 ((ex == ey + p) & (ey == fy) & (same_sign | (ex > fx)) & (ex < fx + (p - 1))))
@@ -968,15 +968,15 @@ function main(
                 verified += 1
             end
 
-            ############################################### THEOREM FAMILY F (7)
+            ################################################# LEMMA FAMILY F (7)
 
-            # Theorems in Family F apply to addends that share
+            # Lemmas in Family F apply to addends that share
             # the same trailing exponent, i.e., (fx == fy).
 
             # The trailing exponent of a floating-point number x, denoted by
             # fx, is the place value of the last nonzero bit in its mantissa.
 
-            # Theorem F1
+            # Lemma F1
             if same_sign & (fx == fy) & (ex == ey) & (ex == fx)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex+1:ex+1, ex + 1), pos_zero)
@@ -985,7 +985,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem F2
+            # Lemma F2
             if same_sign & (fx == fy) & (ex == ey) & (ex > fx)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex+1:ex+1, fx+1:ex), pos_zero)
@@ -994,7 +994,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem F3
+            # Lemma F3
             if same_sign & (fx == fy) & (ex == ey + 1)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , fx+1:ex-2), pos_zero)
@@ -1014,7 +1014,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem F4
+            # Lemma F4
             if same_sign & (fx == fy) & (ex > ey + 1)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , fx+1:ex-1), pos_zero)
@@ -1034,7 +1034,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem F5
+            # Lemma F5
             if diff_sign & (fx == fy) & (ex == ey)
                 let t = MediumPairSummary[]
                     push!(t, (pos_zero, pos_zero))
@@ -1046,7 +1046,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem F6
+            # Lemma F6
             if diff_sign & (fx == fy) & (ex == ey + 1)
                 let t = MediumPairSummary[]
                     for k = fx+1:ex-1
@@ -1070,7 +1070,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem F7
+            # Lemma F7
             if diff_sign & (fx == fy) & (ex > ey + 1)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, fx+1:ey), pos_zero)
@@ -1094,13 +1094,13 @@ function main(
                 @assert isone(verified)
             end
 
-            ############################################# THEOREM FAMILY E (7+8)
+            ############################################### LEMMA FAMILY E (7+8)
 
-            # Theorems in Family E (for "exact") apply to addends
+            # Lemmas in Family E (for "exact") apply to addends
             # with different trailing exponents that can be summed
             # exactly with no rounding error.
 
-            # Theorem E1: Addends have same sign and exponent.
+            # Lemma E1: Addends have same sign and exponent.
             if same_sign & (ex == ey) & (fx < fy) & (ex < fx + (p - 1)) & (ey < fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex+1:ex+1, fx), pos_zero)
@@ -1116,7 +1116,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem E2: Addends have same exponent and different signs.
+            # Lemma E2: Addends have same exponent and different signs.
             if diff_sign & (ex == ey) & (fx < fy) & (ex > fx + 1) & (ey > fy + 1)
                 let t = MediumPairSummary[]
                     push_range!(t, (±, fx:ex-1, fx), pos_zero)
@@ -1132,7 +1132,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem E2.1: Boundary case of E2 where two leading bits cancel.
+            # Lemma E2.1: Boundary case of E2 where two leading bits cancel.
             if diff_sign & (ex == ey) & (ex > fx + 1) & (ey == fy + 1)
                 let t = MediumPairSummary[]
                     push_range!(t, (±, fx:ex-2, fx), pos_zero)
@@ -1148,7 +1148,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem E3: Addends do not overlap.
+            # Lemma E3: Addends do not overlap.
             if (same_sign | (ex > fx)) & (fx > ey) & (ex < fy + p)
                 @assert only(s) == ((sx, ex, fy), pos_zero)
                 verified += 1
@@ -1158,7 +1158,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem E3.1: Boundary case of E3 where leading bits cancel.
+            # Lemma E3.1: Boundary case of E3 where leading bits cancel.
             if diff_sign & (
                     ((ex == fx) & (fx > ey + 1) & (ex < fy + (p + 1))) |
                     ((ex == fx + 1) & (fx == ey) & (ey > fy)))
@@ -1178,7 +1178,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem E4: Addends have same sign and partially overlap.
+            # Lemma E4: Addends have same sign and partially overlap.
             if same_sign & ((ex > ey > fx > fy) | (ex > ey + 1 > fx > fy)) & (ex < fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex:ex+1, fy), pos_zero)
@@ -1194,7 +1194,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem E4.1: Boundary case of E4 with guaranteed carry.
+            # Lemma E4.1: Boundary case of E4 with guaranteed carry.
             if same_sign & (ex == ey + 1) & (ey == fx > fy) & (ex < fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex+1:ex+1, fy), pos_zero)
@@ -1210,7 +1210,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem E5: Addends have different signs and partially overlap.
+            # Lemma E5: Addends have different signs and partially overlap.
             if diff_sign & (ex > ey + 1 > fx > fy) & (ex < fy + p)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex, fy), pos_zero)
@@ -1226,7 +1226,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem E5.1: Boundary case of E5 with more possible cancellation.
+            # Lemma E5.1: Boundary case of E5 with more possible cancellation.
             if diff_sign & (ex == ey + 1) & (ey > fx > fy) & (ex < fy + p)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, fx:ex, fy), pos_zero)
@@ -1242,7 +1242,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem E5.2: Boundary case of E5 with guaranteed cancellation.
+            # Lemma E5.2: Boundary case of E5 with guaranteed cancellation.
             if diff_sign & (ex == ey + 1 == fx) & (fx > fy + 1)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, fy:ex-2, fy), pos_zero)
@@ -1258,7 +1258,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem E5.3: Boundary case of E5.2 with guaranteed cancellation.
+            # Lemma E5.3: Boundary case of E5.2 with guaranteed cancellation.
             if diff_sign & (ex == ey + 1 == fx == fy + 1)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, fy:ex-1, fy), pos_zero)
@@ -1274,7 +1274,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem E6: Addends have same sign and completely overlap.
+            # Lemma E6: Addends have same sign and completely overlap.
             if same_sign & (ex > ey) & (fx < fy) & (ex < fx + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex:ex+1, fx), pos_zero)
@@ -1290,7 +1290,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem E7: Addends have different signs and completely overlap.
+            # Lemma E7: Addends have different signs and completely overlap.
             # All hypotheses are strictly necessary.
             if diff_sign & (ex > ey + 1) & (fx < fy)
                 let t = MediumPairSummary[]
@@ -1307,7 +1307,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem E7.1: Boundary case of E7 with more possible cancellation.
+            # Lemma E7.1: Boundary case of E7 with more possible cancellation.
             # All hypotheses are strictly necessary.
             if diff_sign & (ex == ey + 1) & (fx < fy)
                 let t = MediumPairSummary[]
@@ -1324,7 +1324,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem E7.2: Boundary case of E7 with guaranteed cancellation.
+            # Lemma E7.2: Boundary case of E7 with guaranteed cancellation.
             if diff_sign & (ex == ey == fy) & (fx < fy)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, fx:ex-1, fx), pos_zero)
@@ -1340,12 +1340,12 @@ function main(
                 verified += 1
             end
 
-            ############################################### THEOREM FAMILY O (3)
+            ################################################# LEMMA FAMILY O (3)
 
-            # Theorems in Family O (for "overlap") apply to addends
+            # Lemmas in Family O (for "overlap") apply to addends
             # that completely overlap but cannot be summed exactly.
 
-            # Theorem O1: All hypotheses are strictly necessary.
+            # Lemma O1: All hypotheses are strictly necessary.
             if same_sign & (ex == fx + (p - 1)) & (ex > ey > fy > fx)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , fx), pos_zero)
@@ -1365,7 +1365,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem O2: All hypotheses are strictly necessary.
+            # Lemma O2: All hypotheses are strictly necessary.
             if same_sign & (ex == fx + (p - 1)) & (ex > ey == fy > fx + 1)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , fx), pos_zero)
@@ -1387,7 +1387,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem O3: All hypotheses are strictly necessary.
+            # Lemma O3: All hypotheses are strictly necessary.
             if same_sign & (ex == fx + (p - 1)) & (ey == fy == fx + 1)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , fx), pos_zero)
@@ -1405,16 +1405,16 @@ function main(
                 verified += 1
             end
 
-            ############################################ MASTER THEOREM FAMILIES
+            ############################################## MASTER LEMMA FAMILIES
 
-            # Theorems 1, 2, and 3 are "Master Theorems." Their hypotheses only
+            # Lemmas 1, 2, and 3 are "Master Lemmas." Their hypotheses only
             # contain inequalities in the exponent variables (ex, fx, ey, fy).
             # This means that they apply to a full-dimensional region of the
             # input space as opposed to a lower-dimensional subspace.
 
-            ############################################### THEOREM FAMILY 1 (4)
+            ################################################# LEMMA FAMILY 1 (4)
 
-            # Theorem 1
+            # Lemma 1
             if (ex < ey + p) & (ex > fy + p) & (fx > ey + 1) & ((ex > fx) | same_sign)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex, ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
@@ -1434,7 +1434,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 1A
+            # Lemma 1A
             if (ex == ey + p) & (ex > fy + p) & (fx > ey + 1) & ((ex > fx) | same_sign)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex, ey + 1       ), (!sy, fy:ex-(p+1), fy))
@@ -1450,7 +1450,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 1B.G
+            # Lemma 1B.G
             if (ex < ey + (p - 1)) & (ex == fy + p) & (fx > ey + 1) & ((ex > fx) | same_sign)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex, ex-(p-2):ey-1), (±  , fy:ex-p, fy))
@@ -1470,7 +1470,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 1B.1
+            # Lemma 1B.1
             if (ex == ey + (p - 1)) & (ex == fy + p) & (fx > ey + 1) & ((ex > fx) | same_sign)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex, ey + 1       ), (!sy, fy:ex-p, fy))
@@ -1486,9 +1486,9 @@ function main(
                 verified += 1
             end
 
-            ############################################## THEOREM FAMILY 2 (18)
+            ################################################ LEMMA FAMILY 2 (18)
 
-            # Theorem 2: All hypotheses are strictly necessary.
+            # Lemma 2: All hypotheses are strictly necessary.
             if same_sign & (ex > fy + p) & (fx < ey)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ex-(p-1):ex-1), (±  , fy:ex-(p+1), fy))
@@ -1510,7 +1510,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2A.G: All hypotheses are strictly necessary.
+            # Lemma 2A.G: All hypotheses are strictly necessary.
             if same_sign & (ex == fy + p) & (fx < ey) & (ey < fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ex-(p-2):ex-1), (±, fy:ex-p, fy))
@@ -1530,7 +1530,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2A.1
+            # Lemma 2A.1
             if same_sign & (ex == fy + p) & (fx + 1 < ey) & (ey == fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ex-(p-2):ex-2), (±, fy:ex-p, fy))
@@ -1550,7 +1550,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2A.2
+            # Lemma 2A.2
             if same_sign & (ex == fy + p) & (fx + 1 == ey) & (ey == fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ex-(p-2):ey-2), (± , fy:ex-p, fy))
@@ -1572,7 +1572,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2B.G: All hypotheses are strictly necessary.
+            # Lemma 2B.G: All hypotheses are strictly necessary.
             if same_sign & (ex > fy + p) & (fx == ey) & (ex < fx + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
@@ -1598,7 +1598,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2B.1
+            # Lemma 2B.1
             if same_sign & (ex > fy + p) & (fx == ey) & (ex == fx + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ey           ), (!sy, fy:ex-(p+1), fy))
@@ -1618,7 +1618,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2C.G: All hypotheses are strictly necessary.
+            # Lemma 2C.G: All hypotheses are strictly necessary.
             if same_sign & (ex == fy + (p - 1)) & (fx < ey) & (ex < fx + (p - 1)) & (ey < fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , fy), pos_zero)
@@ -1638,7 +1638,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2C.1
+            # Lemma 2C.1
             if same_sign & (ex == fy + (p - 1)) & (fx < ey) & (ex < fx + (p - 1)) & (ey == fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex+1:ex+1, ex-(p-3):ey), (± , fy:ex-(p-1), fy))
@@ -1654,7 +1654,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2D.G: All hypotheses are strictly necessary.
+            # Lemma 2D.G: All hypotheses are strictly necessary.
             if same_sign & (ex > fy + p) & (fx == ey + 1) & (ex < fx + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
@@ -1676,7 +1676,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2D.1
+            # Lemma 2D.1
             if same_sign & (ex > fy + p) & (fx == ey + 1) & (ex == fx + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ey+2:ex-1    ), (!sy, fy:ex-(p+1), fy))
@@ -1694,7 +1694,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2AB.G: All hypotheses are strictly necessary.
+            # Lemma 2AB.G: All hypotheses are strictly necessary.
             if same_sign & (ex == fy + p) & (fx == ey) & (ex < fx + (p - 1)) & (ey < fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ex-(p-2):ey-1), (±  , fy:ex-p, fy))
@@ -1720,7 +1720,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2AB.1
+            # Lemma 2AB.1
             if same_sign & (ex == fy + p) & (fx == ey) & (ex == fx + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ey+1:ex-1    ), (sy , fy:ex-p, fy))
@@ -1738,7 +1738,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2AB.2
+            # Lemma 2AB.2
             if same_sign & (ex == fy + p) & (fx == ey) & (ey == fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex+1:ex+1, ex-(p-2):ey-1), (±  , fy:ex-p, fy))
@@ -1758,7 +1758,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2BC.G: All hypotheses are strictly necessary.
+            # Lemma 2BC.G: All hypotheses are strictly necessary.
             if same_sign & (ex == fy + (p - 1)) & (fx == ey) & (ey > fy + 1) & (ey < fy + (p - 2))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , fy), pos_zero)
@@ -1780,7 +1780,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2BC.1: All hypotheses are strictly necessary.
+            # Lemma 2BC.1: All hypotheses are strictly necessary.
             if same_sign & (ex == fy + (p - 1)) & (fx == ey) & (ey > fy + (p - 3))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex+1:ex+1, ex-(p-3):ey-1), (±  , fy:ex-(p-1), fy))
@@ -1800,7 +1800,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2BC.2
+            # Lemma 2BC.2
             if same_sign & (ex == fy + (p - 1)) & (fx == ey) & (ey == fy + 1)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , fy), pos_zero)
@@ -1818,7 +1818,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2AD.G: All hypotheses are strictly necessary.
+            # Lemma 2AD.G: All hypotheses are strictly necessary.
             if same_sign & (ex == fy + p) & (fx == ey + 1) & (ex < fx + (p - 2))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ex-(p-2):ey-1), (±  , fy:ex-p, fy))
@@ -1840,7 +1840,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 2AD.1
+            # Lemma 2AD.1
             if same_sign & (ex == fy + p) & (fx == ey + 1) & (ex > fx + (p - 3))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex       , ey+2:ex-1    ), (!sy, fy:ex-p, fy))
@@ -1858,9 +1858,9 @@ function main(
                 verified += 1
             end
 
-            ############################################## THEOREM FAMILY 3 (13)
+            ################################################ LEMMA FAMILY 3 (13)
 
-            # Theorem 3: All hypotheses are strictly necessary.
+            # Lemma 3: All hypotheses are strictly necessary.
             if diff_sign & (ex > fy + (p + 1)) & (fx < ey)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, ex-p:ey      ), (±  , fy:ex-(p+2), fy))
@@ -1882,7 +1882,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 3A: All hypotheses are strictly necessary.
+            # Lemma 3A: All hypotheses are strictly necessary.
             if diff_sign & (ex == fy + (p + 1)) & (fx < ey)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ey), (±, fy:ex-(p+1), fy))
@@ -1900,7 +1900,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 3B: All hypotheses are strictly necessary.
+            # Lemma 3B: All hypotheses are strictly necessary.
             if diff_sign & (ex > fy + (p + 1)) & (fx == ey)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, ex-p:ey-1    ), (±  , fy:ex-(p+2), fy))
@@ -1926,7 +1926,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 3C.G: All hypotheses are strictly necessary.
+            # Lemma 3C.G: All hypotheses are strictly necessary.
             if diff_sign & (ex == fy + p) & (fx < ey) & (ey < fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, fy), pos_zero)
@@ -1946,7 +1946,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 3C.1
+            # Lemma 3C.1
             if diff_sign & (ex == fy + p) & (fx + 1 < ey) & (ey == fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, fx:ex-1, fy), pos_zero)
@@ -1966,8 +1966,8 @@ function main(
                 verified += 1
             end
 
-            # Theorem 3C.2: All hypotheses are strictly necessary.
-            # This theorem uniquely contains the leading exponent range ex-2:ex-1.
+            # Lemma 3C.2: All hypotheses are strictly necessary.
+            # This lemma uniquely contains the leading exponent range ex-2:ex-1.
             if diff_sign & (ex == fy + p) & (fx + 1 == ey) & (ey == fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-2:ex-1, fy), pos_zero)
@@ -1989,7 +1989,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 3D.G: All hypotheses are strictly necessary.
+            # Lemma 3D.G: All hypotheses are strictly necessary.
             if diff_sign & (ex > fy + p) & (fx == ey + 1) & (ex < fx + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex, ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
@@ -2009,7 +2009,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 3D.1: All hypotheses are strictly necessary.
+            # Lemma 3D.1: All hypotheses are strictly necessary.
             if diff_sign & (ex > fy + p) & (fx == ey + 1) & (ex == fx + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex, ey+2:ex      ), (!sy, fy:ex-(p+1), fy))
@@ -2025,7 +2025,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 3AB: All hypotheses are strictly necessary.
+            # Lemma 3AB: All hypotheses are strictly necessary.
             if diff_sign & (ex == fy + (p + 1)) & (fx == ey)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
@@ -2049,7 +2049,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 3BC.G
+            # Lemma 3BC.G
             if diff_sign & (ex == fy + p) & (fx == ey) & (ex > fx + 1) & (ey > fy + 1)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, fy), pos_zero)
@@ -2071,7 +2071,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 3BC.2
+            # Lemma 3BC.2
             if diff_sign & (ex == fy + p) & (fx == ey) & (ey == fy + 1)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, fy), pos_zero)
@@ -2089,7 +2089,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 3CD.G
+            # Lemma 3CD.G
             if diff_sign & (ex == fy + p) & (fx == ey + 1) & (ex > fx) & (ey > fy + 1)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex, ex-(p-2):ey-1), (±  , fy:ex-p, fy))
@@ -2109,7 +2109,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 3CD.1
+            # Lemma 3CD.1
             if diff_sign & (ex == fy + p) & (fx == ey + 1) & (ey < fy + 2)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex, ey+2:ex      ), (!sy, fy:ex-p, fy))
@@ -2125,9 +2125,9 @@ function main(
                 verified += 1
             end
 
-            ############################################### THEOREM FAMILY 4 (4)
+            ################################################# LEMMA FAMILY 4 (4)
 
-            # Theorem 4
+            # Lemma 4
             if diff_sign & (ex > fy + (p + 1)) & (fx < ey + (p + 1)) & (ex == fx)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, ex-p:ey-1), (±  , fy:ex-(p+2), fy))
@@ -2147,7 +2147,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 4A.G
+            # Lemma 4A.G
             if diff_sign & (ex == fy + (p + 1)) & (fx < ey + p) & (ex == fx)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ey-1), (±  , fy:ex-(p+1), fy))
@@ -2167,7 +2167,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 4A.1
+            # Lemma 4A.1
             if diff_sign & (ex == fy + (p + 1)) & (fx == ey + p) & (ex == fx)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, ex-(p-1):ey+1), (!sy, fy:ex-(p+1), fy))
@@ -2183,7 +2183,7 @@ function main(
                 verified += 1
             end
 
-            # Theorem 4B
+            # Lemma 4B
             if diff_sign & (ex > fy + (p + 1)) & (fx == ey + (p + 1)) & (ex == fx)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, ex-p:ey+1), (!sy, fy:ex-(p+2), fy))
