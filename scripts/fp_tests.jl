@@ -2213,7 +2213,7 @@ function main(
                 verified += 1
             end
 
-            # Lemma 3BC.2
+            # Lemma 3BC.1
             if diff_sign & (ex == fy + p) & (fx == ey) & (ey == fy + 1)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex-1, fy), pos_zero)
