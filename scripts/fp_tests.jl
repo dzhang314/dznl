@@ -1160,7 +1160,7 @@ function main(
                 verified += 1
             end
 
-            # Lemma E2: Addends have same exponent and different signs.
+            # Lemma E2.G: Addends have same exponent and different signs.
             if diff_sign & (ex == ey) & (fx < fy) & (ex > fx + 1) & (ey > fy + 1)
                 let t = MediumPairSummary[]
                     push_range!(t, (±, fx:ex-1, fx), pos_zero)
@@ -1189,14 +1189,14 @@ function main(
             end
             if diff_sign & (ex == ey) & (ex == fx + 1) & (ey > fy + 1)
                 let t = MediumPairSummary[]
-                    push_range!(t, (±, fy:ex-2, fy), pos_zero)
+                    push_range!(t, (±, fy:ey-2, fy), pos_zero)
                     @assert s == t
                 end
                 lemma_e_count += 1
                 verified += 1
             end
 
-            # Lemma E3: Addends do not overlap.
+            # Lemma E3.G: Addends do not overlap.
             if (same_sign | (ex > fx)) & (fx > ey) & (ex < fy + p)
                 @assert only(s) == ((sx, ex, fy), pos_zero)
                 lemma_e_count += 1
@@ -1230,7 +1230,7 @@ function main(
                 verified += 1
             end
 
-            # Lemma E4: Addends have same sign and partially overlap.
+            # Lemma E4.G: Addends have same sign and partially overlap.
             if same_sign & ((ex > ey > fx > fy) | (ex > ey + 1 > fx > fy)) & (ex < fy + (p - 1))
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex:ex+1, fy), pos_zero)
@@ -1266,7 +1266,7 @@ function main(
                 verified += 1
             end
 
-            # Lemma E5: Addends have different signs and partially overlap.
+            # Lemma E5.G: Addends have different signs and partially overlap.
             if diff_sign & (ex > ey + 1 > fx > fy) & (ex < fy + p)
                 let t = MediumPairSummary[]
                     push_range!(t, (sx, ex-1:ex, fy), pos_zero)
@@ -1356,7 +1356,7 @@ function main(
                 verified += 1
             end
 
-            # Lemma E7: Addends have different signs and completely overlap.
+            # Lemma E7.G: Addends have different signs and completely overlap.
             # All hypotheses are strictly necessary.
             if diff_sign & (ex > ey + 1) & (fx < fy)
                 let t = MediumPairSummary[]
