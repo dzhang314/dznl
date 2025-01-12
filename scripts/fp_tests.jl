@@ -1101,29 +1101,48 @@ function main(
             # exactly with no rounding error.
 
             # Theorem E1: Addends have same sign and exponent.
-            if same_sign & (ex == ey) & (fx != fy) & (ex < fx + (p - 1)) & (ey < fy + (p - 1))
+            if same_sign & (ex == ey) & (fx < fy) & (ex < fx + (p - 1)) & (ey < fy + (p - 1))
                 let t = MediumPairSummary[]
-                    push_range!(t, (sx, ex+1:ex+1, min(fx, fy)), pos_zero)
+                    push_range!(t, (sx, ex+1:ex+1, fx), pos_zero)
+                    @assert s == t
+                end
+                verified += 1
+            end
+            if same_sign & (ex == ey) & (fx > fy) & (ex < fx + (p - 1)) & (ey < fy + (p - 1))
+                let t = MediumPairSummary[]
+                    push_range!(t, (sx, ex+1:ex+1, fy), pos_zero)
                     @assert s == t
                 end
                 verified += 1
             end
 
             # Theorem E2: Addends have same exponent and different signs.
-            if diff_sign & (ex == ey) & (fx != fy) & (ex > fx + 1) & (ey > fy + 1)
+            if diff_sign & (ex == ey) & (fx < fy) & (ex > fx + 1) & (ey > fy + 1)
                 let t = MediumPairSummary[]
-                    push_range!(t, (±, min(fx, fy):ex-1, min(fx, fy)), pos_zero)
+                    push_range!(t, (±, fx:ex-1, fx), pos_zero)
+                    @assert s == t
+                end
+                verified += 1
+            end
+            if diff_sign & (ex == ey) & (fx > fy) & (ex > fx + 1) & (ey > fy + 1)
+                let t = MediumPairSummary[]
+                    push_range!(t, (±, fy:ey-1, fy), pos_zero)
                     @assert s == t
                 end
                 verified += 1
             end
 
             # Theorem E2.1: Boundary case of E2 where two leading bits cancel.
-            if diff_sign & (ex == ey) & (fx != fy) & (
-                    ((ex == fx + 1) & (ey > fy + 1)) |
-                    ((ex > fx + 1) & (ey == fy + 1)))
+            if diff_sign & (ex == ey) & (ex > fx + 1) & (ey == fy + 1)
                 let t = MediumPairSummary[]
-                    push_range!(t, (±, min(fx, fy):ex-2, min(fx, fy)), pos_zero)
+                    push_range!(t, (±, fx:ex-2, fx), pos_zero)
+                    @assert s == t
+                end
+                verified += 1
+            end
+            if diff_sign & (ex == ey) & (ex == fx + 1) & (ey > fy + 1)
+                let t = MediumPairSummary[]
+                    push_range!(t, (±, fy:ex-2, fy), pos_zero)
                     @assert s == t
                 end
                 verified += 1
