@@ -43,6 +43,12 @@ IntVar = typing.TypeVar("IntVar", z3.ArithRef, z3.BitVecRef)
 FloatVar = typing.TypeVar("FloatVar")
 
 
+# This wrapper function works around Python type checkers
+# being unable to resolve overloads through type variables.
+def z3_If(c: z3.BoolRef, a: IntVar, b: IntVar) -> IntVar:
+    return z3.If(c, a, b)  # type: ignore
+
+
 def two_sum_lemmas(
     x: FloatVar,
     y: FloatVar,
@@ -105,13 +111,87 @@ def two_sum_lemmas(
     lze: z3.BoolRef = z3.Not(lbe)
     tzx: z3.BoolRef = z3.Not(tbx)
     tzy: z3.BoolRef = z3.Not(tby)
-    # tzs: z3.BoolRef = z3.Not(tbs)
+    tzs: z3.BoolRef = z3.Not(tbs)
     tze: z3.BoolRef = z3.Not(tbe)
 
-    e_pow_two: z3.BoolRef = z3.And(lze, tze, nlbe == p - one, ntbe == p - one)
+    same_sign = sx == sy
+    diff_sign = sx != sy
+
+    fx: IntVar = z3_If(tbx, ex - (p - one), ex - (p - one) + ntbx)
+    fy: IntVar = z3_If(tby, ey - (p - one), ey - (p - one) + ntby)
+    fs: IntVar = z3_If(tbs, es - (p - one), es - (p - one) + ntbs)
+    fe: IntVar = z3_If(tbe, ee - (p - one), ee - (p - one) + ntbe)
 
     ############################################################################
 
+    result["TwoSum-4-X"] = z3.Implies(
+        z3.And(diff_sign, ex > fy + (p + one), fx < ey + (p + one), ex == fx),
+        z3.Or(
+            z3.And(
+                ss == sx,
+                es == ex - one,
+                fs >= ex - p,
+                fs <= ey - one,
+                ee >= fy,
+                ee <= ex - (p + two),
+                fe == fy,
+            ),
+            z3.And(
+                ss == sx,
+                es == ex - one,
+                fs == ey,
+                se == sy,
+                ee >= fy,
+                ee <= ex - (p + two),
+                fe == fy,
+            ),
+            z3.And(
+                ss == sx,
+                es == ex - one,
+                fs == ey + one,
+                se != sy,
+                ee >= fy,
+                ee <= ex - (p + two),
+                fe == fy,
+            ),
+        ),
+    )
+    result["TwoSum-4-Y"] = z3.Implies(
+        z3.And(diff_sign, ey > fx + (p + one), fy < ex + (p + one), ey == fy),
+        z3.Or(
+            z3.And(
+                ss == sy,
+                es == ey - one,
+                fs >= ey - p,
+                fs <= ex - one,
+                ee >= fx,
+                ee <= ey - (p + two),
+                fe == fx,
+            ),
+            z3.And(
+                ss == sy,
+                es == ey - one,
+                fs == ex,
+                se == sx,
+                ee >= fx,
+                ee <= ey - (p + two),
+                fe == fx,
+            ),
+            z3.And(
+                ss == sy,
+                es == ey - one,
+                fs == ex + one,
+                se != sx,
+                ee >= fx,
+                ee <= ey - (p + two),
+                fe == fx,
+            ),
+        ),
+    )
+
+    ############################################################################
+
+    """
     result["TwoSum-AXS"] = z3.Implies(z3.And(sx == sy, lzx, ex > ey + one), es == ex)
     result["TwoSum-AYS"] = z3.Implies(z3.And(sx == sy, lzy, ex + one < ey), es == ey)
     result["TwoSum-AXD"] = z3.Implies(z3.And(sx != sy, lbx, ex > ey + one), es == ex)
@@ -765,6 +845,7 @@ def two_sum_lemmas(
             ),
         ),
     )
+    """
 
     ############################################################################
 
