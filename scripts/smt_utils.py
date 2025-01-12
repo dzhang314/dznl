@@ -59,10 +59,14 @@ class SMTJob(object):
         assert self.result is None
         random.shuffle(SMT_SOLVERS)
         for smt_solver in SMT_SOLVERS:
+            command: list[str] = [smt_solver]
+            if smt_solver == "cvc5":
+                command.append("--fp-exp")
+            command.append(self.filename)
             self.processes[smt_solver] = (
                 time.perf_counter_ns(),
                 subprocess.Popen(
-                    [smt_solver, self.filename],
+                    command,
                     stdout=subprocess.PIPE,
                     text=True,
                 ),

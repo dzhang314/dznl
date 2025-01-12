@@ -171,12 +171,19 @@ def create_two_sum_jobs(
 
 def main() -> None:
 
-    f32_jobs: list[SMTJob] = create_two_sum_jobs(8, 16, 24, suffix="-F32")
+    f16_jobs: list[SMTJob] = create_two_sum_jobs(5, 8, 11, suffix="-F16")
+    bf16_jobs: list[SMTJob] = create_two_sum_jobs(8, 12, 8, suffix="-BF16")
+    f32_jobs: list[SMTJob] = create_two_sum_jobs(8, 12, 24, suffix="-F32")
     f64_jobs: list[SMTJob] = create_two_sum_jobs(11, 16, 53, suffix="-F64")
-    remaining_jobs: list[SMTJob] = f32_jobs + f64_jobs
+    remaining_jobs: list[SMTJob] = f16_jobs + bf16_jobs + f32_jobs + f64_jobs
 
     cpu_count: int | None = os.cpu_count()
-    job_count: int = 1 if cpu_count is None else cpu_count // len(SMT_SOLVERS)
+    if cpu_count is None:
+        print("WARNING: Could not determine CPU core count using os.cpu_count().")
+        job_count: int = 1
+    else:
+        job_count: int = max(cpu_count // len(SMT_SOLVERS), 1)
+    print("Verifying lemmas with", job_count, "parallel jobs.")
     running_jobs: list[SMTJob] = []
 
     solver_len: int = max(map(len, SMT_SOLVERS))
@@ -230,86 +237,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
-"""
-lemmas["GA-NO-S"] = z3.Implies(
-    z3.And(
-        e_x - (z_x + ONE_BV) > e_y,
-        z3.Or(s_x != s_y, z_x >= ONE_BV),
-        z_x < PRECISION_MINUS_ONE_BV,
-    ),
-    z3.And(s_s == s_x, e_s == e_x, z_s >= z_x - ONE_BV),
-)  # likely cannot be strengthened
-
-lemmas["GB-NO-S"] = z3.Implies(
-    z3.And(
-        e_x < e_y - (z_y + ONE_BV),
-        z3.Or(s_x != s_y, z_y >= ONE_BV),
-        z_y < PRECISION_MINUS_ONE_BV,
-    ),
-    z3.And(s_s == s_y, e_s == e_y, z_s >= z_y - ONE_BV),
-)  # likely cannot be strengthened
-
-lemmas["G-NOC-E"] = z3.Implies(
-    z3.Or(  # None of the following strict inequalities can be weakened.
-        z3.And(e_x - n_x > e_y, e_x - PRECISION_BV < e_y - n_y),
-        z3.And(e_x - (o_x + ONE_BV) > e_y, e_x - PRECISION_BV < e_y - n_y),
-        z3.And(e_x < e_y - n_y, e_x - n_x > e_y - PRECISION_BV),
-        z3.And(e_x < e_y - (o_y + ONE_BV), e_x - n_x > e_y - PRECISION_BV),
-    ),
-    z3.fpIsZero(e),
-)
-
-case_2ad_zn = z3.And(
-    e_x - PRECISION_PLUS_ONE_BV == e_y, s_x != s_y, n_x == ZERO_BV, n_y != ZERO_BV
-)
-case_2bd_zn = z3.And(
-    e_x == e_y - PRECISION_PLUS_ONE_BV, s_x != s_y, n_x != ZERO_BV, n_y == ZERO_BV
-)
-case_6s_x = z3.And(
-    e_x == e_y,
-    s_x == s_y,
-    z3.Xor(n_x == PRECISION_MINUS_ONE_BV, n_y == PRECISION_MINUS_ONE_BV),
-)
-case_6d = z3.And(e_x == e_y, s_x != s_y)
-
-lemmas["2AD-ZN-S"] = z3.Implies(
-    case_2ad_zn,
-    z3.And(
-        s_s == s_x,
-        e_s == e_x - ONE_BV,
-        z_s == ZERO_BV,
-        o_s == PRECISION_MINUS_ONE_BV,
-        n_s == PRECISION_MINUS_ONE_BV,
-    ),
-)  # cannot be strengthened
-lemmas["2BD-ZN-S"] = z3.Implies(
-    case_2bd_zn,
-    z3.And(
-        s_s == s_y,
-        e_s == e_y - ONE_BV,
-        z_s == ZERO_BV,
-        o_s == PRECISION_MINUS_ONE_BV,
-        n_s == PRECISION_MINUS_ONE_BV,
-    ),
-)  # cannot be strengthened
-
-lemmas["6S-X-E"] = z3.Implies(
-    case_6s_x,
-    z3.And(
-        e_e == e_x - PRECISION_MINUS_ONE_BV,
-        e_e == e_y - PRECISION_MINUS_ONE_BV,
-        z_e == PRECISION_MINUS_ONE_BV,
-        o_e == ZERO_BV,
-        n_e == ZERO_BV,
-    ),
-)  # likely cannot be strengthened
-lemmas["6D-UBES"] = z3.Implies(
-    case_6d,
-    z3.And(
-        z3.Or(z3.fpIsZero(s), e_s < e_x - z_x, e_s < e_y - z_y),
-        z3.Or(z3.fpIsZero(s), e_s < e_x - o_x, e_s < e_y - o_y),
-    ),
-)  # cannot be strengthened by a constant
-"""
