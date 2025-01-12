@@ -2,6 +2,7 @@
 
 import operator
 import os
+import sys
 import time
 import z3
 
@@ -173,9 +174,16 @@ def main() -> None:
 
     f16_jobs: list[SMTJob] = create_two_sum_jobs(5, 8, 11, suffix="-F16")
     bf16_jobs: list[SMTJob] = create_two_sum_jobs(8, 12, 8, suffix="-BF16")
-    f32_jobs: list[SMTJob] = create_two_sum_jobs(8, 12, 24, suffix="-F32")
-    f64_jobs: list[SMTJob] = create_two_sum_jobs(11, 16, 53, suffix="-F64")
-    remaining_jobs: list[SMTJob] = f16_jobs + bf16_jobs + f32_jobs + f64_jobs
+    remaining_jobs: list[SMTJob] = f16_jobs + bf16_jobs
+    if "--verify-fp32" in sys.argv:
+        f32_jobs: list[SMTJob] = create_two_sum_jobs(8, 12, 24, suffix="-F32")
+        remaining_jobs += f32_jobs
+    if "--verify-fp64" in sys.argv:
+        f64_jobs: list[SMTJob] = create_two_sum_jobs(11, 16, 53, suffix="-F64")
+        remaining_jobs += f64_jobs
+    if "--verify-fp128" in sys.argv:
+        f128_jobs: list[SMTJob] = create_two_sum_jobs(15, 20, 113, suffix="-F128")
+        remaining_jobs += f128_jobs
 
     cpu_count: int | None = os.cpu_count()
     if cpu_count is None:
