@@ -287,7 +287,7 @@ def verify_joldes_2017_algorithm_4(p: int) -> None:
     ]
 
     prove(solver, a3.is_ulp_nonoverlapping(b3), "A4N", variables)
-    prove(solver, c2.is_smaller_than(a3, 2 * p - 3), "A4C", variables)
+    prove(solver, c2.is_smaller_than(a3, 2 * p - 1), "A4C", variables)
 
 
 def verify_joldes_2017_algorithm_6(p: int) -> None:
@@ -319,7 +319,7 @@ def verify_joldes_2017_algorithm_6(p: int) -> None:
 
     prove(solver, a5.is_ulp_nonoverlapping(b5), "A6N", variables)
     prove(solver, c2.is_smaller_than(a5, 2 * p - 3), "A6C", variables)
-    prove(solver, d4.is_smaller_than(a5, 2 * p - 2), "A6D", variables)
+    prove(solver, d4.is_smaller_than(a5, 2 * p - 1), "A6D", variables)
 
 
 def verify_zhang_addition(p: int) -> None:
@@ -350,7 +350,7 @@ def verify_zhang_addition(p: int) -> None:
     ]
 
     prove(solver, a4.is_ulp_nonoverlapping(b4), "ZAN", variables)
-    prove(solver, c3.is_smaller_than(a4, 2 * p - 1), "ZAC", variables)
+    prove(solver, c3.is_smaller_than(a4, 2 * p - 2), "ZAC", variables)
     prove(solver, d2.is_smaller_than(a4, 2 * p - 1), "ZAD", variables)
 
 
