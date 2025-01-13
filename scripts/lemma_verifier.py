@@ -172,19 +172,6 @@ def create_two_sum_jobs(
 
 def main() -> None:
 
-    f16_jobs: list[SMTJob] = create_two_sum_jobs(5, 8, 11, suffix="-F16")
-    bf16_jobs: list[SMTJob] = create_two_sum_jobs(8, 12, 8, suffix="-BF16")
-    remaining_jobs: list[SMTJob] = f16_jobs + bf16_jobs
-    if "--verify-fp32" in sys.argv:
-        f32_jobs: list[SMTJob] = create_two_sum_jobs(8, 12, 24, suffix="-F32")
-        remaining_jobs += f32_jobs
-    if "--verify-fp64" in sys.argv:
-        f64_jobs: list[SMTJob] = create_two_sum_jobs(11, 16, 53, suffix="-F64")
-        remaining_jobs += f64_jobs
-    if "--verify-fp128" in sys.argv:
-        f128_jobs: list[SMTJob] = create_two_sum_jobs(15, 20, 113, suffix="-F128")
-        remaining_jobs += f128_jobs
-
     cpu_count: int | None = os.cpu_count()
     if cpu_count is None:
         print("WARNING: Could not determine CPU core count using os.cpu_count().")
@@ -192,18 +179,53 @@ def main() -> None:
     else:
         job_count: int = max(cpu_count // len(SMT_SOLVERS), 1)
     print("Verifying lemmas with", job_count, "parallel jobs.")
+
+    remaining_jobs: list[SMTJob] = []
+
+    print("Constructing f16 lemmas...")
+    f16_jobs: list[SMTJob] = create_two_sum_jobs(5, 8, 11, suffix="-F16")
+    remaining_jobs += f16_jobs
+
+    print("Constructing bf16 lemmas...")
+    bf16_jobs: list[SMTJob] = create_two_sum_jobs(8, 12, 8, suffix="-BF16")
+    remaining_jobs += bf16_jobs
+
+    if "--verify-f32" in sys.argv:
+        print("Constructing f32 lemmas...")
+        f32_jobs: list[SMTJob] = create_two_sum_jobs(8, 12, 24, suffix="-F32")
+        remaining_jobs += f32_jobs
+
+    if "--verify-f64" in sys.argv:
+        print("Constructing f64 lemmas...")
+        f64_jobs: list[SMTJob] = create_two_sum_jobs(11, 16, 53, suffix="-F64")
+        remaining_jobs += f64_jobs
+
+    if "--verify-f128" in sys.argv:
+        print("Constructing f128 lemmas...")
+        f128_jobs: list[SMTJob] = create_two_sum_jobs(15, 20, 113, suffix="-F128")
+        remaining_jobs += f128_jobs
+
     running_jobs: list[SMTJob] = []
-
     solver_len: int = max(map(len, SMT_SOLVERS))
-    name_len: int = max(len(job.filename) for job in remaining_jobs)
+    filename_len: int = max(len(job.filename) for job in remaining_jobs)
 
-    while remaining_jobs or running_jobs:
+    prefix: str = ""
+    for i, arg in enumerate(sys.argv):
+        if arg == "--prefix":
+            prefix = sys.argv[i + 1]
+        elif arg.startswith("--prefix="):
+            prefix = arg[len("--prefix=") :]
+    if prefix:
+        print(f'Verifying only lemmas that begin with "{prefix}".')
+
+    while running_jobs or remaining_jobs:
 
         # Start new jobs until all job slots are filled.
         while remaining_jobs and (len(running_jobs) < job_count):
             next_job: SMTJob = remaining_jobs.pop(0)
-            next_job.start()
-            running_jobs.append(next_job)
+            if os.path.basename(next_job.filename).startswith(prefix):
+                next_job.start()
+                running_jobs.append(next_job)
 
         # Check status of all running jobs.
         finished_jobs: list[SMTJob] = []
@@ -218,7 +240,7 @@ def main() -> None:
                     print(
                         job.processes.popitem()[0].rjust(solver_len),
                         "proved",
-                        job.filename.ljust(name_len),
+                        job.filename.ljust(filename_len),
                         "in",
                         job.result[0],
                         "seconds.",
@@ -227,7 +249,7 @@ def main() -> None:
                     print(
                         job.processes.popitem()[0].rjust(solver_len),
                         "failed to prove",
-                        job.filename.ljust(name_len),
+                        job.filename.ljust(filename_len),
                         "in",
                         job.result[0],
                         "seconds.",
