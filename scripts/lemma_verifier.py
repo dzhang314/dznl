@@ -2,6 +2,7 @@
 
 import operator
 import os
+import subprocess
 import sys
 import time
 import z3
@@ -236,24 +237,39 @@ def main() -> None:
 
                 # Print results of finished jobs.
                 assert len(job.processes) == 1
+                solver_name: str = job.processes.popitem()[0]
+
                 if job.result[1] == z3.unsat:
                     print(
-                        job.processes.popitem()[0].rjust(solver_len),
+                        solver_name.rjust(solver_len),
                         "proved",
                         job.filename.ljust(filename_len),
                         "in",
                         job.result[0],
                         "seconds.",
                     )
-                else:
+                elif job.result[1] == z3.sat:
                     print(
-                        job.processes.popitem()[0].rjust(solver_len),
-                        "failed to prove",
+                        solver_name.rjust(solver_len),
+                        "refuted",
                         job.filename.ljust(filename_len),
                         "in",
                         job.result[0],
                         "seconds.",
                     )
+                    print("Counterexample:")
+                    with open(job.filename, "a") as f:
+                        f.write("(get-model)\n")
+                    if solver_name == "cvc5":
+                        subprocess.run(
+                            ["cvc5", "--fp-exp", "--produce-models", job.filename]
+                        )
+                    elif solver_name == "bitwuzla":
+                        subprocess.run(["bitwuzla", "--produce-models", job.filename])
+                    elif solver_name == "z3":
+                        subprocess.run(["z3", job.filename])
+                    sys.exit(1)
+                else:
                     assert False
 
         # Vacate slots of finished jobs.
