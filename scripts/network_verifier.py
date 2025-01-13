@@ -213,7 +213,12 @@ def bool_value(var: z3.BoolRef) -> bool:
         raise RuntimeError(f"{var} does not have a concrete Boolean value.")
 
 
-def float_str(model: z3.ModelRef, var: FPVariable) -> str:
+def exponent_length(model: z3.ModelRef, var: FPVariable) -> int:
+    exponent: int = model[var.exponent].as_long()
+    return len(str(exponent))
+
+
+def float_str(model: z3.ModelRef, var: FPVariable, *, head_length: int = 0) -> str:
     sign_str: str = "-" if bool_value(model[var.sign_bit]) else "+"
     exponent: int = model[var.exponent].as_long()
     if exponent == var.zero_exponent:
@@ -243,15 +248,20 @@ def float_str(model: z3.ModelRef, var: FPVariable) -> str:
         assert mantissa[-num_trailing_bits - 1] in {"?", terminator}
         mantissa[-num_trailing_bits - 1] = terminator
 
-    head_str: str = f"{sign_str}2^{exponent}"
+    head_str: str = f"{sign_str}2^{exponent}".ljust(head_length)
     mantissa_str: str = "1." + "".join(mantissa)
     return f"{head_str} * {mantissa_str}"
 
 
 def print_model(model: z3.ModelRef, variables: list[list[FPVariable]]) -> None:
+    head_length: int = 0
     for row in variables:
         for var in row:
-            print(f"    {var.name}: {float_str(model, var)}")
+            head_length = max(head_length, exponent_length(model, var))
+    head_length += 3
+    for row in variables:
+        for var in row:
+            print(f"    {var.name}: {float_str(model, var, head_length=head_length)}")
         print()
     return None
 
@@ -350,14 +360,14 @@ def verify_zhang_addition(p: int) -> None:
     ]
 
     prove(solver, a4.is_ulp_nonoverlapping(b4), "ZAN", variables)
-    prove(solver, c3.is_smaller_than(a4, 2 * p - 2), "ZAC", variables)
+    prove(solver, c3.is_smaller_than(a4, 2 * p - 1), "ZAC", variables)
     prove(solver, d2.is_smaller_than(a4, 2 * p - 1), "ZAD", variables)
 
 
 if __name__ == "__main__":
-    verify_joldes_2017_algorithm_4(10)
-    verify_joldes_2017_algorithm_6(10)
-    verify_zhang_addition(10)
+    verify_joldes_2017_algorithm_4(11)
+    verify_joldes_2017_algorithm_6(11)
+    verify_zhang_addition(11)
     verify_joldes_2017_algorithm_4(24)
     verify_joldes_2017_algorithm_6(24)
     verify_zhang_addition(24)
