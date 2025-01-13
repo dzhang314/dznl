@@ -117,68 +117,118 @@ def two_sum_lemmas(
     gx: IntVar = z3_If(lbx, ex - nlbx, ex)
     gy: IntVar = z3_If(lby, ey - nlby, ey)
     gs: IntVar = z3_If(lbs, es - nlbs, es)
-    ge: IntVar = z3_If(lbe, ee - nlbe, ee)
+    # ge: IntVar = z3_If(lbe, ee - nlbe, ee)
 
     hx: IntVar = z3_If(lbx, ex, ex - nlbx)
     hy: IntVar = z3_If(lby, ey, ey - nlby)
     hs: IntVar = z3_If(lbs, es, es - nlbs)
-    he: IntVar = z3_If(lbe, ee, ee - nlbe)
+    # he: IntVar = z3_If(lbe, ee, ee - nlbe)
 
     same_sign: z3.BoolRef = sx == sy
     diff_sign: z3.BoolRef = sx != sy
 
     ############################################################# LEMMA FAMILY D
 
+    # All hypotheses are strictly necessary.
     result["TwoSum-D1-X"] = z3.Implies(
-        z3.And(diff_sign, ex > gx, ex > ey + one), es == ex
+        z3.And(diff_sign, ex > gx, ex > ey + one), z3.And(ss == sx, es == ex)
     )
     result["TwoSum-D1-Y"] = z3.Implies(
-        z3.And(diff_sign, ey > gy, ex + one < ey), es == ey
+        z3.And(diff_sign, ey > gy, ey > ex + one), z3.And(ss == sy, es == ey)
     )
 
+    # All hypotheses are strictly necessary.
     result["TwoSum-D2-X"] = z3.Implies(
-        z3.And(diff_sign, ex > ey + two, es == ex - one),
+        z3.And(ex > ey + two, es < ex),
         z3.And(lbs, nlbs >= ex - ey - two),
     )
     result["TwoSum-D2-Y"] = z3.Implies(
-        z3.And(diff_sign, ex + two < ey, es == ey - one),
+        z3.And(ex + two < ey, es < ey),
         z3.And(lbs, nlbs >= ey - ex - two),
     )
 
+    # All hypotheses are strictly necessary.
     result["TwoSum-D3-X"] = z3.Implies(
-        z3.And(diff_sign, ex > ey, ey > gy, gy > gx),
-        z3.And(ss == sx, es == ex, gs == ey + one),
-    )
-    result["TwoSum-D3-Y"] = z3.Implies(
-        z3.And(diff_sign, ey > ex, ex > gx, gx > gy),
-        z3.And(ss == sy, es == ey, gs == ex + one),
-    )
-
-    result["TwoSum-D4-X"] = z3.Implies(
-        z3.And(diff_sign, ex > hx, hx > ey + one, ey > ex - p),
-        z3.And(ss == sx, es == ex, hs <= hx),
-    )
-    result["TwoSum-D4-Y"] = z3.Implies(
-        z3.And(diff_sign, ey > hy, hy > ex + one, ex > ey - p),
-        z3.And(ss == sy, es == ey, hs <= hy),
-    )
-
-    result["TwoSum-D5-X"] = z3.Implies(
         z3.And(same_sign, ex > hx, hx > ey),
         z3.And(ss == sx, es == ex, hs <= hx + one),
     )
-    result["TwoSum-D5-Y"] = z3.Implies(
+    result["TwoSum-D3-Y"] = z3.Implies(
         z3.And(same_sign, ey > hy, hy > ex),
         z3.And(ss == sy, es == ey, hs <= hy + one),
     )
 
-    result["TwoSum-D6-X"] = z3.Implies(
-        z3.And(xy_nonzero, same_sign, ex > ey, fy >= hx),
+    # All hypotheses are strictly necessary.
+    result["TwoSum-D4-X"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, ex > ey, fy + one > hx),
         z3.And(ss == sx, es == ex, hs == ey + one),
     )
-    result["TwoSum-D6-Y"] = z3.Implies(
-        z3.And(xy_nonzero, same_sign, ey > ex, fx >= hy),
+    result["TwoSum-D4-Y"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, ey > ex, fx + one > hy),
         z3.And(ss == sy, es == ey, hs == ex + one),
+    )
+
+    # All hypotheses are strictly necessary.
+    result["TwoSum-D5-X"] = z3.Implies(
+        z3.And(ex > gx, gx > ey + one),
+        z3.And(ss == sx, es == ex, gs <= gx + one),
+    )
+    result["TwoSum-D5-Y"] = z3.Implies(
+        z3.And(ey > gy, gy > ex + one),
+        z3.And(ss == sy, es == ey, gs <= gy + one),
+    )
+
+    # All hypotheses are strictly necessary.
+    result["TwoSum-D6-X"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, gx == ey + one, ey == fy, fy + p > ex),
+        z3.And(ss == sx, es == ex, gs <= ey),
+    )
+    result["TwoSum-D6-Y"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, gy == ex + one, ex == fx, fx + p > ey),
+        z3.And(ss == sy, es == ey, gs <= ex),
+    )
+
+    # All hypotheses are strictly necessary.
+    result["TwoSum-D7-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex > ey + one, hx < ey + one),
+        z3.And(ss == sx, es + one == ex, gs <= ey + one),
+    )
+    result["TwoSum-D7-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey > ex + one, hy <= ex),
+        z3.And(ss == sy, es + one == ey, gs <= ex + one),
+    )
+
+    # All hypotheses are strictly necessary.
+    result["TwoSum-D8-X"] = z3.Implies(
+        z3.And(diff_sign, ex > fx, hx > ey + one),
+        z3.And(ss == sx, es == ex, hs <= hx),
+    )
+    result["TwoSum-D8-Y"] = z3.Implies(
+        z3.And(diff_sign, ey > fy, hy > ex + one),
+        z3.And(ss == sy, es == ey, hs <= hy),
+    )
+
+    ############################################################# LEMMA FAMILY C
+
+    # All hypotheses are strictly necessary.
+    # This lemma is complete.
+    result["TwoSum-C1-X"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, fx == gx, fx == ey, ey == fy),
+        z3.And(ss == sx, es == ex + one, fs == es, e_pos_zero),
+    )
+    result["TwoSum-C1-Y"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, fy == gy, fy == ex, ex == fx),
+        z3.And(ss == sy, es == ey + one, fs == es, e_pos_zero),
+    )
+
+    # All hypotheses are strictly necessary.
+    # This lemma is complete.
+    result["TwoSum-C2-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex > fx, fx == gx, fx == ey, ey == fy),
+        z3.And(ss == sx, es == ex, fs == gs, fs == ey + one, e_pos_zero),
+    )
+    result["TwoSum-C2-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey > fy, fy == gy, fy == ex, ex == fx),
+        z3.And(ss == sy, es == ey, fs == gs, fs == ex + one, e_pos_zero),
     )
 
     ############################################################# LEMMA FAMILY Z
