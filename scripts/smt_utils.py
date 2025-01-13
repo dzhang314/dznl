@@ -17,11 +17,7 @@ def detect_smt_solvers() -> list[str]:
 
     try:
         v: str = subprocess.check_output(["cvc5", "--version"], text=True)
-        print("Found CVC5 version:")
-        for line in v.split("\n"):
-            if not line:
-                break
-            print("    ", line)
+        print("Found CVC5 version:", v.splitlines()[0].strip())
         result.append("cvc5")
     except FileNotFoundError:
         print("CVC5 not found in current PATH.")
