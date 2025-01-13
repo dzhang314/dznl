@@ -109,150 +109,77 @@ def two_sum_lemmas(
     e_equals_x: z3.BoolRef = is_equal(e, x)
     e_equals_y: z3.BoolRef = is_equal(e, y)
 
-    lzx: z3.BoolRef = z3.Not(lbx)
-    lzy: z3.BoolRef = z3.Not(lby)
-    # lzs: z3.BoolRef = z3.Not(lbs)
-    # lze: z3.BoolRef = z3.Not(lbe)
-    # tzx: z3.BoolRef = z3.Not(tbx)
-    # tzy: z3.BoolRef = z3.Not(tby)
-    # tzs: z3.BoolRef = z3.Not(tbs)
-    # tze: z3.BoolRef = z3.Not(tbe)
+    fx: IntVar = z3_If(tbx, ex - (p - one), ex - (p - (ntbx + one)))
+    fy: IntVar = z3_If(tby, ey - (p - one), ey - (p - (ntby + one)))
+    fs: IntVar = z3_If(tbs, es - (p - one), es - (p - (ntbs + one)))
+    fe: IntVar = z3_If(tbe, ee - (p - one), ee - (p - (ntbe + one)))
 
-    same_sign = sx == sy
-    diff_sign = sx != sy
+    gx: IntVar = z3_If(lbx, ex - nlbx, ex)
+    gy: IntVar = z3_If(lby, ey - nlby, ey)
+    gs: IntVar = z3_If(lbs, es - nlbs, es)
+    ge: IntVar = z3_If(lbe, ee - nlbe, ee)
 
-    fx: IntVar = z3_If(tbx, ex - (p - one), ex - (p - one) + ntbx)
-    fy: IntVar = z3_If(tby, ey - (p - one), ey - (p - one) + ntby)
-    fs: IntVar = z3_If(tbs, es - (p - one), es - (p - one) + ntbs)
-    fe: IntVar = z3_If(tbe, ee - (p - one), ee - (p - one) + ntbe)
+    hx: IntVar = z3_If(lbx, ex, ex - nlbx)
+    hy: IntVar = z3_If(lby, ey, ey - nlby)
+    hs: IntVar = z3_If(lbs, es, es - nlbs)
+    he: IntVar = z3_If(lbe, ee, ee - nlbe)
 
-    def x_case(
-        es_range: IntVar | tuple[IntVar, IntVar],
-        fs_range: IntVar | tuple[IntVar, IntVar],
-        e_sign: bool | None,
-        e_offset: int,
-        *,
-        overlap: bool = False,
-    ) -> z3.BoolRef:
-        conditions: list[z3.BoolRef] = []
-        conditions.append(ss == sx)
-        if isinstance(es_range, tuple):
-            conditions.append(es >= es_range[0])
-            conditions.append(es <= es_range[1])
-        else:
-            conditions.append(es == es_range)
-        if isinstance(fs_range, tuple):
-            conditions.append(fs >= fs_range[0])
-            conditions.append(fs <= fs_range[1])
-        else:
-            conditions.append(fs == fs_range)
-        if e_sign is not None:
-            if e_sign:
-                conditions.append(se == sy)
-            else:
-                conditions.append(se != sy)
-        if e_offset == 0:
-            conditions.append(ee <= ex - p)
-        elif e_offset == 1:
-            conditions.append(ee <= ex - (p + one))
-        elif e_offset == -1:
-            conditions.append(ee <= ex - (p - one))
-        elif e_offset == 2:
-            conditions.append(ee <= ex - (p + two))
-        elif e_offset == -2:
-            conditions.append(ee <= ex - (p - two))
-        else:
-            assert False
-        if overlap:
-            conditions.append(ee >= fx)
-            conditions.append(fe == fx)
-        else:
-            conditions.append(ee >= fy)
-            conditions.append(fe == fy)
-        return z3.And(*conditions)
+    same_sign: z3.BoolRef = sx == sy
+    diff_sign: z3.BoolRef = sx != sy
 
-    def x_case_zero(
-        es_range: IntVar | tuple[IntVar, IntVar],
-        fs_range: IntVar | tuple[IntVar, IntVar],
-    ) -> z3.BoolRef:
-        conditions: list[z3.BoolRef] = []
-        conditions.append(ss == sx)
-        if isinstance(es_range, tuple):
-            conditions.append(es >= es_range[0])
-            conditions.append(es <= es_range[1])
-        else:
-            conditions.append(es == es_range)
-        if isinstance(fs_range, tuple):
-            conditions.append(fs >= fs_range[0])
-            conditions.append(fs <= fs_range[1])
-        else:
-            conditions.append(fs == fs_range)
-        conditions.append(e_pos_zero)
-        return z3.And(*conditions)
+    ############################################################# LEMMA FAMILY D
 
-    def y_case(
-        es_range: IntVar | tuple[IntVar, IntVar],
-        fs_range: IntVar | tuple[IntVar, IntVar],
-        e_sign: bool | None,
-        e_offset: int,
-        *,
-        overlap: bool = False,
-    ) -> z3.BoolRef:
-        conditions: list[z3.BoolRef] = []
-        conditions.append(ss == sy)
-        if isinstance(es_range, tuple):
-            conditions.append(es >= es_range[0])
-            conditions.append(es <= es_range[1])
-        else:
-            conditions.append(es == es_range)
-        if isinstance(fs_range, tuple):
-            conditions.append(fs >= fs_range[0])
-            conditions.append(fs <= fs_range[1])
-        else:
-            conditions.append(fs == fs_range)
-        if e_sign is not None:
-            if e_sign:
-                conditions.append(se == sx)
-            else:
-                conditions.append(se != sx)
-        if e_offset == 0:
-            conditions.append(ee <= ey - p)
-        elif e_offset == 1:
-            conditions.append(ee <= ey - (p + one))
-        elif e_offset == -1:
-            conditions.append(ee <= ey - (p - one))
-        elif e_offset == 2:
-            conditions.append(ee <= ey - (p + two))
-        elif e_offset == -2:
-            conditions.append(ee <= ey - (p - two))
-        else:
-            assert False
-        if overlap:
-            conditions.append(ee >= fy)
-            conditions.append(fe == fy)
-        else:
-            conditions.append(ee >= fx)
-            conditions.append(fe == fx)
-        return z3.And(*conditions)
+    result["TwoSum-D1-X"] = z3.Implies(
+        z3.And(diff_sign, ex > gx, ex > ey + one), es == ex
+    )
+    result["TwoSum-D1-Y"] = z3.Implies(
+        z3.And(diff_sign, ey > gy, ex + one < ey), es == ey
+    )
 
-    def y_case_zero(
-        es_range: IntVar | tuple[IntVar, IntVar],
-        fs_range: IntVar | tuple[IntVar, IntVar],
-    ) -> z3.BoolRef:
-        conditions: list[z3.BoolRef] = []
-        conditions.append(ss == sy)
-        if isinstance(es_range, tuple):
-            conditions.append(es >= es_range[0])
-            conditions.append(es <= es_range[1])
-        else:
-            conditions.append(es == es_range)
-        if isinstance(fs_range, tuple):
-            conditions.append(fs >= fs_range[0])
-            conditions.append(fs <= fs_range[1])
-        else:
-            conditions.append(fs == fs_range)
-        conditions.append(e_pos_zero)
-        return z3.And(*conditions)
+    result["TwoSum-D2-X"] = z3.Implies(
+        z3.And(diff_sign, ex > ey + two, es == ex - one),
+        z3.And(lbs, nlbs >= ex - ey - two),
+    )
+    result["TwoSum-D2-Y"] = z3.Implies(
+        z3.And(diff_sign, ex + two < ey, es == ey - one),
+        z3.And(lbs, nlbs >= ey - ex - two),
+    )
+
+    result["TwoSum-D3-X"] = z3.Implies(
+        z3.And(diff_sign, ex > ey, ey > gy, gy > gx),
+        z3.And(ss == sx, es == ex, gs == ey + one),
+    )
+    result["TwoSum-D3-Y"] = z3.Implies(
+        z3.And(diff_sign, ey > ex, ex > gx, gx > gy),
+        z3.And(ss == sy, es == ey, gs == ex + one),
+    )
+
+    result["TwoSum-D4-X"] = z3.Implies(
+        z3.And(diff_sign, ex > hx, hx > ey + one, ey > ex - p),
+        z3.And(ss == sx, es == ex, hs <= hx),
+    )
+    result["TwoSum-D4-Y"] = z3.Implies(
+        z3.And(diff_sign, ey > hy, hy > ex + one, ex > ey - p),
+        z3.And(ss == sy, es == ey, hs <= hy),
+    )
+
+    result["TwoSum-D5-X"] = z3.Implies(
+        z3.And(same_sign, ex > hx, hx > ey),
+        z3.And(ss == sx, es == ex, hs <= hx + one),
+    )
+    result["TwoSum-D5-Y"] = z3.Implies(
+        z3.And(same_sign, ey > hy, hy > ex),
+        z3.And(ss == sy, es == ey, hs <= hy + one),
+    )
+
+    result["TwoSum-D6-X"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, ex > ey, fy >= hx),
+        z3.And(ss == sx, es == ex, hs == ey + one),
+    )
+    result["TwoSum-D6-Y"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, ey > ex, fx >= hy),
+        z3.And(ss == sy, es == ey, hs == ex + one),
+    )
 
     ############################################################# LEMMA FAMILY Z
 
@@ -304,6 +231,44 @@ def two_sum_lemmas(
     # fmt: on
 
     ############################################################# LEMMA FAMILY F
+
+    def x_case_zero(
+        es_range: IntVar | tuple[IntVar, IntVar],
+        fs_range: IntVar | tuple[IntVar, IntVar],
+    ) -> z3.BoolRef:
+        conditions: list[z3.BoolRef] = []
+        conditions.append(ss == sx)
+        if isinstance(es_range, tuple):
+            conditions.append(es >= es_range[0])
+            conditions.append(es <= es_range[1])
+        else:
+            conditions.append(es == es_range)
+        if isinstance(fs_range, tuple):
+            conditions.append(fs >= fs_range[0])
+            conditions.append(fs <= fs_range[1])
+        else:
+            conditions.append(fs == fs_range)
+        conditions.append(e_pos_zero)
+        return z3.And(*conditions)
+
+    def y_case_zero(
+        es_range: IntVar | tuple[IntVar, IntVar],
+        fs_range: IntVar | tuple[IntVar, IntVar],
+    ) -> z3.BoolRef:
+        conditions: list[z3.BoolRef] = []
+        conditions.append(ss == sy)
+        if isinstance(es_range, tuple):
+            conditions.append(es >= es_range[0])
+            conditions.append(es <= es_range[1])
+        else:
+            conditions.append(es == es_range)
+        if isinstance(fs_range, tuple):
+            conditions.append(fs >= fs_range[0])
+            conditions.append(fs <= fs_range[1])
+        else:
+            conditions.append(fs == fs_range)
+        conditions.append(e_pos_zero)
+        return z3.And(*conditions)
 
     # # Lemma F1
     # if same_sign & (fx == fy) & (ex == ey) & (ex == fx)
@@ -696,6 +661,96 @@ def two_sum_lemmas(
 
     ############################################################# LEMMA FAMILY O
 
+    def x_case(
+        es_range: IntVar | tuple[IntVar, IntVar],
+        fs_range: IntVar | tuple[IntVar, IntVar],
+        e_sign: bool | None,
+        e_offset: int,
+        *,
+        overlap: bool = False,
+    ) -> z3.BoolRef:
+        conditions: list[z3.BoolRef] = []
+        conditions.append(ss == sx)
+        if isinstance(es_range, tuple):
+            conditions.append(es >= es_range[0])
+            conditions.append(es <= es_range[1])
+        else:
+            conditions.append(es == es_range)
+        if isinstance(fs_range, tuple):
+            conditions.append(fs >= fs_range[0])
+            conditions.append(fs <= fs_range[1])
+        else:
+            conditions.append(fs == fs_range)
+        if e_sign is not None:
+            if e_sign:
+                conditions.append(se == sy)
+            else:
+                conditions.append(se != sy)
+        if e_offset == 0:
+            conditions.append(ee <= ex - p)
+        elif e_offset == 1:
+            conditions.append(ee <= ex - (p + one))
+        elif e_offset == -1:
+            conditions.append(ee <= ex - (p - one))
+        elif e_offset == 2:
+            conditions.append(ee <= ex - (p + two))
+        elif e_offset == -2:
+            conditions.append(ee <= ex - (p - two))
+        else:
+            assert False
+        if overlap:
+            conditions.append(ee >= fx)
+            conditions.append(fe == fx)
+        else:
+            conditions.append(ee >= fy)
+            conditions.append(fe == fy)
+        return z3.And(*conditions)
+
+    def y_case(
+        es_range: IntVar | tuple[IntVar, IntVar],
+        fs_range: IntVar | tuple[IntVar, IntVar],
+        e_sign: bool | None,
+        e_offset: int,
+        *,
+        overlap: bool = False,
+    ) -> z3.BoolRef:
+        conditions: list[z3.BoolRef] = []
+        conditions.append(ss == sy)
+        if isinstance(es_range, tuple):
+            conditions.append(es >= es_range[0])
+            conditions.append(es <= es_range[1])
+        else:
+            conditions.append(es == es_range)
+        if isinstance(fs_range, tuple):
+            conditions.append(fs >= fs_range[0])
+            conditions.append(fs <= fs_range[1])
+        else:
+            conditions.append(fs == fs_range)
+        if e_sign is not None:
+            if e_sign:
+                conditions.append(se == sx)
+            else:
+                conditions.append(se != sx)
+        if e_offset == 0:
+            conditions.append(ee <= ey - p)
+        elif e_offset == 1:
+            conditions.append(ee <= ey - (p + one))
+        elif e_offset == -1:
+            conditions.append(ee <= ey - (p - one))
+        elif e_offset == 2:
+            conditions.append(ee <= ey - (p + two))
+        elif e_offset == -2:
+            conditions.append(ee <= ey - (p - two))
+        else:
+            assert False
+        if overlap:
+            conditions.append(ee >= fy)
+            conditions.append(fe == fy)
+        else:
+            conditions.append(ee >= fx)
+            conditions.append(fe == fx)
+        return z3.And(*conditions)
+
     # fmt: off
 
     # # Lemma O1
@@ -776,7 +831,11 @@ def two_sum_lemmas(
         ),
     )
 
+    # fmt: on
+
     ############################################################# LEMMA FAMILY 1
+
+    # fmt: off
 
     # # Lemma 1
     # if (ex < ey + p) & (ex > fy + p) & (fx > ey + 1) & ((ex > fx) | same_sign)
@@ -858,7 +917,11 @@ def two_sum_lemmas(
         y_case(ey, ex+one, False, 0),
     )
 
+    # fmt: on
+
     ############################################################# LEMMA FAMILY 2
+
+    # fmt: off
 
     # # Lemma 2
     # if same_sign & (ex > fy + p) & (fx < ey)
@@ -1344,7 +1407,11 @@ def two_sum_lemmas(
         ),
     )
 
+    # fmt: on
+
     ############################################################# LEMMA FAMILY 3
+
+    # fmt: off
 
     result["TwoSum-3-X"] = z3.Implies(
         z3.And(diff_sign, ex > fy + (p+one), fx < ey),
@@ -1563,7 +1630,11 @@ def two_sum_lemmas(
         y_case(ey, (ex+two,ey), False, 0),
     )
 
+    # fmt: on
+
     ############################################################# LEMMA FAMILY 4
+
+    # fmt: off
 
     result["TwoSum-4-X"] = z3.Implies(
         z3.And(diff_sign, ex > fy + (p+one), fx < ey + (p+one), ex == fx),
@@ -1618,22 +1689,6 @@ def two_sum_lemmas(
     )
 
     # fmt: on
-
-    ############################################################################
-
-    result["TwoSum-AXS"] = z3.Implies(z3.And(sx == sy, lzx, ex > ey + one), es == ex)
-    result["TwoSum-AYS"] = z3.Implies(z3.And(sx == sy, lzy, ex + one < ey), es == ey)
-    result["TwoSum-AXD"] = z3.Implies(z3.And(sx != sy, lbx, ex > ey + one), es == ex)
-    result["TwoSum-AYD"] = z3.Implies(z3.And(sx != sy, lby, ex + one < ey), es == ey)
-
-    result["TwoSum-CXD"] = z3.Implies(
-        z3.And(sx != sy, ex > ey + two, es == ex - one),
-        z3.And(lbs, nlbs >= ex - ey - two),
-    )
-    result["TwoSum-CYD"] = z3.Implies(
-        z3.And(sx != sy, ex + two < ey, es == ey - one),
-        z3.And(lbs, nlbs >= ey - ex - two),
-    )
 
     ############################################################################
 
