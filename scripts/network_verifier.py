@@ -213,17 +213,19 @@ def bool_value(var: z3.BoolRef) -> bool:
         raise RuntimeError(f"{var} does not have a concrete Boolean value.")
 
 
-def exponent_length(model: z3.ModelRef, var: FPVariable) -> int:
-    exponent: int = model[var.exponent].as_long()
-    return len(str(exponent))
-
-
-def float_str(model: z3.ModelRef, var: FPVariable, *, head_length: int = 0) -> str:
+def float_str(
+    model: z3.ModelRef,
+    var: FPVariable,
+    *,
+    exponent_delta: int = 0,
+    head_length: int = 0,
+) -> str:
     sign_str: str = "-" if bool_value(model[var.sign_bit]) else "+"
     exponent: int = model[var.exponent].as_long()
     if exponent == var.zero_exponent:
         return f"{sign_str}0"
 
+    exponent += exponent_delta
     mantissa: list[str] = ["?" for _ in range(var.precision - 1)]
 
     leading_bit: bool = bool_value(model[var.leading_bit])
@@ -254,14 +256,21 @@ def float_str(model: z3.ModelRef, var: FPVariable, *, head_length: int = 0) -> s
 
 
 def print_model(model: z3.ModelRef, variables: list[list[FPVariable]]) -> None:
-    head_length: int = 0
+    # TODO: Handle the case where every variable is zero.
+    min_exponent: int = min(
+        model[var.exponent].as_long() for row in variables for var in row
+    )
+    head_length: int = 3 + max(
+        len(str(model[var.exponent].as_long() - min_exponent))
+        for row in variables
+        for var in row
+    )
     for row in variables:
         for var in row:
-            head_length = max(head_length, exponent_length(model, var))
-    head_length += 3
-    for row in variables:
-        for var in row:
-            print(f"    {var.name}: {float_str(model, var, head_length=head_length)}")
+            s: str = float_str(
+                model, var, exponent_delta=-min_exponent, head_length=head_length
+            )
+            print(f"    {var.name}: {s}")
         print()
     return None
 
@@ -277,7 +286,7 @@ def prove(
         print_model(counterexample, variables)
 
 
-def verify_joldes_2017_algorithm_4(p: int) -> None:
+def verify_joldes_2017_algorithm_4(p: int, suffix: str = "") -> None:
     solver: z3.Solver = z3.SolverFor("QF_LIA")
 
     a0 = FPVariable(solver, "a0", precision=p, zero_exponent=-1)
@@ -296,11 +305,11 @@ def verify_joldes_2017_algorithm_4(p: int) -> None:
         [a1, b2, a3, b3],
     ]
 
-    prove(solver, a3.is_ulp_nonoverlapping(b3), "A4N", variables)
-    prove(solver, c2.is_smaller_than(a3, 2 * p - 1), "A4C", variables)
+    prove(solver, a3.is_ulp_nonoverlapping(b3), "A4N" + suffix, variables)
+    prove(solver, c2.is_smaller_than(a3, 2 * p - 1), "A4C" + suffix, variables)
 
 
-def verify_joldes_2017_algorithm_6(p: int) -> None:
+def verify_joldes_2017_algorithm_6(p: int, suffix: str = "") -> None:
     solver: z3.Solver = z3.SolverFor("QF_LIA")
 
     a0 = FPVariable(solver, "a0", precision=p, zero_exponent=-1)
@@ -327,12 +336,12 @@ def verify_joldes_2017_algorithm_6(p: int) -> None:
         [a3, b4, a5, b5],
     ]
 
-    prove(solver, a5.is_ulp_nonoverlapping(b5), "A6N", variables)
-    prove(solver, c2.is_smaller_than(a5, 2 * p - 3), "A6C", variables)
-    prove(solver, d4.is_smaller_than(a5, 2 * p - 1), "A6D", variables)
+    prove(solver, a5.is_ulp_nonoverlapping(b5), "A6N" + suffix, variables)
+    prove(solver, c2.is_smaller_than(a5, 2 * p - 3), "A6C" + suffix, variables)
+    prove(solver, d4.is_smaller_than(a5, 2 * p), "A6D" + suffix, variables)
 
 
-def verify_zhang_addition(p: int) -> None:
+def verify_zhang_addition(p: int, suffix: str = "") -> None:
     solver: z3.Solver = z3.SolverFor("QF_LIA")
 
     a0 = FPVariable(solver, "a0", precision=p, zero_exponent=-1)
@@ -359,18 +368,30 @@ def verify_zhang_addition(p: int) -> None:
         [a2, b3, a4, b4],
     ]
 
-    prove(solver, a4.is_ulp_nonoverlapping(b4), "ZAN", variables)
-    prove(solver, c3.is_smaller_than(a4, 2 * p - 1), "ZAC", variables)
-    prove(solver, d2.is_smaller_than(a4, 2 * p - 1), "ZAD", variables)
+    prove(solver, a4.is_ulp_nonoverlapping(b4), "ZAN" + suffix, variables)
+    prove(solver, c3.is_smaller_than(a4, 2 * p - 1), "ZAC" + suffix, variables)
+    prove(solver, d2.is_smaller_than(a4, 2 * p - 1), "ZAD" + suffix, variables)
 
 
 if __name__ == "__main__":
-    verify_joldes_2017_algorithm_4(11)
-    verify_joldes_2017_algorithm_6(11)
-    verify_zhang_addition(11)
-    verify_joldes_2017_algorithm_4(24)
-    verify_joldes_2017_algorithm_6(24)
-    verify_zhang_addition(24)
-    verify_joldes_2017_algorithm_4(53)
-    verify_joldes_2017_algorithm_6(53)
-    verify_zhang_addition(53)
+    verify_joldes_2017_algorithm_4(8, "-BF16")
+    verify_joldes_2017_algorithm_6(8, "-BF16")
+    verify_zhang_addition(8, "-BF16")
+    verify_joldes_2017_algorithm_4(11, "-F16")
+    verify_joldes_2017_algorithm_6(11, "-F16")
+    verify_zhang_addition(11, "-F16")
+    verify_joldes_2017_algorithm_4(24, "-F32")
+    verify_joldes_2017_algorithm_6(24, "-F32")
+    verify_zhang_addition(24, "-F32")
+    verify_joldes_2017_algorithm_4(53, "-F64")
+    verify_joldes_2017_algorithm_6(53, "-F64")
+    verify_zhang_addition(53, "-F64")
+    verify_joldes_2017_algorithm_4(64, "-F80")
+    verify_joldes_2017_algorithm_6(64, "-F80")
+    verify_zhang_addition(64, "-F80")
+    verify_joldes_2017_algorithm_4(113, "-F128")
+    verify_joldes_2017_algorithm_6(113, "-F128")
+    verify_zhang_addition(113, "-F128")
+    verify_joldes_2017_algorithm_4(237, "-F256")
+    verify_joldes_2017_algorithm_6(237, "-F256")
+    verify_zhang_addition(237, "-F256")
