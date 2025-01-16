@@ -1,0 +1,6 @@
+#define EXPONENT_WIDTH 8
+#define MANTISSA_WIDTH 23
+#define EXPONENT_BIAS 127
+#define PRECISION 24
+#define PADDING_WIDTH 4
+#define INT_WIDTH 12
