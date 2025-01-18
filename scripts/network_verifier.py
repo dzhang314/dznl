@@ -113,7 +113,7 @@ class FPVariable(object):
     def is_smaller_than(self, other: "FPVariable", magnitude: int) -> z3.BoolRef:
         assert self.precision == other.precision
         assert self.zero_exponent == other.zero_exponent
-        return z3.Or(self.is_zero, self.exponent <= other.exponent - magnitude)
+        return z3.Or(self.is_zero, self.exponent + magnitude < other.exponent)
 
 
 def two_sum(
@@ -258,7 +258,10 @@ def float_str(
 def print_model(model: z3.ModelRef, variables: list[list[FPVariable]]) -> None:
     # TODO: Handle the case where every variable is zero.
     min_exponent: int = min(
-        model[var.exponent].as_long() for row in variables for var in row
+        model[var.exponent].as_long()
+        for row in variables
+        for var in row
+        if model[var.exponent].as_long() != var.zero_exponent
     )
     head_length: int = 3 + max(
         len(str(model[var.exponent].as_long() - min_exponent))
@@ -306,7 +309,7 @@ def verify_joldes_2017_algorithm_4(p: int, suffix: str = "") -> None:
     ]
 
     prove(solver, a3.is_ulp_nonoverlapping(b3), "A4N" + suffix, variables)
-    prove(solver, c2.is_smaller_than(a3, 2 * p - 1), "A4C" + suffix, variables)
+    prove(solver, c2.is_smaller_than(a3, 2 * p - 2), "A4E" + suffix, variables)
 
 
 def verify_joldes_2017_algorithm_6(p: int, suffix: str = "") -> None:
@@ -326,6 +329,7 @@ def verify_joldes_2017_algorithm_6(p: int, suffix: str = "") -> None:
     a3, b3 = two_sum(solver, a1, b2, "a3", "b3")
     b4, d4 = two_sum(solver, b3, d1, "b4", "d4")
     a5, b5 = two_sum(solver, a3, b4, "a5", "b5")
+    c5, d5 = two_sum(solver, c2, d4, "c5", "d5")
 
     variables = [
         [a0, b0, a1, b1],
@@ -334,11 +338,11 @@ def verify_joldes_2017_algorithm_6(p: int, suffix: str = "") -> None:
         [a1, b2, a3, b3],
         [b3, d1, b4, d4],
         [a3, b4, a5, b5],
+        [c2, d4, c5, d5],
     ]
 
     prove(solver, a5.is_ulp_nonoverlapping(b5), "A6N" + suffix, variables)
-    prove(solver, c2.is_smaller_than(a5, 2 * p - 3), "A6C" + suffix, variables)
-    prove(solver, d4.is_smaller_than(a5, 2 * p), "A6D" + suffix, variables)
+    prove(solver, c5.is_smaller_than(a5, 2 * p - 4), "A6E" + suffix, variables)
 
 
 def verify_zhang_addition(p: int, suffix: str = "") -> None:
@@ -358,6 +362,7 @@ def verify_zhang_addition(p: int, suffix: str = "") -> None:
     b2, d2 = two_sum(solver, b1, d1, "b2", "d2")
     b3, c3 = two_sum(solver, b2, c2, "b3", "c3")
     a4, b4 = two_sum(solver, a2, b3, "a4", "b4")
+    c4, d4 = two_sum(solver, c3, d2, "c4", "d4")
 
     variables = [
         [a0, b0, a1, b1],
@@ -366,11 +371,11 @@ def verify_zhang_addition(p: int, suffix: str = "") -> None:
         [b1, d1, b2, d2],
         [b2, c2, b3, c3],
         [a2, b3, a4, b4],
+        [c3, d2, c4, d4],
     ]
 
     prove(solver, a4.is_ulp_nonoverlapping(b4), "ZAN" + suffix, variables)
-    prove(solver, c3.is_smaller_than(a4, 2 * p - 1), "ZAC" + suffix, variables)
-    prove(solver, d2.is_smaller_than(a4, 2 * p - 1), "ZAD" + suffix, variables)
+    prove(solver, c4.is_smaller_than(a4, 2 * p - 2), "ZAE" + suffix, variables)
 
 
 if __name__ == "__main__":
