@@ -74,14 +74,10 @@
 (assert (not (fp.isNaN c5)))
 (assert (not (fp.isNaN d5)))
 
-(assert (or
-    (bvsgt ea0 (bvadd ec0 PRECISION_INT))
-    (and (= ea0 (bvadd ec0 PRECISION_INT)) (= mc0 ZERO_MANTISSA))
-    (fp.isZero c0)))
-(assert (or
-    (bvsgt eb0 (bvadd ed0 PRECISION_INT))
-    (and (= eb0 (bvadd ed0 PRECISION_INT)) (= md0 ZERO_MANTISSA))
-    (fp.isZero d0)))
+(assert (= a0 (two-sum a0 c0)))
+(assert (= c0 (two-sum-err a0 c0)))
+(assert (= b0 (two-sum b0 d0)))
+(assert (= d0 (two-sum-err b0 d0)))
 
 ; a1, b1 = two_sum(a0, b0)
 (define-fun a1 () FLOAT (two-sum a0 b0))
@@ -112,7 +108,7 @@
 (assert (= d5 (two-sum-err c2 d4)))
 
 (assert (not (or
-    (bvsge ea5 (bvadd ec5 (bvsub (bvadd PRECISION_INT PRECISION_INT) ONE_INT)))
+    (bvsgt ea5 (bvadd ec5 (bvsub (bvadd PRECISION_INT PRECISION_INT) (bvadd ONE_INT ONE_INT))))
     (fp.isZero c5))))
 
 (check-sat)
