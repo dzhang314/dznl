@@ -2,13 +2,18 @@
     "cSpell.words": [
         "BFLOAT",
         "bitwuzla",
+        "bvadd",
         "BVFP",
+        "bvsgt",
+        "bvsub",
         "clzg",
         "debuginfo",
         "dznl",
         "ferror",
         "fmax",
         "FPRM",
+        "Grcar",
+        "Hessenberg",
         "icpx",
         "isnormal",
         "isystem",
@@ -36,11 +41,13 @@
         "seltzo",
         "setz",
         "sexpr",
+        "Toeplitz",
         "uinttype",
         "unsat",
         "Werror",
         "Weverything",
         "Wextra",
+        "wolframscript",
         "Zhang"
     ]
 }
