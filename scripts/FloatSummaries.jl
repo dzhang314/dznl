@@ -124,18 +124,18 @@ end
 ################################################################################
 
 
-export TwoSumSummary, find_possible_results
+export EFTSummary, find_possible_results
 
 
-struct TwoSumSummary
+struct EFTSummary
     x::FloatSummary
     y::FloatSummary
-    s::FloatSummary
+    r::FloatSummary
     e::FloatSummary
 end
 
 
-@inline function _to_u64(summary::TwoSumSummary)
+@inline function _to_u64(summary::EFTSummary)
     result = zero(UInt64)
     result |= UInt64(summary.x.data) << 32
     result |= UInt64(summary.y.data)
@@ -143,28 +143,18 @@ end
 end
 
 
-@inline function _to_u128(summary::TwoSumSummary)
+@inline function _to_u128(summary::EFTSummary)
     result = zero(UInt128)
     result |= UInt128(summary.x.data) << 96
     result |= UInt128(summary.y.data) << 64
-    result |= UInt128(summary.s.data) << 32
+    result |= UInt128(summary.r.data) << 32
     result |= UInt128(summary.e.data)
     return result
 end
 
 
-@inline Base.isless(a::TwoSumSummary, b::TwoSumSummary) =
+@inline Base.isless(a::EFTSummary, b::EFTSummary) =
     isless(_to_u128(a), _to_u128(b))
-
-
-function find_possible_results(
-    summaries::AbstractVector{TwoSumSummary},
-    x::FloatSummary,
-    y::FloatSummary,
-)
-    range = searchsorted(summaries, TwoSumSummary(x, y, x, y); by=_to_u64)
-    return [(summaries[i].s, summaries[i].e) for i in range]
-end
 
 
 ################################################################################
@@ -223,29 +213,28 @@ end
 
 function _two_sum_summary_helper(
     summarize_func::F,
-    summary::FloatSummary,
-    values::Vector{T},
+    sx::FloatSummary,
+    x_values::Vector{T},
 ) where {F,T}
     U = uinttype(T)
-    result = Vector{TwoSumSummary}[]
-    for i in eachindex(values)
-        x = values[i]
-        temp = TwoSumSummary[]
+    result = Vector{EFTSummary}[]
+    for x in x_values
+        temp = EFTSummary[]
         for j in zero(U):typemax(U)
             y = reinterpret(T, j)
             if isnormal(y)
                 sy = summarize_func(y)
-                s = x + y
-                if isnormal(s)
-                    ss = summarize_func(s)
-                    x_eff = s - y
-                    y_eff = s - x_eff
-                    x_err = x - x_eff
-                    y_err = y - y_eff
-                    e = x_err + y_err
+                r = x + y
+                if isnormal(r)
+                    sr = summarize_func(r)
+                    x_prime = r - y
+                    y_prime = r - x_prime
+                    delta_x = x - x_prime
+                    delta_y = y - y_prime
+                    e = delta_x + delta_y
                     if isnormal(e)
                         se = summarize_func(e)
-                        push!(temp, TwoSumSummary(summary, sy, ss, se))
+                        push!(temp, EFTSummary(sx, sy, sr, se))
                     end
                 end
             end
@@ -262,22 +251,124 @@ function normal_two_sum_summaries(summarize_func::F, ::Type{T}) where {F,T}
     for i in zero(U):typemax(U)
         x = reinterpret(T, i)
         if isnormal(x)
-            summary = summarize_func(x)
-            if haskey(summary_dict, summary)
-                push!(summary_dict[summary], x)
+            sx = summarize_func(x)
+            if haskey(summary_dict, sx)
+                push!(summary_dict[sx], x)
             else
-                summary_dict[summary] = T[x]
+                summary_dict[sx] = T[x]
             end
         end
     end
     summaries = collect(enumerate(sort!(collect(summary_dict))))
-    result = Vector{Vector{TwoSumSummary}}(undef, length(summaries))
+    result = Vector{Vector{EFTSummary}}(undef, length(summaries))
     p = Progress(length(summaries); desc="TwoSum ($summarize_func, $T)")
-    @threads :dynamic for (i, (summary, values)) in summaries
-        result[i] = _two_sum_summary_helper(summarize_func, summary, values)
+    @threads :dynamic for (i, (sx, x_values)) in summaries
+        result[i] = _two_sum_summary_helper(summarize_func, sx, x_values)
         next!(p)
     end
     return reduce(vcat, result)
+end
+
+
+################################################################################
+
+
+export LemmaVerifier, LemmaHelper
+
+
+function find_possible_results(
+    summaries::AbstractVector{EFTSummary},
+    x::FloatSummary,
+    y::FloatSummary,
+)
+    range = searchsorted(summaries, EFTSummary(x, y, x, y); by=_to_u64)
+    return [(summaries[i].r, summaries[i].e) for i in range]
+end
+
+
+struct LemmaVerifier
+    summaries::Vector{EFTSummary}
+    x::FloatSummary
+    y::FloatSummary
+    count::Array{Int,0}
+
+    @inline LemmaVerifier(
+        summaries::Vector{EFTSummary},
+        x::FloatSummary,
+        y::FloatSummary,
+    ) = new(summaries, x, y, fill(0))
+end
+
+
+function (verifier::LemmaVerifier)(
+    f!::Function,
+    hypothesis::Bool,
+)
+    if hypothesis
+        possible_results = find_possible_results(
+            verifier.summaries, verifier.x, verifier.y)
+        stated_results = Tuple{FloatSummary,FloatSummary}[]
+        f!(stated_results)
+        @assert possible_results == sort!(stated_results)
+        verifier.count[] += 1
+    end
+    return nothing
+end
+
+
+struct LemmaHelper
+    e_min::Int
+    e_max::Int
+
+    @inline LemmaHelper(::Type{T}) where {T} = new(
+        exponent(floatmin(T)), exponent(floatmax(T)))
+end
+
+
+@inline _lemma_range(::LemmaHelper, r::Bool) = r:r
+@inline _lemma_range(::LemmaHelper, r::UnitRange{Bool}) = r
+@inline _lemma_range_e(helper::LemmaHelper, r::Integer) =
+    _lemma_range_e(helper, r:r)
+@inline _lemma_range_e(helper::LemmaHelper, r::UnitRange) =
+    UnitRange(max(helper.e_min, r.start), min(helper.e_max, r.stop))
+
+
+function (helper::LemmaHelper)(
+    v::AbstractVector{Tuple{FloatSummary,FloatSummary}},
+    r_summary::FloatSummary, e_summary::FloatSummary,
+)
+    push!(v, (r_summary, e_summary))
+    return v
+end
+
+
+function (helper::LemmaHelper)(
+    v::AbstractVector{Tuple{FloatSummary,FloatSummary}},
+    (sr_range, er_range), e_summary::FloatSummary,
+)
+    for sr in _lemma_range(helper, sr_range)
+        for er in _lemma_range_e(helper, er_range)
+            push!(v, (FloatSummary(sr, er), e_summary))
+        end
+    end
+    return v
+end
+
+
+function (helper::LemmaHelper)(
+    v::AbstractVector{Tuple{FloatSummary,FloatSummary}},
+    (sr_range, er_range), (se_range, ee_range),
+)
+    for sr in _lemma_range(helper, sr_range)
+        for er in _lemma_range_e(helper, er_range)
+            for se in _lemma_range(helper, se_range)
+                for ee in _lemma_range_e(helper, ee_range)
+                    push!(v, (FloatSummary(sr, er), FloatSummary(se, ee)))
+                end
+            end
+        end
+    end
+    return v
 end
 
 
