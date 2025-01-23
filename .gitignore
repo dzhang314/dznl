@@ -3,9 +3,9 @@
 /doc/latex
 /scripts/__pycache__
 /scripts/smt2
-**/Float16ShortTwoSumSummaries.jld2
-**/Float16MediumTwoSumSummaries.jld2
-**/Float16LongTwoSumSummaries.jld2
-**/BFloat16ShortTwoSumSummaries.jld2
-**/BFloat16MediumTwoSumSummaries.jld2
-**/BFloat16LongTwoSumSummaries.jld2
+**/Float16TwoSumSE.bin
+**/Float16TwoSumSETZ.bin
+**/Float16TwoSumSELTZO.bin
+**/BFloat16TwoSumSE.bin
+**/BFloat16TwoSumSETZ.bin
+**/BFloat16TwoSumSELTZO.bin
