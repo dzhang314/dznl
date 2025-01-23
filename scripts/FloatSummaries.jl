@@ -331,7 +331,7 @@ struct LemmaHelper
     f_min::Int
 
     @inline LemmaHelper(::Type{T}) where {T} = new(
-        precision(T), exponent(floatmin(T)), exponent(floatmax(T)),
+        precision(T), exponent(floatmax(T)), exponent(floatmin(T)),
         exponent(floatmin(T)) - (precision(T) - 1))
 end
 
@@ -382,6 +382,7 @@ function (helper::LemmaHelper)(
     (sr_range, er_range, fr_range)::_SETZTuple,
     e_summary::FloatSummary,
 )
+    p = helper.p
     for sr in _lemma_range(helper, sr_range)
         for er in _lemma_range_e(helper, er_range)
             for fr in _lemma_range_f(helper, fr_range)
@@ -416,6 +417,7 @@ function (helper::LemmaHelper)(
     (sr_range, er_range, fr_range)::_SETZTuple,
     (se_range, ee_range, fe_range)::_SETZTuple,
 )
+    p = helper.p
     for sr in _lemma_range(helper, sr_range)
         for er in _lemma_range_e(helper, er_range)
             for fr in _lemma_range_f(helper, fr_range)
