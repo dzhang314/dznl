@@ -69,6 +69,13 @@ struct FloatSummary
 end
 
 
+@inline function FloatSummary(s::Bool, e::Integer)
+    data = UInt32(Int16(e) % UInt16)
+    data |= UInt32(s) << 31
+    return FloatSummary(data)
+end
+
+
 @inline function summarize_se(x::T) where {T}
     data = UInt32(Int16(unsafe_exponent(x)) % UInt16)
     data |= UInt32(signbit(x)) << 31
@@ -117,7 +124,7 @@ end
 ################################################################################
 
 
-export TwoSumSummary
+export TwoSumSummary, find_possible_results
 
 
 struct TwoSumSummary
@@ -125,6 +132,14 @@ struct TwoSumSummary
     y::FloatSummary
     s::FloatSummary
     e::FloatSummary
+end
+
+
+@inline function _to_u64(summary::TwoSumSummary)
+    result = zero(UInt64)
+    result |= UInt64(summary.x.data) << 32
+    result |= UInt64(summary.y.data)
+    return result
 end
 
 
@@ -140,6 +155,16 @@ end
 
 @inline Base.isless(a::TwoSumSummary, b::TwoSumSummary) =
     isless(_to_u128(a), _to_u128(b))
+
+
+function find_possible_results(
+    summaries::AbstractVector{TwoSumSummary},
+    x::FloatSummary,
+    y::FloatSummary,
+)
+    range = searchsorted(summaries, TwoSumSummary(x, y, x, y); by=_to_u64)
+    return [(summaries[i].s, summaries[i].e) for i in range]
+end
 
 
 ################################################################################
