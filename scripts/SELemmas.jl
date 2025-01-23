@@ -84,6 +84,11 @@ function verify_two_sum_se_lemmas(
             # From this point forward, all lemma statements carry
             # an implicit assumption that both addends are nonzero.
 
+            ######################################################## LEMMA I (1)
+
+            # Lemma I (for "identical") applies to addends
+            # returned unchanged by the TwoSum algorithm.
+
             verifier((ex > ey + (p+1)) | ((ex == ey + (p+1)) & same_sign)) do lemma
                 add_case!(lemma, x, y)
             end
@@ -91,6 +96,11 @@ function verify_two_sum_se_lemmas(
                 add_case!(lemma, y, x)
             end
 
+            ################################################# LEMMA FAMILY S (5)
+
+            # Lemmas in Family S apply to addends with the same sign.
+
+            # Lemma S1
             verifier(same_sign & (ex == ey + p)) do lemma
                 add_case!(lemma, (sx, ex:ex+1), (!sy, ey-(p-1):ey))
                 add_case!(lemma, (sx, ex     ), ( sy, ey         ))
@@ -100,6 +110,7 @@ function verify_two_sum_se_lemmas(
                 add_case!(lemma, (sy, ey     ), ( sx, ex         ))
             end
 
+            # Lemma S2
             verifier(same_sign & (ex == ey + (p-1))) do lemma
                 add_case!(lemma, (sx, ex:ex+1), pos_zero          )
                 add_case!(lemma, (sx, ex:ex+1), (±, ey-(p-1):ey-1))
@@ -109,6 +120,7 @@ function verify_two_sum_se_lemmas(
                 add_case!(lemma, (sy, ey:ey+1), (±, ex-(p-1):ex-1))
             end
 
+            # Lemma S3
             verifier(same_sign & (ex == ey + (p-2))) do lemma
                 add_case!(lemma, (sx, ex:ex+1), pos_zero            )
                 add_case!(lemma, (sx, ex:ex+1), (!sy, ey-(p-1):ey-2))
@@ -122,6 +134,7 @@ function verify_two_sum_se_lemmas(
                 add_case!(lemma, (sy, ey+1   ), ( sx, ex-(p-1):ex-1))
             end
 
+            # Lemma S4
             verifier(same_sign & (ex > ey) & (ex < ey + (p-2))) do lemma
                 k = ex - ey
                 add_case!(lemma, (sx, ex:ex+1), pos_zero                  )
@@ -135,11 +148,17 @@ function verify_two_sum_se_lemmas(
                 add_case!(lemma, (sy, ey+1   ), (±, ex-(p-1):ex-(p-(k+1))))
             end
 
+            # Lemma S5
             verifier(same_sign & (ex == ey)) do lemma
                 add_case!(lemma, (sx, ex+1), pos_zero)
                 add_case!(lemma, (sx, ex+1), (±, ex-(p-1)))
             end
 
+            ################################################# LEMMA FAMILY D (5)
+
+            # Lemmas in Family D apply to addends with different signs.
+
+            # Lemma D1
             verifier(diff_sign & (ex == ey + (p+1))) do lemma
                 add_case!(lemma, (sx, ex-1), (!sy, ey-(p-1):ey-1))
                 add_case!(lemma, (sx, ex  ), ( sy, ey           ))
@@ -149,6 +168,7 @@ function verify_two_sum_se_lemmas(
                 add_case!(lemma, (sy, ey  ), ( sx, ex           ))
             end
 
+            # Lemma D2
             verifier(diff_sign & (ex == ey + p)) do lemma
                 add_case!(lemma, (sx, ex-1), pos_zero            )
                 add_case!(lemma, (sx, ex-1), ( sy, ey-(p-1):ey-2))
@@ -164,41 +184,21 @@ function verify_two_sum_se_lemmas(
                 add_case!(lemma, (sy, ey  ), ( sx, ex           ))
             end
 
-            verifier(diff_sign & (ex == ey + (p-1))) do lemma
-                add_case!(lemma, (sx, ex-1:ex), pos_zero          )
-                add_case!(lemma, (sx, ex-1   ), (±, ey-(p-1):ey-2))
-                add_case!(lemma, (sx, ex     ), (±, ey-(p-1):ey-1))
-            end
-            verifier(diff_sign & (ey == ex + (p-1))) do lemma
-                add_case!(lemma, (sy, ey-1:ey), pos_zero          )
-                add_case!(lemma, (sy, ey-1   ), (±, ex-(p-1):ex-2))
-                add_case!(lemma, (sy, ey     ), (±, ex-(p-1):ex-1))
-            end
-
-            verifier(diff_sign & (ex == ey + (p-2))) do lemma
-                add_case!(lemma, (sx, ex-1:ex), pos_zero          )
-                add_case!(lemma, (sx, ex-1   ), (±, ey-(p-1):ey-3))
-                add_case!(lemma, (sx, ex     ), (±, ey-(p-1):ey-2))
-            end
-            verifier(diff_sign & (ey == ex + (p-2))) do lemma
-                add_case!(lemma, (sy, ey-1:ey), pos_zero          )
-                add_case!(lemma, (sy, ey-1   ), (±, ex-(p-1):ex-3))
-                add_case!(lemma, (sy, ey     ), (±, ex-(p-1):ex-2))
-            end
-
-            verifier(diff_sign & (ex > ey + 1) & (ex < ey + (p-2))) do lemma
+            # Lemma D3
+            verifier(diff_sign & (ex > ey + 1) & (ex < ey + p)) do lemma
                 k = ex - ey
                 add_case!(lemma, (sx, ex-1:ex), pos_zero                  )
                 add_case!(lemma, (sx, ex-1   ), (±, ey-(p-1):ey-(p-(k-1))))
                 add_case!(lemma, (sx, ex     ), (±, ey-(p-1):ey-(p-k)    ))
             end
-            verifier(diff_sign & (ey > ex + 1) & (ey < ex + (p-2))) do lemma
+            verifier(diff_sign & (ey > ex + 1) & (ey < ex + p)) do lemma
                 k = ey - ex
                 add_case!(lemma, (sy, ey-1:ey), pos_zero                  )
                 add_case!(lemma, (sy, ey-1   ), (±, ex-(p-1):ex-(p-(k-1))))
                 add_case!(lemma, (sy, ey     ), (±, ex-(p-1):ex-(p-k)    ))
             end
 
+            # Lemma D4
             verifier(diff_sign & (ex == ey + 1)) do lemma
                 add_case!(lemma, (sx, ex-p:ex), pos_zero     )
                 add_case!(lemma, (sx, ex     ), (±, ey-(p-1)))
@@ -208,6 +208,7 @@ function verify_two_sum_se_lemmas(
                 add_case!(lemma, (sy, ey     ), (±, ex-(p-1)))
             end
 
+            # Lemma D5
             verifier(diff_sign & (ex == ey)) do lemma
                 add_case!(lemma, pos_zero          , pos_zero)
                 add_case!(lemma, (±, ex-(p-1):ex-1), pos_zero)
