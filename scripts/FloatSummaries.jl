@@ -298,18 +298,21 @@ struct LemmaVerifier
     summaries::Vector{EFTSummary}
     x::FloatSummary
     y::FloatSummary
+    lemma_dict::Dict{String,Int}
     count::Array{Int,0}
 
     @inline LemmaVerifier(
         summaries::Vector{EFTSummary},
         x::FloatSummary,
         y::FloatSummary,
-    ) = new(summaries, x, y, fill(0))
+        lemma_dict::Dict{String,Int},
+    ) = new(summaries, x, y, lemma_dict, fill(0))
 end
 
 
 function (verifier::LemmaVerifier)(
     f!::Function,
+    lemma_name::String,
     hypothesis::Bool,
 )
     if hypothesis
@@ -318,6 +321,10 @@ function (verifier::LemmaVerifier)(
         stated_results = Tuple{FloatSummary,FloatSummary}[]
         f!(stated_results)
         @assert possible_results == sort!(stated_results)
+        if !haskey(verifier.lemma_dict, lemma_name)
+            verifier.lemma_dict[lemma_name] = 0
+        end
+        verifier.lemma_dict[lemma_name] += 1
         verifier.count[] += 1
     end
     return nothing
