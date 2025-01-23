@@ -77,7 +77,7 @@ struct RangePusher
     @inline RangePusher(::Type{T}) where {T} = new(
         exponent(floatmin(T)),
         exponent(floatmax(T)),
-        exponent(floatmin(T)) - precision(T) + 1,
+        exponent(floatmin(T)) - (precision(T) - 1),
         exponent(floatmax(T)),
     )
 end
@@ -168,69 +168,8 @@ function main(
         verified = 0
 
         if x_zero | y_zero ################################## LEMMA FAMILY Z (2)
-
-            # Lemmas in Family Z (for "zero") apply to
-            # cases where one or both addends are zero.
-
-            # Lemma Z1: Both addends are zero.
-            if (rx == pos_zero) & (ry == pos_zero)
-                @assert only(s) == (pos_zero, pos_zero)
-                lemma_z_count += 1
-                verified += 1
-            end
-            if (rx == pos_zero) & (ry == neg_zero)
-                @assert only(s) == (pos_zero, pos_zero)
-                lemma_z_count += 1
-                verified += 1
-            end
-            if (rx == neg_zero) & (ry == pos_zero)
-                @assert only(s) == (pos_zero, pos_zero)
-                lemma_z_count += 1
-                verified += 1
-            end
-            if (rx == neg_zero) & (ry == neg_zero)
-                @assert only(s) == (neg_zero, pos_zero)
-                lemma_z_count += 1
-                verified += 1
-            end
-
-            # Lemma Z2: One addend is zero.
-            if y_zero & !x_zero
-                @assert only(s) == (rx, pos_zero)
-                lemma_z_count += 1
-                verified += 1
-            end
-            if x_zero & !y_zero
-                @assert only(s) == (ry, pos_zero)
-                lemma_z_count += 1
-                verified += 1
-            end
-
         else #################################################### NONZERO LEMMAS
 
-            # From this point forward, all lemma statements carry
-            # an implicit assumption that both addends are nonzero.
-
-            ################################################# LEMMA FAMILY I (1)
-
-            # Lemmas in Family I (for "identical") apply to addends
-            # that are returned unchanged by the TwoSum algorithm.
-
-            # Lemma I
-            if ((ex > ey + (p+1)) |
-                ((ex == ey + (p+1)) & ((ey == fy) | same_sign | (ex > fx))) |
-                ((ex == ey + p) & (ey == fy) & (same_sign | (ex > fx)) & (ex < fx + (p-1))))
-                @assert only(s) == (rx, ry)
-                lemma_i_count += 1
-                verified += 1
-            end
-            if ((ey > ex + (p+1)) |
-                ((ey == ex + (p+1)) & ((ex == fx) | same_sign | (ey > fy))) |
-                ((ey == ex + p) & (ex == fx) & (same_sign | (ey > fy)) & (ey < fy + (p-1))))
-                @assert only(s) == (ry, rx)
-                lemma_i_count += 1
-                verified += 1
-            end
 
             ################################################# LEMMA FAMILY F (7)
 

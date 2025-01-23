@@ -4,28 +4,6 @@ push!(LOAD_PATH, @__DIR__)
 using FloatSummaries
 
 
-if !isfile("Float16TwoSumSE.bin")
-    open("Float16TwoSumSE.bin", "w") do io
-        write(io, normal_two_sum_summaries(summarize_se, Float16))
-    end
-end
-@assert isfile("Float16TwoSumSE.bin")
-@assert filesize("Float16TwoSumSE.bin") == 38_638 * sizeof(EFTSummary)
-const FLOAT16_TWO_SUM_SE = Vector{EFTSummary}(undef, 38_638)
-read!("Float16TwoSumSE.bin", FLOAT16_TWO_SUM_SE)
-
-
-if !isfile("BFloat16TwoSumSE.bin")
-    open("BFloat16TwoSumSE.bin", "w") do io
-        write(io, normal_two_sum_summaries(summarize_se, BFloat16))
-    end
-end
-@assert isfile("BFloat16TwoSumSE.bin")
-@assert filesize("BFloat16TwoSumSE.bin") == 548_026 * sizeof(EFTSummary)
-const BFLOAT16_TWO_SUM_SE = Vector{EFTSummary}(undef, 548_026)
-read!("BFloat16TwoSumSE.bin", BFLOAT16_TWO_SUM_SE)
-
-
 const ± = false:true
 
 
@@ -54,8 +32,8 @@ function verify_two_sum_se_lemmas(
 
         if x_zero | y_zero ################################## LEMMA FAMILY Z (2)
 
-            # Lemmas in Family Z (for "zero") apply to
-            # cases where one or both addends are zero.
+            # Lemmas in Family Z (for "zero") apply
+            # when one or both addends are zero.
 
             # Lemma Z1: Both addends are zero.
             verifier((x == pos_zero) & (y == pos_zero)) do lemma
@@ -221,11 +199,29 @@ function verify_two_sum_se_lemmas(
 end
 
 
+if !isfile("Float16TwoSumSE.bin")
+    open("Float16TwoSumSE.bin", "w") do io
+        write(io, normal_two_sum_summaries(summarize_se, Float16))
+    end
+end
+@assert isfile("Float16TwoSumSE.bin")
+@assert filesize("Float16TwoSumSE.bin") == 38_638 * sizeof(EFTSummary)
+const FLOAT16_TWO_SUM_SE = Vector{EFTSummary}(undef, 38_638)
+read!("Float16TwoSumSE.bin", FLOAT16_TWO_SUM_SE)
 verify_two_sum_se_lemmas(Float16, FLOAT16_TWO_SUM_SE)
 println("Verified all TwoSum-SE lemmas for Float16.")
 flush(stdout)
 
 
+if !isfile("BFloat16TwoSumSE.bin")
+    open("BFloat16TwoSumSE.bin", "w") do io
+        write(io, normal_two_sum_summaries(summarize_se, BFloat16))
+    end
+end
+@assert isfile("BFloat16TwoSumSE.bin")
+@assert filesize("BFloat16TwoSumSE.bin") == 548_026 * sizeof(EFTSummary)
+const BFLOAT16_TWO_SUM_SE = Vector{EFTSummary}(undef, 548_026)
+read!("BFloat16TwoSumSE.bin", BFLOAT16_TWO_SUM_SE)
 verify_two_sum_se_lemmas(BFloat16, BFLOAT16_TWO_SUM_SE)
 println("Verified all TwoSum-SE lemmas for BFloat16.")
 flush(stdout)

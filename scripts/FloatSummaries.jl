@@ -76,35 +76,43 @@ end
 end
 
 
-@inline function summarize_se(x::T) where {T}
-    data = UInt32(Int16(unsafe_exponent(x)) % UInt16)
-    data |= UInt32(signbit(x)) << 31
-    return FloatSummary(data)
-end
-
-
-@inline function summarize_setz(x::T) where {T}
-    ntz = mantissa_trailing_zeros(x)
-    data = UInt32(Int16(unsafe_exponent(x)) % UInt16)
+@inline function FloatSummary(s::Bool, e::Integer, ntz::Integer)
+    data = UInt32(Int16(e) % UInt16)
     data |= UInt32(UInt8(ntz)) << 16
-    data |= UInt32(signbit(x)) << 31
+    data |= UInt32(s) << 31
     return FloatSummary(data)
 end
 
 
-@inline function summarize_seltzo(x::T) where {T}
-    lb = mantissa_leading_bit(x)
-    nlb = ifelse(lb, mantissa_leading_ones(x), mantissa_leading_zeros(x))
-    tb = mantissa_trailing_bit(x)
-    ntb = ifelse(tb, mantissa_trailing_ones(x), mantissa_trailing_zeros(x))
-    data = UInt32(Int16(unsafe_exponent(x)) % UInt16)
+@inline function FloatSummary(
+    s::Bool, e::Integer,
+    lb::Bool, nlb::Integer,
+    tb::Bool, ntb::Integer,
+)
+    data = UInt32(Int16(e) % UInt16)
     data |= UInt32(UInt8(ntb)) << 16
     data |= UInt32(UInt8(nlb)) << 22
     data |= UInt32(tb) << 29
     data |= UInt32(lb) << 30
-    data |= UInt32(signbit(x)) << 31
+    data |= UInt32(s) << 31
     return FloatSummary(data)
 end
+
+
+@inline summarize_se(x::T) where {T} = FloatSummary(
+    signbit(x), unsafe_exponent(x))
+
+
+@inline summarize_setz(x::T) where {T} = FloatSummary(
+    signbit(x), unsafe_exponent(x), mantissa_trailing_zeros(x))
+
+
+@inline summarize_seltzo(x::T) where {T} = FloatSummary(
+    signbit(x), unsafe_exponent(x),
+    mantissa_leading_bit(x), ifelse(mantissa_leading_bit(x),
+        mantissa_leading_ones(x), mantissa_leading_zeros(x)),
+    mantissa_trailing_bit(x), ifelse(mantissa_trailing_bit(x),
+        mantissa_trailing_ones(x), mantissa_trailing_zeros(x)))
 
 
 @inline Base.isless(a::FloatSummary, b::FloatSummary) = isless(a.data, b.data)
@@ -317,11 +325,14 @@ end
 
 
 struct LemmaHelper
-    e_min::Int
+    p::Int
     e_max::Int
+    e_min::Int
+    f_min::Int
 
     @inline LemmaHelper(::Type{T}) where {T} = new(
-        exponent(floatmin(T)), exponent(floatmax(T)))
+        precision(T), exponent(floatmin(T)), exponent(floatmax(T)),
+        exponent(floatmin(T)) - (precision(T) - 1))
 end
 
 
@@ -331,6 +342,16 @@ end
     _lemma_range_e(helper, r:r)
 @inline _lemma_range_e(helper::LemmaHelper, r::UnitRange) =
     UnitRange(max(helper.e_min, r.start), min(helper.e_max, r.stop))
+@inline _lemma_range_f(helper::LemmaHelper, r::Integer) =
+    _lemma_range_f(helper, r:r)
+@inline _lemma_range_f(helper::LemmaHelper, r::UnitRange) =
+    UnitRange(max(helper.f_min, r.start), min(helper.e_max, r.stop))
+
+
+const _BoolRange = Union{Bool,UnitRange{Bool}}
+const _IntegerRange = Union{Integer,UnitRange{<:Integer}}
+const _SETuple = Tuple{_BoolRange,_IntegerRange}
+const _SETZTuple = Tuple{_BoolRange,_IntegerRange,_IntegerRange}
 
 
 function (helper::LemmaHelper)(
@@ -344,7 +365,8 @@ end
 
 function (helper::LemmaHelper)(
     v::AbstractVector{Tuple{FloatSummary,FloatSummary}},
-    (sr_range, er_range), e_summary::FloatSummary,
+    (sr_range, er_range)::_SETuple,
+    e_summary::FloatSummary,
 )
     for sr in _lemma_range(helper, sr_range)
         for er in _lemma_range_e(helper, er_range)
@@ -357,13 +379,54 @@ end
 
 function (helper::LemmaHelper)(
     v::AbstractVector{Tuple{FloatSummary,FloatSummary}},
-    (sr_range, er_range), (se_range, ee_range),
+    (sr_range, er_range, fr_range)::_SETZTuple,
+    e_summary::FloatSummary,
+)
+    for sr in _lemma_range(helper, sr_range)
+        for er in _lemma_range_e(helper, er_range)
+            for fr in _lemma_range_f(helper, fr_range)
+                push!(v, (FloatSummary(sr, er, (p-1) - (er-fr)), e_summary))
+            end
+        end
+    end
+    return v
+end
+
+
+function (helper::LemmaHelper)(
+    v::AbstractVector{Tuple{FloatSummary,FloatSummary}},
+    (sr_range, er_range)::_SETuple,
+    (se_range, ee_range)::_SETuple,
 )
     for sr in _lemma_range(helper, sr_range)
         for er in _lemma_range_e(helper, er_range)
             for se in _lemma_range(helper, se_range)
                 for ee in _lemma_range_e(helper, ee_range)
                     push!(v, (FloatSummary(sr, er), FloatSummary(se, ee)))
+                end
+            end
+        end
+    end
+    return v
+end
+
+
+function (helper::LemmaHelper)(
+    v::AbstractVector{Tuple{FloatSummary,FloatSummary}},
+    (sr_range, er_range, fr_range)::_SETZTuple,
+    (se_range, ee_range, fe_range)::_SETZTuple,
+)
+    for sr in _lemma_range(helper, sr_range)
+        for er in _lemma_range_e(helper, er_range)
+            for fr in _lemma_range_f(helper, fr_range)
+                for se in _lemma_range(helper, se_range)
+                    for ee in _lemma_range_e(helper, ee_range)
+                        for fe in _lemma_range_f(helper, fe_range)
+                            push!(v, (
+                                FloatSummary(sr, er, (p-1) - (er-fr)),
+                                FloatSummary(se, ee, (p-1) - (ee-fe))))
+                        end
+                    end
                 end
             end
         end
