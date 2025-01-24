@@ -155,9 +155,9 @@ function verify_two_sum_setz_lemmas(
                 end
             end
 
-            ############################################### LEMMA FAMILY E (7+8)
+            ########################################### LEMMA FAMILY SETZ-E (15)
 
-            # Lemmas in Family E (for "exact") apply to addends with
+            # Lemmas in Family SETZ-E (for "exact") apply to addends with
             # different trailing exponents whose floating-point sum is exact.
 
             # Lemma SETZ-EN0: Addends do not overlap.
@@ -286,6 +286,304 @@ function verify_two_sum_setz_lemmas(
                 add_case!(lemma, (±, fy:ey-2, fy), pos_zero)
             end
 
+            ############################################ LEMMA FAMILY SETZ-O (3)
+
+            # Lemmas in Family SETZ-O (for "overlap") apply to addends
+            # that completely overlap but cannot be summed exactly.
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-O0-X", same_sign & (ex == fx + (p-1)) & (ex > ey > fy > fx)) do lemma
+                add_case!(lemma, (sx, ex  , fx         ), pos_zero             )
+                add_case!(lemma, (sx, ex+1, ex-(p-3):ey), (± , fx:ex-(p-1), fx))
+                add_case!(lemma, (sx, ex+1, ex+1       ), (sy, fx:ex-(p-1), fx))
+            end
+            verifier("SETZ-O0-Y", same_sign & (ey == fy + (p-1)) & (ey > ex > fx > fy)) do lemma
+                add_case!(lemma, (sy, ey  , fy         ), pos_zero             )
+                add_case!(lemma, (sy, ey+1, ey-(p-3):ex), (± , fy:ey-(p-1), fy))
+                add_case!(lemma, (sy, ey+1, ey+1       ), (sx, fy:ey-(p-1), fy))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-O1-X", same_sign & (ex == fx + (p-1)) & (ex > ey == fy > fx + 1)) do lemma
+                add_case!(lemma, (sx, ex  , fx           ), pos_zero              )
+                add_case!(lemma, (sx, ex+1, ex-(p-3):ey-1), ( ± , fx:ex-(p-1), fx))
+                add_case!(lemma, (sx, ex+1, ey           ), (!sy, fx:ex-(p-1), fx))
+                add_case!(lemma, (sx, ex+1, ex+1         ), ( sy, fx:ex-(p-1), fx))
+            end
+            verifier("SETZ-O1-Y", same_sign & (ey == fy + (p-1)) & (ey > ex == fx > fy + 1)) do lemma
+                add_case!(lemma, (sy, ey  , fy           ), pos_zero              )
+                add_case!(lemma, (sy, ey+1, ey-(p-3):ex-1), ( ± , fy:ey-(p-1), fy))
+                add_case!(lemma, (sy, ey+1, ex           ), (!sx, fy:ey-(p-1), fy))
+                add_case!(lemma, (sy, ey+1, ey+1         ), ( sx, fy:ey-(p-1), fy))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-O2-X", same_sign & (ex == fx + (p-1)) & (ey == fy == fx + 1)) do lemma
+                add_case!(lemma, (sx, ex  , fx  ), pos_zero             )
+                add_case!(lemma, (sx, ex+1, ex+1), (sy, fx:ex-(p-1), fx))
+            end
+            verifier("SETZ-O2-Y", same_sign & (ey == fy + (p-1)) & (ex == fx == fy + 1)) do lemma
+                add_case!(lemma, (sy, ey  , fy  ), pos_zero             )
+                add_case!(lemma, (sy, ey+1, ey+1), (sx, fy:ey-(p-1), fy))
+            end
+
+            ############################################ LEMMA FAMILY SETZ-1 (4)
+
+            verifier("SETZ-1-X", (ex < ey + p) & (ex > fy + p) & (fx > ey + 1) & ((ex > fx) | same_sign)) do lemma
+                add_case!(lemma, (sx, ex, ex-(p-1):ey-1), ( ± , fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex, ey           ), ( sy, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex, ey+1         ), (!sy, fy:ex-(p+1), fy))
+            end
+            verifier("SETZ-1-Y", (ey < ex + p) & (ey > fx + p) & (fy > ex + 1) & ((ey > fy) | same_sign)) do lemma
+                add_case!(lemma, (sy, ey, ey-(p-1):ex-1), ( ± , fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey, ex           ), ( sx, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey, ex+1         ), (!sx, fx:ey-(p+1), fx))
+            end
+
+            verifier("SETZ-1A-X", (ex == ey + p) & (ex > fy + p) & (fx > ey + 1) & ((ex > fx) | same_sign)) do lemma
+                add_case!(lemma, (sx, ex, ey+1), (!sy, fy:ex-(p+1), fy))
+            end
+            verifier("SETZ-1A-Y", (ey == ex + p) & (ey > fx + p) & (fy > ex + 1) & ((ey > fy) | same_sign)) do lemma
+                add_case!(lemma, (sy, ey, ex+1), (!sx, fx:ey-(p+1), fx))
+            end
+
+            verifier("SETZ-1B0-X", (ex < ey + (p-1)) & (ex == fy + p) & (fx > ey + 1) & ((ex > fx) | same_sign)) do lemma
+                add_case!(lemma, (sx, ex, ex-(p-2):ey-1), ( ± , fy:ex-p, fy))
+                add_case!(lemma, (sx, ex, ey           ), ( sy, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex, ey+1         ), (!sy, fy:ex-p, fy))
+            end
+            verifier("SETZ-1B0-Y", (ey < ex + (p-1)) & (ey == fx + p) & (fy > ex + 1) & ((ey > fy) | same_sign)) do lemma
+                add_case!(lemma, (sy, ey, ey-(p-2):ex-1), ( ± , fx:ey-p, fx))
+                add_case!(lemma, (sy, ey, ex           ), ( sx, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey, ex+1         ), (!sx, fx:ey-p, fx))
+            end
+
+            verifier("SETZ-1B1-X", (ex == ey + (p-1)) & (ex == fy + p) & (fx > ey + 1) & ((ex > fx) | same_sign)) do lemma
+                add_case!(lemma, (sx, ex, ey+1), (!sy, fy:ex-p, fy))
+            end
+            verifier("SETZ-1B1-Y", (ey == ex + (p-1)) & (ey == fx + p) & (fy > ex + 1) & ((ey > fy) | same_sign)) do lemma
+                add_case!(lemma, (sy, ey, ex+1), (!sx, fx:ey-p, fx))
+            end
+
+            ########################################### LEMMA FAMILY SETZ-2 (18)
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-2-X", same_sign & (ex > fy + p) & (fx < ey)) do lemma
+                add_case!(lemma, (sx, ex  , ex-(p-1):ex-1), ( ± , fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex+1, ex-(p-2):ey  ), ( ± , fy:ex-p    , fy))
+                add_case!(lemma, (sx, ex+1, ex+1         ), (!sy, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex+1, ex+1         ), ( sy, fy:ex-p    , fy))
+            end
+            verifier("SETZ-2-Y", same_sign & (ey > fx + p) & (fy < ex)) do lemma
+                add_case!(lemma, (sy, ey  , ey-(p-1):ey-1), ( ± , fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey+1, ey-(p-2):ex  ), ( ± , fx:ey-p    , fx))
+                add_case!(lemma, (sy, ey+1, ey+1         ), (!sx, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey+1, ey+1         ), ( sx, fx:ey-p    , fx))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-2A0-X", same_sign & (ex == fy + p) & (fx < ey) & (ey < fy + (p-1))) do lemma
+                add_case!(lemma, (sx, ex  , ex-(p-2):ex-1), (±, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex+1, ex-(p-2):ey  ), (±, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex+1, ex+1         ), (±, fy:ex-p, fy))
+            end
+            verifier("SETZ-2A0-Y", same_sign & (ey == fx + p) & (fy < ex) & (ex < fx + (p-1))) do lemma
+                add_case!(lemma, (sy, ey  , ey-(p-2):ey-1), (±, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey+1, ey-(p-2):ex  ), (±, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey+1, ey+1         ), (±, fx:ey-p, fx))
+            end
+
+            verifier("SETZ-2A1-X", same_sign & (ex == fy + p) & (fx + 1 < ey) & (ey == fy + (p-1))) do lemma
+                add_case!(lemma, (sx, ex  , ex-(p-2):ex-2), (±, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex+1, ex-(p-2):ey  ), (±, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex+1, ex+1         ), (±, fy:ex-p, fy))
+            end
+            verifier("SETZ-2A1-Y", same_sign & (ey == fx + p) & (fy + 1 < ex) & (ex == fx + (p-1))) do lemma
+                add_case!(lemma, (sy, ey  , ey-(p-2):ey-2), (±, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey+1, ey-(p-2):ex  ), (±, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey+1, ey+1         ), (±, fx:ey-p, fx))
+            end
+
+            verifier("SETZ-2A2-X", same_sign & (ex == fy + p) & (fx + 1 == ey) & (ey == fy + (p-1))) do lemma
+                add_case!(lemma, (sx, ex  , ex-(p-2):ey-2), (± , fy:ex-p, fy))
+                add_case!(lemma, (sx, ex  , ey-1         ), (sy, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex+1, ex-(p-2):ey  ), (± , fy:ex-p, fy))
+                add_case!(lemma, (sx, ex+1, ex+1         ), (± , fy:ex-p, fy))
+            end
+            verifier("SETZ-2A2-Y", same_sign & (ey == fx + p) & (fy + 1 == ex) & (ex == fx + (p-1))) do lemma
+                add_case!(lemma, (sy, ey  , ey-(p-2):ex-2), (± , fx:ey-p, fx))
+                add_case!(lemma, (sy, ey  , ex-1         ), (sx, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey+1, ey-(p-2):ex  ), (± , fx:ey-p, fx))
+                add_case!(lemma, (sy, ey+1, ey+1         ), (± , fx:ey-p, fx))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-2B0-X", same_sign & (ex > fy + p) & (fx == ey) & (ex < fx + (p-1))) do lemma
+                add_case!(lemma, (sx, ex  , ex-(p-1):ey-1), ( ± , fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex  , ey           ), (!sy, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex  , ey+1:ex-1    ), ( sy, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex+1, ex-(p-2):ey-1), ( ± , fy:ex-p    , fy))
+                add_case!(lemma, (sx, ex+1, ey           ), (!sy, fy:ex-p    , fy))
+                add_case!(lemma, (sx, ex+1, ex+1         ), ( sy, fy:ex-p    , fy))
+            end
+            verifier("SETZ-2B0-Y", same_sign & (ey > fx + p) & (fy == ex) & (ey < fy + (p-1))) do lemma
+                add_case!(lemma, (sy, ey  , ey-(p-1):ex-1), ( ± , fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey  , ex           ), (!sx, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey  , ex+1:ey-1    ), ( sx, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey+1, ey-(p-2):ex-1), ( ± , fx:ey-p    , fx))
+                add_case!(lemma, (sy, ey+1, ex           ), (!sx, fx:ey-p    , fx))
+                add_case!(lemma, (sy, ey+1, ey+1         ), ( sx, fx:ey-p    , fx))
+            end
+
+            verifier("SETZ-2B1-X", same_sign & (ex > fy + p) & (fx == ey) & (ex == fx + (p-1))) do lemma
+                add_case!(lemma, (sx, ex  , ey       ), (!sy, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex  , ey+1:ex-1), ( sy, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex+1, ex+1     ), ( sy, fy:ex-p    , fy))
+            end
+            verifier("SETZ-2B1-Y", same_sign & (ey > fx + p) & (fy == ex) & (ey == fy + (p-1))) do lemma
+                add_case!(lemma, (sy, ey  , ex       ), (!sx, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey  , ex+1:ey-1), ( sx, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey+1, ey+1     ), ( sx, fx:ey-p    , fx))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-2C0-X", same_sign & (ex == fy + (p-1)) & (fx < ey) & (ex < fx + (p-1)) & (ey < fy + (p-1))) do lemma
+                add_case!(lemma, (sx, ex  , fy         ), pos_zero             )
+                add_case!(lemma, (sx, ex+1, ex-(p-3):ey), (± , fy:ex-(p-1), fy))
+                add_case!(lemma, (sx, ex+1, ex+1       ), (sy, fy:ex-(p-1), fy))
+            end
+            verifier("SETZ-2C0-Y", same_sign & (ey == fx + (p-1)) & (fy < ex) & (ey < fy + (p-1)) & (ex < fx + (p-1))) do lemma
+                add_case!(lemma, (sy, ey  , fx         ), pos_zero             )
+                add_case!(lemma, (sy, ey+1, ey-(p-3):ex), (± , fx:ey-(p-1), fx))
+                add_case!(lemma, (sy, ey+1, ey+1       ), (sx, fx:ey-(p-1), fx))
+            end
+
+            verifier("SETZ-2C1-X", same_sign & (ex == fy + (p-1)) & (fx < ey) & (ex < fx + (p-1)) & (ey == fy + (p-1))) do lemma
+                add_case!(lemma, (sx, ex+1, ex-(p-3):ey), (±, fy:ex-(p-1), fy))
+            end
+            verifier("SETZ-2C1-Y", same_sign & (ey == fx + (p-1)) & (fy < ex) & (ey < fy + (p-1)) & (ex == fx + (p-1))) do lemma
+                add_case!(lemma, (sy, ey+1, ey-(p-3):ex), (±, fx:ey-(p-1), fx))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-2D0-X", same_sign & (ex > fy + p) & (fx == ey + 1) & (ex < fx + (p-1))) do lemma
+                add_case!(lemma, (sx, ex  , ex-(p-1):ey-1), ( ± , fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex  , ey           ), ( sy, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex  , ey+2:ex-1    ), (!sy, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex+1, ex+1         ), (!sy, fy:ex-(p+1), fy))
+            end
+            verifier("SETZ-2D0-Y", same_sign & (ey > fx + p) & (fy == ex + 1) & (ey < fy + (p-1))) do lemma
+                add_case!(lemma, (sy, ey  , ey-(p-1):ex-1), ( ± , fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey  , ex           ), ( sx, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey  , ex+2:ey-1    ), (!sx, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey+1, ey+1         ), (!sx, fx:ey-(p+1), fx))
+            end
+
+            verifier("SETZ-2D1-X", same_sign & (ex > fy + p) & (fx == ey + 1) & (ex == fx + (p-1))) do lemma
+                add_case!(lemma, (sx, ex  , ey+2:ex-1), (!sy, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex+1, ex+1     ), (!sy, fy:ex-(p+1), fy))
+            end
+            verifier("SETZ-2D1-Y", same_sign & (ey > fx + p) & (fy == ex + 1) & (ey == fy + (p-1))) do lemma
+                add_case!(lemma, (sy, ey  , ex+2:ey-1), (!sx, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey+1, ey+1     ), (!sx, fx:ey-(p+1), fx))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-2AB0-X", same_sign & (ex == fy + p) & (fx == ey) & (ex < fx + (p-1)) & (ey < fy + (p-1))) do lemma
+                add_case!(lemma, (sx, ex  , ex-(p-2):ey-1), ( ± , fy:ex-p, fy))
+                add_case!(lemma, (sx, ex  , ey           ), (!sy, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex  , ey+1:ex-1    ), ( sy, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex+1, ex-(p-2):ey-1), ( ± , fy:ex-p, fy))
+                add_case!(lemma, (sx, ex+1, ey           ), (!sy, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex+1, ex+1         ), ( sy, fy:ex-p, fy))
+            end
+            verifier("SETZ-2AB0-Y", same_sign & (ey == fx + p) & (fy == ex) & (ey < fy + (p-1)) & (ex < fx + (p-1))) do lemma
+                add_case!(lemma, (sy, ey  , ey-(p-2):ex-1), ( ± , fx:ey-p, fx))
+                add_case!(lemma, (sy, ey  , ex           ), (!sx, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey  , ex+1:ey-1    ), ( sx, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey+1, ey-(p-2):ex-1), ( ± , fx:ey-p, fx))
+                add_case!(lemma, (sy, ey+1, ex           ), (!sx, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey+1, ey+1         ), ( sx, fx:ey-p, fx))
+            end
+
+            verifier("SETZ-2AB1-X", same_sign & (ex == fy + p) & (fx == ey) & (ex == fx + (p-1))) do lemma
+                add_case!(lemma, (sx, ex  , ey+1:ex-1), (sy, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex+1, ex+1     ), (sy, fy:ex-p, fy))
+            end
+            verifier("SETZ-2AB1-Y", same_sign & (ey == fx + p) & (fy == ex) & (ey == fy + (p-1))) do lemma
+                add_case!(lemma, (sy, ey  , ex+1:ey-1), (sx, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey+1, ey+1     ), (sx, fx:ey-p, fx))
+            end
+
+            verifier("SETZ-2AB2-X", same_sign & (ex == fy + p) & (fx == ey) & (ey == fy + (p-1))) do lemma
+                add_case!(lemma, (sx, ex+1, ex-(p-2):ey-1), ( ± , fy:ex-p, fy))
+                add_case!(lemma, (sx, ex+1, ey           ), (!sy, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex+1, ex+1         ), ( sy, fy:ex-p, fy))
+            end
+            verifier("SETZ-2AB2-Y", same_sign & (ey == fx + p) & (fy == ex) & (ex == fx + (p-1))) do lemma
+                add_case!(lemma, (sy, ey+1, ey-(p-2):ex-1), ( ± , fx:ey-p, fx))
+                add_case!(lemma, (sy, ey+1, ex           ), (!sx, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey+1, ey+1         ), ( sx, fx:ey-p, fx))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-2BC0-X", same_sign & (ex == fy + (p-1)) & (fx == ey) & (ey > fy + 1) & (ey < fy + (p-2))) do lemma
+                add_case!(lemma, (sx, ex  , fy           ), pos_zero              )
+                add_case!(lemma, (sx, ex+1, ex-(p-3):ey-1), ( ± , fy:ex-(p-1), fy))
+                add_case!(lemma, (sx, ex+1, ey           ), (!sy, fy:ex-(p-1), fy))
+                add_case!(lemma, (sx, ex+1, ex+1         ), ( sy, fy:ex-(p-1), fy))
+            end
+            verifier("SETZ-2BC0-Y", same_sign & (ey == fx + (p-1)) & (fy == ex) & (ex > fx + 1) & (ex < fx + (p-2))) do lemma
+                add_case!(lemma, (sy, ey  , fx           ), pos_zero              )
+                add_case!(lemma, (sy, ey+1, ey-(p-3):ex-1), ( ± , fx:ey-(p-1), fx))
+                add_case!(lemma, (sy, ey+1, ex           ), (!sx, fx:ey-(p-1), fx))
+                add_case!(lemma, (sy, ey+1, ey+1         ), ( sx, fx:ey-(p-1), fx))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-2BC1-X", same_sign & (ex == fy + (p-1)) & (fx == ey) & (ey > fy + (p-3))) do lemma
+                add_case!(lemma, (sx, ex+1, ex-(p-3):ey-1), ( ± , fy:ex-(p-1), fy))
+                add_case!(lemma, (sx, ex+1, ey           ), (!sy, fy:ex-(p-1), fy))
+                add_case!(lemma, (sx, ex+1, ex+1         ), ( sy, fy:ex-(p-1), fy))
+            end
+            verifier("SETZ-2BC1-Y", same_sign & (ey == fx + (p-1)) & (fy == ex) & (ex > fx + (p-3))) do lemma
+                add_case!(lemma, (sy, ey+1, ey-(p-3):ex-1), ( ± , fx:ey-(p-1), fx))
+                add_case!(lemma, (sy, ey+1, ex           ), (!sx, fx:ey-(p-1), fx))
+                add_case!(lemma, (sy, ey+1, ey+1         ), ( sx, fx:ey-(p-1), fx))
+            end
+
+            verifier("SETZ-2BC2-X", same_sign & (ex == fy + (p-1)) & (fx == ey) & (ey == fy + 1)) do lemma
+                add_case!(lemma, (sx, ex  , fy  ), pos_zero             )
+                add_case!(lemma, (sx, ex+1, ex+1), (sy, fy:ex-(p-1), fy))
+            end
+            verifier("SETZ-2BC2-Y", same_sign & (ey == fx + (p-1)) & (fy == ex) & (ex == fx + 1)) do lemma
+                add_case!(lemma, (sy, ey  , fx  ), pos_zero             )
+                add_case!(lemma, (sy, ey+1, ey+1), (sx, fx:ey-(p-1), fx))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-2AD0-X", same_sign & (ex == fy + p) & (fx == ey + 1) & (ex < fx + (p-2))) do lemma
+                add_case!(lemma, (sx, ex  , ex-(p-2):ey-1), ( ± , fy:ex-p, fy))
+                add_case!(lemma, (sx, ex  , ey           ), ( sy, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex  , ey+2:ex-1    ), (!sy, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex+1, ex+1         ), (!sy, fy:ex-p, fy))
+            end
+            verifier("SETZ-2AD0-Y", same_sign & (ey == fx + p) & (fy == ex + 1) & (ey < fy + (p-2))) do lemma
+                add_case!(lemma, (sy, ey  , ey-(p-2):ex-1), ( ± , fx:ey-p, fx))
+                add_case!(lemma, (sy, ey  , ex           ), ( sx, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey  , ex+2:ey-1    ), (!sx, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey+1, ey+1         ), (!sx, fx:ey-p, fx))
+            end
+
+            verifier("SETZ-2AD1-X", same_sign & (ex == fy + p) & (fx == ey + 1) & (ex > fx + (p-3))) do lemma
+                add_case!(lemma, (sx, ex  , ey+2:ex-1), (!sy, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex+1, ex+1     ), (!sy, fy:ex-p, fy))
+            end
+            verifier("SETZ-2AD1-Y", same_sign & (ey == fx + p) & (fy == ex + 1) & (ey > fy + (p-3))) do lemma
+                add_case!(lemma, (sy, ey  , ex+2:ey-1), (!sx, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey+1, ey+1     ), (!sx, fx:ey-p, fx))
+            end
+
         end
         if iszero(verifier.count[])
             unverified_count += 1
@@ -299,7 +597,7 @@ function verify_two_sum_setz_lemmas(
     println("Unverified $T lemmas: $unverified_count of ",
         length(possible_inputs)^2)
 
-        return nothing
+    return nothing
 end
 
 
