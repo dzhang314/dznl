@@ -18,7 +18,6 @@ function verify_two_sum_setz_lemmas(
     possible_inputs = normal_summaries(summarize_setz, T)
     add_case! = LemmaHelper(T)
     lemma_dict = Dict{String,Int}()
-    unverified_count = 0
 
     for x in possible_inputs, y in possible_inputs
 
@@ -584,18 +583,209 @@ function verify_two_sum_setz_lemmas(
                 add_case!(lemma, (sy, ey+1, ey+1     ), (!sx, fx:ey-p, fx))
             end
 
+            ########################################### LEMMA FAMILY SETZ-3 (13)
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-3-X", diff_sign & (ex > fy + (p+1)) & (fx < ey)) do lemma
+                add_case!(lemma, (sx, ex-1, ex-p:ey      ), ( ± , fy:ex-(p+2), fy))
+                add_case!(lemma, (sx, ex  , ex-(p-1):ex-1), ( ± , fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex  , ex           ), ( sy, fy:ex-(p+2), fy))
+                add_case!(lemma, (sx, ex  , ex           ), (!sy, fy:ex-(p+1), fy))
+            end
+            verifier("SETZ-3-Y", diff_sign & (ey > fx + (p+1)) & (fy < ex)) do lemma
+                add_case!(lemma, (sy, ey-1, ey-p:ex      ), ( ± , fx:ey-(p+2), fx))
+                add_case!(lemma, (sy, ey  , ey-(p-1):ey-1), ( ± , fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey  , ey           ), ( sx, fx:ey-(p+2), fx))
+                add_case!(lemma, (sy, ey  , ey           ), (!sx, fx:ey-(p+1), fx))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-3A-X", diff_sign & (ex == fy + (p+1)) & (fx < ey)) do lemma
+                add_case!(lemma, (sx, ex-1, ex-(p-1):ey), (±, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex  , ex-(p-1):ex), (±, fy:ex-(p+1), fy))
+            end
+            verifier("SETZ-3A-Y", diff_sign & (ey == fx + (p+1)) & (fy < ex)) do lemma
+                add_case!(lemma, (sy, ey-1, ey-(p-1):ex), (±, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey  , ey-(p-1):ey), (±, fx:ey-(p+1), fx))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-3B-X", diff_sign & (ex > fy + (p+1)) & (fx == ey)) do lemma
+                add_case!(lemma, (sx, ex-1, ex-p:ey-1    ), ( ± , fy:ex-(p+2), fy))
+                add_case!(lemma, (sx, ex-1, ey           ), (!sy, fy:ex-(p+2), fy))
+                add_case!(lemma, (sx, ex  , ex-(p-1):ey-1), ( ± , fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex  , ey           ), (!sy, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex  , ey+1:ex-1    ), ( sy, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex  , ex           ), ( sy, fy:ex-(p+2), fy))
+            end
+            verifier("SETZ-3B-Y", diff_sign & (ey > fx + (p+1)) & (fy == ex)) do lemma
+                add_case!(lemma, (sy, ey-1, ey-p:ex-1    ), ( ± , fx:ey-(p+2), fx))
+                add_case!(lemma, (sy, ey-1, ex           ), (!sx, fx:ey-(p+2), fx))
+                add_case!(lemma, (sy, ey  , ey-(p-1):ex-1), ( ± , fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey  , ex           ), (!sx, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey  , ex+1:ey-1    ), ( sx, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey  , ey           ), ( sx, fx:ey-(p+2), fx))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-3C0-X", diff_sign & (ex == fy + p) & (fx < ey) & (ey < fy + (p-1))) do lemma
+                add_case!(lemma, (sx, ex-1, fy           ), pos_zero          )
+                add_case!(lemma, (sx, ex  , ex-(p-2):ex-1), ( ± , fy:ex-p, fy))
+                add_case!(lemma, (sx, ex  , ex           ), (!sy, fy:ex-p, fy))
+            end
+            verifier("SETZ-3C0-Y", diff_sign & (ey == fx + p) & (fy < ex) & (ex < fx + (p-1))) do lemma
+                add_case!(lemma, (sy, ey-1, fx           ), pos_zero          )
+                add_case!(lemma, (sy, ey  , ey-(p-2):ey-1), ( ± , fx:ey-p, fx))
+                add_case!(lemma, (sy, ey  , ey           ), (!sx, fx:ey-p, fx))
+            end
+
+            verifier("SETZ-3C1-X", diff_sign & (ex == fy + p) & (fx + 1 < ey) & (ey == fy + (p-1))) do lemma
+                add_case!(lemma, (sx, fx:ex-1, fy           ), pos_zero          )
+                add_case!(lemma, (sx, ex     , ex-(p-2):ex-2), ( ± , fy:ex-p, fy))
+                add_case!(lemma, (sx, ex     , ex           ), (!sy, fy:ex-p, fy))
+            end
+            verifier("SETZ-3C1-Y", diff_sign & (ey == fx + p) & (fy + 1 < ex) & (ex == fx + (p-1))) do lemma
+                add_case!(lemma, (sy, fy:ey-1, fx           ), pos_zero          )
+                add_case!(lemma, (sy, ey     , ey-(p-2):ey-2), ( ± , fx:ey-p, fx))
+                add_case!(lemma, (sy, ey     , ey           ), (!sx, fx:ey-p, fx))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-3C2-X", diff_sign & (ex == fy + p) & (fx + 1 == ey) & (ey == fy + (p-1))) do lemma
+                add_case!(lemma, (sx, ex-2:ex-1, fy           ), pos_zero          )
+                add_case!(lemma, (sx, ex       , ex-(p-2):ey-2), ( ± , fy:ex-p, fy))
+                add_case!(lemma, (sx, ex       , ey-1         ), ( sy, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex       , ex           ), (!sy, fy:ex-p, fy))
+            end
+            verifier("SETZ-3C2-Y", diff_sign & (ey == fx + p) & (fy + 1 == ex) & (ex == fx + (p-1))) do lemma
+                add_case!(lemma, (sy, ey-2:ey-1, fx           ), pos_zero          )
+                add_case!(lemma, (sy, ey       , ey-(p-2):ex-2), ( ± , fx:ey-p, fx))
+                add_case!(lemma, (sy, ey       , ex-1         ), ( sx, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey       , ey           ), (!sx, fx:ey-p, fx))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-3D0-X", diff_sign & (ex > fy + p) & (fx == ey + 1) & (ex < fx + (p-1))) do lemma
+                add_case!(lemma, (sx, ex, ex-(p-1):ey-1), ( ± , fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex, ey           ), ( sy, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex, ey+2:ex      ), (!sy, fy:ex-(p+1), fy))
+            end
+            verifier("SETZ-3D0-Y", diff_sign & (ey > fx + p) & (fy == ex + 1) & (ey < fy + (p-1))) do lemma
+                add_case!(lemma, (sy, ey, ey-(p-1):ex-1), ( ± , fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey, ex           ), ( sx, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey, ex+2:ey      ), (!sx, fx:ey-(p+1), fx))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-3D1-X", diff_sign & (ex > fy + p) & (fx == ey + 1) & (ex == fx + (p-1))) do lemma
+                add_case!(lemma, (sx, ex, ey+2:ex), (!sy, fy:ex-(p+1), fy))
+            end
+            verifier("SETZ-3D1-Y", diff_sign & (ey > fx + p) & (fy == ex + 1) & (ey == fy + (p-1))) do lemma
+                add_case!(lemma, (sy, ey, ex+2:ey), (!sx, fx:ey-(p+1), fx))
+            end
+
+            # All hypotheses are strictly necessary.
+            verifier("SETZ-3AB-X", diff_sign & (ex == fy + (p+1)) & (fx == ey)) do lemma
+                add_case!(lemma, (sx, ex-1, ex-(p-1):ey-1), ( ± , fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex-1, ey           ), (!sy, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex  , ex-(p-1):ey-1), ( ± , fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex  , ey           ), (!sy, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex  , ey+1:ex      ), ( sy, fy:ex-(p+1), fy))
+            end
+            verifier("SETZ-3AB-Y", diff_sign & (ey == fx + (p+1)) & (fy == ex)) do lemma
+                add_case!(lemma, (sy, ey-1, ey-(p-1):ex-1), ( ± , fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey-1, ex           ), (!sx, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey  , ey-(p-1):ex-1), ( ± , fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey  , ex           ), (!sx, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey  , ex+1:ey      ), ( sx, fx:ey-(p+1), fx))
+            end
+
+            verifier("SETZ-3BC0-X", diff_sign & (ex == fy + p) & (fx == ey) & (ex > fx + 1) & (ey > fy + 1)) do lemma
+                add_case!(lemma, (sx, ex-1, fy           ), pos_zero          )
+                add_case!(lemma, (sx, ex  , ex-(p-2):ey-1), ( ± , fy:ex-p, fy))
+                add_case!(lemma, (sx, ex  , ey           ), (!sy, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex  , ey+1:ex-1    ), ( sy, fy:ex-p, fy))
+            end
+            verifier("SETZ-3BC0-Y", diff_sign & (ey == fx + p) & (fy == ex) & (ey > fy + 1) & (ex > fx + 1)) do lemma
+                add_case!(lemma, (sy, ey-1, fx           ), pos_zero          )
+                add_case!(lemma, (sy, ey  , ey-(p-2):ex-1), ( ± , fx:ey-p, fx))
+                add_case!(lemma, (sy, ey  , ex           ), (!sx, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey  , ex+1:ey-1    ), ( sx, fx:ey-p, fx))
+            end
+
+            verifier("SETZ-3BC1-X", diff_sign & (ex == fy + p) & (fx == ey) & (ey == fy + 1)) do lemma
+                add_case!(lemma, (sx, ex-1, fy       ), pos_zero         )
+                add_case!(lemma, (sx, ex  , ey+1:ex-1), (sy, fy:ex-p, fy))
+            end
+            verifier("SETZ-3BC1-Y", diff_sign & (ey == fx + p) & (fy == ex) & (ex == fx + 1)) do lemma
+                add_case!(lemma, (sy, ey-1, fx       ), pos_zero         )
+                add_case!(lemma, (sy, ey  , ex+1:ey-1), (sx, fx:ey-p, fx))
+            end
+
+            verifier("SETZ-3CD0-X", diff_sign & (ex == fy + p) & (fx == ey + 1) & (ex > fx) & (ey > fy + 1)) do lemma
+                add_case!(lemma, (sx, ex, ex-(p-2):ey-1), ( ± , fy:ex-p, fy))
+                add_case!(lemma, (sx, ex, ey           ), ( sy, fy:ex-p, fy))
+                add_case!(lemma, (sx, ex, ey+2:ex      ), (!sy, fy:ex-p, fy))
+            end
+            verifier("SETZ-3CD0-Y", diff_sign & (ey == fx + p) & (fy == ex + 1) & (ey > fy) & (ex > fx + 1)) do lemma
+                add_case!(lemma, (sy, ey, ey-(p-2):ex-1), ( ± , fx:ey-p, fx))
+                add_case!(lemma, (sy, ey, ex           ), ( sx, fx:ey-p, fx))
+                add_case!(lemma, (sy, ey, ex+2:ey      ), (!sx, fx:ey-p, fx))
+            end
+
+            verifier("SETZ-3CD1-X", diff_sign & (ex == fy + p) & (fx == ey + 1) & (ey < fy + 2)) do lemma
+                add_case!(lemma, (sx, ex, ey+2:ex), (!sy, fy:ex-p, fy))
+            end
+            verifier("SETZ-3CD1-Y", diff_sign & (ey == fx + p) & (fy == ex + 1) & (ex < fx + 2)) do lemma
+                add_case!(lemma, (sy, ey, ex+2:ey), (!sx, fx:ey-p, fx))
+            end
+
+            ############################################ LEMMA FAMILY SETZ-4 (4)
+
+            verifier("SETZ-4-X", diff_sign & (ex > fy + (p+1)) & (fx < ey + (p+1)) & (ex == fx)) do lemma
+                add_case!(lemma, (sx, ex-1, ex-p:ey-1), ( ± , fy:ex-(p+2), fy))
+                add_case!(lemma, (sx, ex-1, ey       ), ( sy, fy:ex-(p+2), fy))
+                add_case!(lemma, (sx, ex-1, ey+1     ), (!sy, fy:ex-(p+2), fy))
+            end
+            verifier("SETZ-4-Y", diff_sign & (ey > fx + (p+1)) & (fy < ex + (p+1)) & (ey == fy)) do lemma
+                add_case!(lemma, (sy, ey-1, ey-p:ex-1), ( ± , fx:ey-(p+2), fx))
+                add_case!(lemma, (sy, ey-1, ex       ), ( sx, fx:ey-(p+2), fx))
+                add_case!(lemma, (sy, ey-1, ex+1     ), (!sx, fx:ey-(p+2), fx))
+            end
+
+            verifier("SETZ-4A0-X", diff_sign & (ex == fy + (p+1)) & (fx < ey + p) & (ex == fx)) do lemma
+                add_case!(lemma, (sx, ex-1, ex-(p-1):ey-1), ( ± , fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex-1, ey           ), ( sy, fy:ex-(p+1), fy))
+                add_case!(lemma, (sx, ex-1, ey+1         ), (!sy, fy:ex-(p+1), fy))
+            end
+            verifier("SETZ-4A0-Y", diff_sign & (ey == fx + (p+1)) & (fy < ex + p) & (ey == fy)) do lemma
+                add_case!(lemma, (sy, ey-1, ey-(p-1):ex-1), ( ± , fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey-1, ex           ), ( sx, fx:ey-(p+1), fx))
+                add_case!(lemma, (sy, ey-1, ex+1         ), (!sx, fx:ey-(p+1), fx))
+            end
+
+            verifier("SETZ-4A1-X", diff_sign & (ex == fy + (p+1)) & (fx == ey + p) & (ex == fx)) do lemma
+                add_case!(lemma, (sx, ex-1, ex-(p-1):ey+1), (!sy, fy:ex-(p+1), fy))
+            end
+            verifier("SETZ-4A1-Y", diff_sign & (ey == fx + (p+1)) & (fy == ex + p) & (ey == fy)) do lemma
+                add_case!(lemma, (sy, ey-1, ey-(p-1):ex+1), (!sx, fx:ey-(p+1), fx))
+            end
+
+            verifier("SETZ-4B-X", diff_sign & (ex > fy + (p+1)) & (fx == ey + (p+1)) & (ex == fx)) do lemma
+                add_case!(lemma, (sx, ex-1, ex-p:ey+1), (!sy, fy:ex-(p+2), fy))
+            end
+            verifier("SETZ-4B-Y", diff_sign & (ey > fx + (p+1)) & (fy == ex + (p+1)) & (ey == fy)) do lemma
+                add_case!(lemma, (sy, ey-1, ey-p:ex+1), (!sx, fx:ey-(p+2), fx))
+            end
+
         end
-        if iszero(verifier.count[])
-            unverified_count += 1
-        end
+        @assert isone(verifier.count[])
     end
 
     println(T, " TwoSum-SETZ lemmas:")
     for (name, count) in sort!(collect(lemma_dict))
         println("    ", name, ": ", count)
     end
-    println("Unverified $T lemmas: $unverified_count of ",
-        length(possible_inputs)^2)
 
     return nothing
 end
@@ -611,7 +801,7 @@ end
 const FLOAT16_TWO_SUM_SETZ = Vector{EFTSummary}(undef, 3_833_700)
 read!("Float16TwoSumSETZ.bin", FLOAT16_TWO_SUM_SETZ)
 verify_two_sum_setz_lemmas(Float16, FLOAT16_TWO_SUM_SETZ)
-# println("Verified all Float16 TwoSum-SETZ lemmas.")
+println("Verified all Float16 TwoSum-SETZ lemmas.")
 flush(stdout)
 
 
@@ -625,5 +815,5 @@ end
 const BFLOAT16_TWO_SUM_SETZ = Vector{EFTSummary}(undef, 26_618_866)
 read!("BFloat16TwoSumSETZ.bin", BFLOAT16_TWO_SUM_SETZ)
 verify_two_sum_setz_lemmas(BFloat16, BFLOAT16_TWO_SUM_SETZ)
-# println("Verified all BFloat16 TwoSum-SETZ lemmas.")
+println("Verified all BFloat16 TwoSum-SETZ lemmas.")
 flush(stdout)
