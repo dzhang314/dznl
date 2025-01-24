@@ -11,8 +11,10 @@ using ProgressMeter: Progress, next!
 
 
 export unsafe_exponent,
-    mantissa_leading_bit, mantissa_leading_zeros, mantissa_leading_ones,
-    mantissa_trailing_bit, mantissa_trailing_zeros, mantissa_trailing_ones
+    mantissa_leading_bit, mantissa_leading_bits,
+    mantissa_leading_zeros, mantissa_leading_ones,
+    mantissa_trailing_bit, mantissa_trailing_bits,
+    mantissa_trailing_zeros, mantissa_trailing_ones
 
 
 const _BITS_PER_BYTE = div(64, sizeof(UInt64))
@@ -44,6 +46,12 @@ end
 end
 
 
+@inline mantissa_leading_bits(x::T) where {T} = ifelse(
+    mantissa_leading_bit(x),
+    mantissa_leading_ones(x),
+    mantissa_leading_zeros(x))
+
+
 @inline mantissa_trailing_bit(x::T) where {T} = !iszero(
     reinterpret(Unsigned, x) & one(uinttype(T)))
 
@@ -56,6 +64,12 @@ end
 @inline function mantissa_trailing_ones(x::T) where {T}
     return trailing_ones(reinterpret(Unsigned, x) & significand_mask(T))
 end
+
+
+@inline mantissa_trailing_bits(x::T) where {T} = ifelse(
+    mantissa_trailing_bit(x),
+    mantissa_trailing_ones(x),
+    mantissa_trailing_zeros(x))
 
 
 ################################################################################
@@ -119,14 +133,18 @@ end
 @inline Base.signbit(s::FloatSummary) = !iszero(s.data & 0x80000000)
 @inline unsafe_exponent(s::FloatSummary) =
     Int(UInt16(s.data & 0x0000FFFF) % Int16)
+@inline mantissa_leading_bit(s::FloatSummary) = !iszero(s.data & 0x40000000)
+@inline mantissa_leading_bits(s::FloatSummary) = Int((s.data >> 22) & 0x3F)
 @inline mantissa_leading_zeros(s::FloatSummary) =
-    ifelse(iszero(s.data & 0x40000000), Int((s.data >> 22) & 0x3F), 0)
+    ifelse(mantissa_leading_bit(s), 0, mantissa_leading_bits(s))
 @inline mantissa_leading_ones(s::FloatSummary) =
-    ifelse(iszero(s.data & 0x40000000), 0, Int((s.data >> 22) & 0x3F))
+    ifelse(mantissa_leading_bit(s), mantissa_leading_bits(s), 0)
+@inline mantissa_trailing_bit(s::FloatSummary) = !iszero(s.data & 0x20000000)
+@inline mantissa_trailing_bits(s::FloatSummary) = Int((s.data >> 16) & 0x3F)
 @inline mantissa_trailing_zeros(s::FloatSummary) =
-    ifelse(iszero(s.data & 0x20000000), Int((s.data >> 16) & 0x3F), 0)
+    ifelse(mantissa_trailing_bit(s), 0, mantissa_trailing_bits(s))
 @inline mantissa_trailing_ones(s::FloatSummary) =
-    ifelse(iszero(s.data & 0x20000000), 0, Int((s.data >> 16) & 0x3F))
+    ifelse(mantissa_trailing_bit(s), mantissa_trailing_bits(s), 0)
 
 
 ################################################################################
