@@ -1,7 +1,9 @@
-using BFloat16s
+using BFloat16s: BFloat16
 
 push!(LOAD_PATH, @__DIR__)
-using FloatSummaries
+using FloatSummaries: summarize_setz, unsafe_exponent, mantissa_trailing_zeros,
+    normal_summaries, normal_two_sum_summaries,
+    EFTSummary, LemmaVerifier, LemmaHelper
 
 
 const ± = false:true
