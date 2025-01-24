@@ -132,7 +132,7 @@ end
 ################################################################################
 
 
-export EFTSummary, find_possible_results
+export EFTSummary
 
 
 struct EFTSummary
@@ -284,16 +284,6 @@ end
 export LemmaVerifier, LemmaHelper
 
 
-function find_possible_results(
-    summaries::AbstractVector{EFTSummary},
-    x::FloatSummary,
-    y::FloatSummary,
-)
-    range = searchsorted(summaries, EFTSummary(x, y, x, y); by=_to_u64)
-    return [(summaries[i].r, summaries[i].e) for i in range]
-end
-
-
 struct LemmaVerifier
     summaries::Vector{EFTSummary}
     x::FloatSummary
@@ -310,13 +300,23 @@ struct LemmaVerifier
 end
 
 
+function _find_possible_results(
+    summaries::AbstractVector{EFTSummary},
+    x::FloatSummary,
+    y::FloatSummary,
+)
+    range = searchsorted(summaries, EFTSummary(x, y, x, y); by=_to_u64)
+    return [(summaries[i].r, summaries[i].e) for i in range]
+end
+
+
 function (verifier::LemmaVerifier)(
     f!::Function,
     lemma_name::String,
     hypothesis::Bool,
 )
     if hypothesis
-        possible_results = find_possible_results(
+        possible_results = _find_possible_results(
             verifier.summaries, verifier.x, verifier.y)
         stated_results = Tuple{FloatSummary,FloatSummary}[]
         f!(stated_results)
