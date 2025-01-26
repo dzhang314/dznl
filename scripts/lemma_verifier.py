@@ -21,6 +21,16 @@ from subprocess import run
 from time import sleep
 
 
+def compute_job_count() -> int:
+    cpu_count: int | None = os.cpu_count()
+    if cpu_count is None:
+        print("WARNING: Could not determine CPU core count using os.cpu_count().")
+        cpu_count = 1
+    return max(cpu_count // len(SMT_SOLVERS), 1)
+
+
+JOB_COUNT: int = compute_job_count()
+print("Verifying lemmas with", JOB_COUNT, "parallel jobs.")
 ONE: z3.BitVecNumRef = z3.BitVecVal(1, 1)
 RNE: z3.FPRMRef = z3.RoundNearestTiesToEven()
 
@@ -228,14 +238,6 @@ def create_two_sum_jobs(
 
 def main(model: str) -> None:
 
-    cpu_count: int | None = os.cpu_count()
-    if cpu_count is None:
-        print("WARNING: Could not determine CPU core count using os.cpu_count().")
-        job_count: int = 1
-    else:
-        job_count: int = max(cpu_count // len(SMT_SOLVERS), 1)
-    print("Verifying lemmas with", job_count, "parallel jobs.")
-
     remaining_jobs: list[SMTJob] = []
 
     print("Constructing f16 lemmas...")
@@ -279,7 +281,7 @@ def main(model: str) -> None:
     while running_jobs or remaining_jobs:
 
         # Start new jobs until all job slots are filled.
-        while remaining_jobs and (len(running_jobs) < job_count):
+        while remaining_jobs and (len(running_jobs) < JOB_COUNT):
             next_job: SMTJob = remaining_jobs.pop(0)
             if os.path.basename(next_job.filename).startswith(prefix):
                 next_job.start()
