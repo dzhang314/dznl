@@ -118,7 +118,6 @@ function verify_two_sum_se_lemmas(
                 add_case!(lemma, (sx, ex+1   ), (±, ey-(p-1):ex-(p-1)))
             end
             verifier("SE-S4-Y", same_sign & (ey > ex) & (ey < ex + (p-2))) do lemma
-                k = ey - ex
                 add_case!(lemma, (sy, ey:ey+1), pos_zero              )
                 add_case!(lemma, (sy, ey     ), (±, ex-(p-1):ey-p    ))
                 add_case!(lemma, (sy, ey+1   ), (±, ex-(p-1):ey-(p-1)))
