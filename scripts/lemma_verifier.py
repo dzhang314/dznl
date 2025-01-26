@@ -7,6 +7,7 @@ import z3
 from fp_lemmas import two_sum_lemmas
 from operator import eq
 from se_lemmas import two_sum_se_lemmas
+from setz_lemmas import two_sum_setz_lemmas
 from smt_utils import (
     SMT_SOLVERS,
     SMTJob,
@@ -119,6 +120,33 @@ def create_two_sum_jobs(
             z3.BitVecVal(precision, promoted_exponent_width),
             z3.BitVecVal(1, promoted_exponent_width),
             z3.BitVecVal(2, promoted_exponent_width),
+        )
+    elif model == "SETZ":
+        lemmas: dict[str, z3.BoolRef] = two_sum_setz_lemmas(
+            x,
+            y,
+            s,
+            e,
+            x_sign_bit,
+            y_sign_bit,
+            s_sign_bit,
+            e_sign_bit,
+            z3.Concat(exponent_padding, x_exponent) - exponent_bias,
+            z3.Concat(exponent_padding, y_exponent) - exponent_bias,
+            z3.Concat(exponent_padding, s_exponent) - exponent_bias,
+            z3.Concat(exponent_padding, e_exponent) - exponent_bias,
+            count_trailing_zeros(x_mantissa, promoted_exponent_width),
+            count_trailing_zeros(y_mantissa, promoted_exponent_width),
+            count_trailing_zeros(s_mantissa, promoted_exponent_width),
+            count_trailing_zeros(e_mantissa, promoted_exponent_width),
+            z3.fpIsZero,
+            z3.fpIsPositive,
+            z3.fpIsNegative,
+            eq,
+            z3.BitVecVal(precision, promoted_exponent_width),
+            z3.BitVecVal(1, promoted_exponent_width),
+            z3.BitVecVal(2, promoted_exponent_width),
+            z3.BitVecVal(3, promoted_exponent_width),
         )
     else:
         lemmas: dict[str, z3.BoolRef] = two_sum_lemmas(
@@ -309,4 +337,4 @@ def main(model: str) -> None:
 
 
 if __name__ == "__main__":
-    main("SE")
+    main("SETZ")

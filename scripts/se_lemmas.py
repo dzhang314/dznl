@@ -105,46 +105,46 @@ def two_sum_se_lemmas(
     ########################################################### HELPER FUNCTIONS
 
     def se_case(
-        s_sign: BoolVar | tuple[BoolVar] | None,
-        s_exponent: IntVar | tuple[IntVar, IntVar],
-        e_sign: BoolVar | tuple[BoolVar] | None,
-        e_exponent: IntVar | tuple[IntVar, IntVar],
+        ss_value: BoolVar | tuple[BoolVar] | None,
+        es_range: IntVar | tuple[IntVar, IntVar],
+        se_value: BoolVar | tuple[BoolVar] | None,
+        ee_range: IntVar | tuple[IntVar, IntVar],
     ) -> z3.BoolRef:
         result: list[z3.BoolRef] = []
-        if isinstance(s_sign, tuple):
-            result.append(ss != s_sign[0])
-        elif s_sign is not None:
-            result.append(ss == s_sign)
-        if isinstance(s_exponent, tuple):
-            result.append(es >= s_exponent[0])
-            result.append(es <= s_exponent[1])
+        if isinstance(ss_value, tuple):
+            result.append(ss != ss_value[0])
+        elif ss_value is not None:
+            result.append(ss == ss_value)
+        if isinstance(es_range, tuple):
+            result.append(es >= es_range[0])
+            result.append(es <= es_range[1])
         else:
-            result.append(es == s_exponent)
-        if isinstance(e_sign, tuple):
-            result.append(se != e_sign[0])
-        elif e_sign is not None:
-            result.append(se == e_sign)
-        if isinstance(e_exponent, tuple):
-            result.append(ee >= e_exponent[0])
-            result.append(ee <= e_exponent[1])
+            result.append(es == es_range)
+        if isinstance(se_value, tuple):
+            result.append(se != se_value[0])
+        elif se_value is not None:
+            result.append(se == se_value)
+        if isinstance(ee_range, tuple):
+            result.append(ee >= ee_range[0])
+            result.append(ee <= ee_range[1])
         else:
-            result.append(ee == e_exponent)
+            result.append(ee == ee_range)
         return z3.And(*result)
 
     def se_case_zero(
-        s_sign: BoolVar | tuple[BoolVar] | None,
-        s_exponent: IntVar | tuple[IntVar, IntVar],
+        ss_value: BoolVar | tuple[BoolVar] | None,
+        es_range: IntVar | tuple[IntVar, IntVar],
     ) -> z3.BoolRef:
         result: list[z3.BoolRef] = []
-        if isinstance(s_sign, tuple):
-            result.append(ss != s_sign[0])
-        elif s_sign is not None:
-            result.append(ss == s_sign)
-        if isinstance(s_exponent, tuple):
-            result.append(es >= s_exponent[0])
-            result.append(es <= s_exponent[1])
+        if isinstance(ss_value, tuple):
+            result.append(ss != ss_value[0])
+        elif ss_value is not None:
+            result.append(ss == ss_value)
+        if isinstance(es_range, tuple):
+            result.append(es >= es_range[0])
+            result.append(es <= es_range[1])
         else:
-            result.append(es == s_exponent)
+            result.append(es == es_range)
         result.append(e_pos_zero)
         return z3.And(*result)
 
