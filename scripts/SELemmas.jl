@@ -147,14 +147,14 @@ function verify_two_sum_se_lemmas(
                 add_case!(lemma, (sx, ex-1), ( sy, ey-(p-1):ex-(p+2)))
                 add_case!(lemma, (sx, ex-1), (!sy, ey-(p-1):ex-(p+1)))
                 add_case!(lemma, (sx, ex  ), (!sy, ey-(p-1):ex-p    ))
-                add_case!(lemma, (sx, ex  ), ( sy, ey               ))
+                add_case!(lemma, x         , y                       )
             end
             verifier("SE-D2-Y", diff_sign & (ey == ex + p)) do lemma
                 add_case!(lemma, (sy, ey-1), pos_zero                )
                 add_case!(lemma, (sy, ey-1), ( sx, ex-(p-1):ey-(p+2)))
                 add_case!(lemma, (sy, ey-1), (!sx, ex-(p-1):ey-(p+1)))
                 add_case!(lemma, (sy, ey  ), (!sx, ex-(p-1):ey-p    ))
-                add_case!(lemma, (sy, ey  ), ( sx, ex               ))
+                add_case!(lemma, y         , x                       )
             end
 
             verifier("SE-D3-X", diff_sign & (ex > ey + 1) & (ex < ey + p)) do lemma
