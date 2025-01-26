@@ -303,18 +303,14 @@ def main(model: str) -> None:
                         solver_name.rjust(solver_len),
                         "proved",
                         job.filename.ljust(filename_len),
-                        "in",
-                        job.result[0],
-                        "seconds.",
+                        f"in{job.result[0]:8.3f} seconds.",
                     )
                 elif job.result[1] == z3.sat:
                     print(
                         solver_name.rjust(solver_len),
                         "refuted",
                         job.filename.ljust(filename_len),
-                        "in",
-                        job.result[0],
-                        "seconds.",
+                        f"in{job.result[0]:8.3f} seconds.",
                     )
                     print("Counterexample:")
                     with open(job.filename, "a") as f:
