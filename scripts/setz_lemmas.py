@@ -1492,6 +1492,24 @@ def two_sum_setz_lemmas(
     #     add_case!(lemma, (sy, ey  , ey           ), ( sx, fx:ey-(p+2), fx))
     #     add_case!(lemma, (sy, ey  , ey           ), (!sx, fx:ey-(p+1), fx))
     # end
+    result["TwoSum-SETZ-3-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex > fy + (p + one), fx < ey),
+        z3.Or(
+            setz_case(sx, ex - one, (ex - p, ey), None, ex - (p + two), fy),
+            setz_case(sx, ex, (ex - (p - one), ex - one), None, ex - (p + one), fy),
+            setz_case(sx, ex, ex, sy, ex - (p + two), fy),
+            setz_case(sx, ex, ex, (sy,), ex - (p + one), fy),
+        ),
+    )
+    result["TwoSum-SETZ-3-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey > fx + (p + one), fy < ex),
+        z3.Or(
+            setz_case(sy, ey - one, (ey - p, ex), None, ey - (p + two), fx),
+            setz_case(sy, ey, (ey - (p - one), ey - one), None, ey - (p + one), fx),
+            setz_case(sy, ey, ey, sx, ey - (p + two), fx),
+            setz_case(sy, ey, ey, (sx,), ey - (p + one), fx),
+        ),
+    )
 
     # # All hypotheses are strictly necessary.
     # verifier("SETZ-3A-X", diff_sign & (ex == fy + (p+1)) & (fx < ey)) do lemma
@@ -1502,6 +1520,20 @@ def two_sum_setz_lemmas(
     #     add_case!(lemma, (sy, ey-1, ey-(p-1):ex), (±, fx:ey-(p+1), fx))
     #     add_case!(lemma, (sy, ey  , ey-(p-1):ey), (±, fx:ey-(p+1), fx))
     # end
+    result["TwoSum-SETZ-3A-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == fy + (p + one), fx < ey),
+        z3.Or(
+            setz_case(sx, ex - one, (ex - (p - one), ey), None, ex - (p + one), fy),
+            setz_case(sx, ex, (ex - (p - one), ex), None, ex - (p + one), fy),
+        ),
+    )
+    result["TwoSum-SETZ-3A-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey == fx + (p + one), fy < ex),
+        z3.Or(
+            setz_case(sy, ey - one, (ey - (p - one), ex), None, ey - (p + one), fx),
+            setz_case(sy, ey, (ey - (p - one), ey), None, ey - (p + one), fx),
+        ),
+    )
 
     # # All hypotheses are strictly necessary.
     # verifier("SETZ-3B-X", diff_sign & (ex > fy + (p+1)) & (fx == ey)) do lemma
@@ -1520,6 +1552,28 @@ def two_sum_setz_lemmas(
     #     add_case!(lemma, (sy, ey  , ex+1:ey-1    ), ( sx, fx:ey-(p+1), fx))
     #     add_case!(lemma, (sy, ey  , ey           ), ( sx, fx:ey-(p+2), fx))
     # end
+    result["TwoSum-SETZ-3B-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex > fy + (p + one), fx == ey),
+        z3.Or(
+            setz_case(sx, ex - one, (ex - p, ey - one), None, ex - (p + two), fy),
+            setz_case(sx, ex - one, ey, (sy,), ex - (p + two), fy),
+            setz_case(sx, ex, (ex - (p - one), ey - one), None, ex - (p + one), fy),
+            setz_case(sx, ex, ey, (sy,), ex - (p + one), fy),
+            setz_case(sx, ex, (ey + one, ex - one), sy, ex - (p + one), fy),
+            setz_case(sx, ex, ex, sy, ex - (p + two), fy),
+        ),
+    )
+    result["TwoSum-SETZ-3B-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey > fx + (p + one), fy == ex),
+        z3.Or(
+            setz_case(sy, ey - one, (ey - p, ex - one), None, ey - (p + two), fx),
+            setz_case(sy, ey - one, ex, (sx,), ey - (p + two), fx),
+            setz_case(sy, ey, (ey - (p - one), ex - one), None, ey - (p + one), fx),
+            setz_case(sy, ey, ex, (sx,), ey - (p + one), fx),
+            setz_case(sy, ey, (ex + one, ey - one), sx, ey - (p + one), fx),
+            setz_case(sy, ey, ey, sx, ey - (p + two), fx),
+        ),
+    )
 
     # # All hypotheses are strictly necessary.
     # verifier("SETZ-3C0-X", diff_sign & (ex == fy + p) & (fx < ey) & (ey < fy + (p-1))) do lemma
@@ -1532,6 +1586,22 @@ def two_sum_setz_lemmas(
     #     add_case!(lemma, (sy, ey  , ey-(p-2):ey-1), ( ± , fx:ey-p, fx))
     #     add_case!(lemma, (sy, ey  , ey           ), (!sx, fx:ey-p, fx))
     # end
+    result["TwoSum-SETZ-3C0-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == fy + p, fx < ey, ey < fy + (p - one)),
+        z3.Or(
+            setz_case_zero(sx, ex - one, fy),
+            setz_case(sx, ex, (ex - (p - two), ex - one), None, ex - p, fy),
+            setz_case(sx, ex, ex, (sy,), ex - p, fy),
+        ),
+    )
+    result["TwoSum-SETZ-3C0-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey == fx + p, fy < ex, ex < fx + (p - one)),
+        z3.Or(
+            setz_case_zero(sy, ey - one, fx),
+            setz_case(sy, ey, (ey - (p - two), ey - one), None, ey - p, fx),
+            setz_case(sy, ey, ey, (sx,), ey - p, fx),
+        ),
+    )
 
     # verifier("SETZ-3C1-X", diff_sign & (ex == fy + p) & (fx + 1 < ey) & (ey == fy + (p-1))) do lemma
     #     add_case!(lemma, (sx, fx:ex-1, fy           ), pos_zero          )
@@ -1543,6 +1613,26 @@ def two_sum_setz_lemmas(
     #     add_case!(lemma, (sy, ey     , ey-(p-2):ey-2), ( ± , fx:ey-p, fx))
     #     add_case!(lemma, (sy, ey     , ey           ), (!sx, fx:ey-p, fx))
     # end
+    result["TwoSum-SETZ-3C1-X"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ex == fy + p, fx + one < ey, ey == fy + (p - one)
+        ),
+        z3.Or(
+            setz_case_zero(sx, (fx, ex - one), fy),
+            setz_case(sx, ex, (ex - (p - two), ex - two), None, ex - p, fy),
+            setz_case(sx, ex, ex, (sy,), ex - p, fy),
+        ),
+    )
+    result["TwoSum-SETZ-3C1-Y"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ey == fx + p, fy + one < ex, ex == fx + (p - one)
+        ),
+        z3.Or(
+            setz_case_zero(sy, (fy, ey - one), fx),
+            setz_case(sy, ey, (ey - (p - two), ey - two), None, ey - p, fx),
+            setz_case(sy, ey, ey, (sx,), ey - p, fx),
+        ),
+    )
 
     # # All hypotheses are strictly necessary.
     # verifier("SETZ-3C2-X", diff_sign & (ex == fy + p) & (fx + 1 == ey) & (ey == fy + (p-1))) do lemma
@@ -1557,6 +1647,28 @@ def two_sum_setz_lemmas(
     #     add_case!(lemma, (sy, ey       , ex-1         ), ( sx, fx:ey-p, fx))
     #     add_case!(lemma, (sy, ey       , ey           ), (!sx, fx:ey-p, fx))
     # end
+    result["TwoSum-SETZ-3C2-X"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ex == fy + p, fx + one == ey, ey == fy + (p - one)
+        ),
+        z3.Or(
+            setz_case_zero(sx, (ex - two, ex - one), fy),
+            setz_case(sx, ex, (ex - (p - two), ey - two), None, ex - p, fy),
+            setz_case(sx, ex, ey - one, sy, ex - p, fy),
+            setz_case(sx, ex, ex, (sy,), ex - p, fy),
+        ),
+    )
+    result["TwoSum-SETZ-3C2-Y"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ey == fx + p, fy + one == ex, ex == fx + (p - one)
+        ),
+        z3.Or(
+            setz_case_zero(sy, (ey - two, ey - one), fx),
+            setz_case(sy, ey, (ey - (p - two), ex - two), None, ey - p, fx),
+            setz_case(sy, ey, ex - one, sx, ey - p, fx),
+            setz_case(sy, ey, ey, (sx,), ey - p, fx),
+        ),
+    )
 
     # # All hypotheses are strictly necessary.
     # verifier("SETZ-3D0-X", diff_sign & (ex > fy + p) & (fx == ey + 1) & (ex < fx + (p-1))) do lemma
@@ -1569,6 +1681,22 @@ def two_sum_setz_lemmas(
     #     add_case!(lemma, (sy, ey, ex           ), ( sx, fx:ey-(p+1), fx))
     #     add_case!(lemma, (sy, ey, ex+2:ey      ), (!sx, fx:ey-(p+1), fx))
     # end
+    result["TwoSum-SETZ-3D0-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex > fy + p, fx == ey + one, ex < fx + (p - one)),
+        z3.Or(
+            setz_case(sx, ex, (ex - (p - one), ey - one), None, ex - (p + one), fy),
+            setz_case(sx, ex, ey, sy, ex - (p + one), fy),
+            setz_case(sx, ex, (ey + two, ex), (sy,), ex - (p + one), fy),
+        ),
+    )
+    result["TwoSum-SETZ-3D0-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey > fx + p, fy == ex + one, ey < fy + (p - one)),
+        z3.Or(
+            setz_case(sy, ey, (ey - (p - one), ex - one), None, ey - (p + one), fx),
+            setz_case(sy, ey, ex, sx, ey - (p + one), fx),
+            setz_case(sy, ey, (ex + two, ey), (sx,), ey - (p + one), fx),
+        ),
+    )
 
     # # All hypotheses are strictly necessary.
     # verifier("SETZ-3D1-X", diff_sign & (ex > fy + p) & (fx == ey + 1) & (ex == fx + (p-1))) do lemma
@@ -1577,6 +1705,18 @@ def two_sum_setz_lemmas(
     # verifier("SETZ-3D1-Y", diff_sign & (ey > fx + p) & (fy == ex + 1) & (ey == fy + (p-1))) do lemma
     #     add_case!(lemma, (sy, ey, ex+2:ey), (!sx, fx:ey-(p+1), fx))
     # end
+    result["TwoSum-SETZ-3D1-X"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ex > fy + p, fx == ey + one, ex == fx + (p - one)
+        ),
+        setz_case(sx, ex, (ey + two, ex), (sy,), ex - (p + one), fy),
+    )
+    result["TwoSum-SETZ-3D1-Y"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ey > fx + p, fy == ex + one, ey == fy + (p - one)
+        ),
+        setz_case(sy, ey, (ex + two, ey), (sx,), ey - (p + one), fx),
+    )
 
     # # All hypotheses are strictly necessary.
     # verifier("SETZ-3AB-X", diff_sign & (ex == fy + (p+1)) & (fx == ey)) do lemma
@@ -1593,6 +1733,30 @@ def two_sum_setz_lemmas(
     #     add_case!(lemma, (sy, ey  , ex           ), (!sx, fx:ey-(p+1), fx))
     #     add_case!(lemma, (sy, ey  , ex+1:ey      ), ( sx, fx:ey-(p+1), fx))
     # end
+    result["TwoSum-SETZ-3AB-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == fy + (p + one), fx == ey),
+        z3.Or(
+            setz_case(
+                sx, ex - one, (ex - (p - one), ey - one), None, ex - (p + one), fy
+            ),
+            setz_case(sx, ex - one, ey, (sy,), ex - (p + one), fy),
+            setz_case(sx, ex, (ex - (p - one), ey - one), None, ex - (p + one), fy),
+            setz_case(sx, ex, ey, (sy,), ex - (p + one), fy),
+            setz_case(sx, ex, (ey + one, ex), sy, ex - (p + one), fy),
+        ),
+    )
+    result["TwoSum-SETZ-3AB-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey == fx + (p + one), fy == ex),
+        z3.Or(
+            setz_case(
+                sy, ey - one, (ey - (p - one), ex - one), None, ey - (p + one), fx
+            ),
+            setz_case(sy, ey - one, ex, (sx,), ey - (p + one), fx),
+            setz_case(sy, ey, (ey - (p - one), ex - one), None, ey - (p + one), fx),
+            setz_case(sy, ey, ex, (sx,), ey - (p + one), fx),
+            setz_case(sy, ey, (ex + one, ey), sx, ey - (p + one), fx),
+        ),
+    )
 
     # verifier("SETZ-3BC0-X", diff_sign & (ex == fy + p) & (fx == ey) & (ex > fx + 1) & (ey > fy + 1)) do lemma
     #     add_case!(lemma, (sx, ex-1, fy           ), pos_zero          )
@@ -1606,6 +1770,28 @@ def two_sum_setz_lemmas(
     #     add_case!(lemma, (sy, ey  , ex           ), (!sx, fx:ey-p, fx))
     #     add_case!(lemma, (sy, ey  , ex+1:ey-1    ), ( sx, fx:ey-p, fx))
     # end
+    result["TwoSum-SETZ-3BC0-X"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ex == fy + p, fx == ey, ex > fx + one, ey > fy + one
+        ),
+        z3.Or(
+            setz_case_zero(sx, ex - one, fy),
+            setz_case(sx, ex, (ex - (p - two), ey - one), None, ex - p, fy),
+            setz_case(sx, ex, ey, (sy,), ex - p, fy),
+            setz_case(sx, ex, (ey + one, ex), sy, ex - p, fy),
+        ),
+    )
+    result["TwoSum-SETZ-3BC0-Y"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ey == fx + p, fy == ex, ey > fy + one, ex > fx + one
+        ),
+        z3.Or(
+            setz_case_zero(sy, ey - one, fx),
+            setz_case(sy, ey, (ey - (p - two), ex - one), None, ey - p, fx),
+            setz_case(sy, ey, ex, (sx,), ey - p, fx),
+            setz_case(sy, ey, (ex + one, ey), sx, ey - p, fx),
+        ),
+    )
 
     # verifier("SETZ-3BC1-X", diff_sign & (ex == fy + p) & (fx == ey) & (ey == fy + 1)) do lemma
     #     add_case!(lemma, (sx, ex-1, fy       ), pos_zero         )
@@ -1615,6 +1801,20 @@ def two_sum_setz_lemmas(
     #     add_case!(lemma, (sy, ey-1, fx       ), pos_zero         )
     #     add_case!(lemma, (sy, ey  , ex+1:ey-1), (sx, fx:ey-p, fx))
     # end
+    result["TwoSum-SETZ-3BC1-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == fy + p, fx == ey, ey == fy + one),
+        z3.Or(
+            setz_case_zero(sx, ex - one, fy),
+            setz_case(sx, ex, (ey + one, ex - one), sy, ex - p, fy),
+        ),
+    )
+    result["TwoSum-SETZ-3BC1-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey == fx + p, fy == ex, ex == fx + one),
+        z3.Or(
+            setz_case_zero(sy, ey - one, fx),
+            setz_case(sy, ey, (ex + one, ey - one), sx, ey - p, fx),
+        ),
+    )
 
     # verifier("SETZ-3CD0-X", diff_sign & (ex == fy + p) & (fx == ey + 1) & (ex > fx) & (ey > fy + 1)) do lemma
     #     add_case!(lemma, (sx, ex, ex-(p-2):ey-1), ( ± , fy:ex-p, fy))
@@ -1626,6 +1826,26 @@ def two_sum_setz_lemmas(
     #     add_case!(lemma, (sy, ey, ex           ), ( sx, fx:ey-p, fx))
     #     add_case!(lemma, (sy, ey, ex+2:ey      ), (!sx, fx:ey-p, fx))
     # end
+    result["TwoSum-SETZ-3CD0-X"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ex == fy + p, fx == ey + one, ex > fx, ey > fy + one
+        ),
+        z3.Or(
+            setz_case(sx, ex, (ex - (p - two), ey - one), None, ex - p, fy),
+            setz_case(sx, ex, ey, sy, ex - p, fy),
+            setz_case(sx, ex, (ey + two, ex), (sy,), ex - p, fy),
+        ),
+    )
+    result["TwoSum-SETZ-3CD0-Y"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ey == fx + p, fy == ex + one, ey > fy, ex > fx + one
+        ),
+        z3.Or(
+            setz_case(sy, ey, (ey - (p - two), ex - one), None, ey - p, fx),
+            setz_case(sy, ey, ex, sx, ey - p, fx),
+            setz_case(sy, ey, (ex + two, ey), (sx,), ey - p, fx),
+        ),
+    )
 
     # verifier("SETZ-3CD1-X", diff_sign & (ex == fy + p) & (fx == ey + 1) & (ey < fy + 2)) do lemma
     #     add_case!(lemma, (sx, ex, ey+2:ex), (!sy, fy:ex-p, fy))
@@ -1633,6 +1853,14 @@ def two_sum_setz_lemmas(
     # verifier("SETZ-3CD1-Y", diff_sign & (ey == fx + p) & (fy == ex + 1) & (ex < fx + 2)) do lemma
     #     add_case!(lemma, (sy, ey, ex+2:ey), (!sx, fx:ey-p, fx))
     # end
+    result["TwoSum-SETZ-3CD1-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == fy + p, fx == ey + one, ey < fy + two),
+        setz_case(sx, ex, (ey + two, ex), (sy,), ex - p, fy),
+    )
+    result["TwoSum-SETZ-3CD1-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey == fx + p, fy == ex + one, ex < fx + two),
+        setz_case(sy, ey, (ex + two, ey), (sx,), ey - p, fx),
+    )
 
     #################################################### LEMMA FAMILY SETZ-4 (4)
 
@@ -1646,6 +1874,26 @@ def two_sum_setz_lemmas(
     #     add_case!(lemma, (sy, ey-1, ex       ), ( sx, fx:ey-(p+2), fx))
     #     add_case!(lemma, (sy, ey-1, ex+1     ), (!sx, fx:ey-(p+2), fx))
     # end
+    result["TwoSum-SETZ-4-X"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ex > fy + (p + one), fx < ey + (p + one), ex == fx
+        ),
+        z3.Or(
+            setz_case(sx, ex - one, (ex - p, ey - one), None, ex - (p + two), fy),
+            setz_case(sx, ex - one, ey, sy, ex - (p + two), fy),
+            setz_case(sx, ex - one, ey + one, (sy,), ex - (p + two), fy),
+        ),
+    )
+    result["TwoSum-SETZ-4-Y"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ey > fx + (p + one), fy < ex + (p + one), ey == fy
+        ),
+        z3.Or(
+            setz_case(sy, ey - one, (ey - p, ex - one), None, ey - (p + two), fx),
+            setz_case(sy, ey - one, ex, sx, ey - (p + two), fx),
+            setz_case(sy, ey - one, ex + one, (sx,), ey - (p + two), fx),
+        ),
+    )
 
     # verifier("SETZ-4A0-X", diff_sign & (ex == fy + (p+1)) & (fx < ey + p) & (ex == fx)) do lemma
     #     add_case!(lemma, (sx, ex-1, ex-(p-1):ey-1), ( ± , fy:ex-(p+1), fy))
@@ -1657,6 +1905,26 @@ def two_sum_setz_lemmas(
     #     add_case!(lemma, (sy, ey-1, ex           ), ( sx, fx:ey-(p+1), fx))
     #     add_case!(lemma, (sy, ey-1, ex+1         ), (!sx, fx:ey-(p+1), fx))
     # end
+    result["TwoSum-SETZ-4A0-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == fy + (p + one), fx < ey + p, ex == fx),
+        z3.Or(
+            setz_case(
+                sx, ex - one, (ex - (p - one), ey - one), None, ex - (p + one), fy
+            ),
+            setz_case(sx, ex - one, ey, sy, ex - (p + one), fy),
+            setz_case(sx, ex - one, ey + one, (sy,), ex - (p + one), fy),
+        ),
+    )
+    result["TwoSum-SETZ-4A0-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey == fx + (p + one), fy < ex + p, ey == fy),
+        z3.Or(
+            setz_case(
+                sy, ey - one, (ey - (p - one), ex - one), None, ey - (p + one), fx
+            ),
+            setz_case(sy, ey - one, ex, sx, ey - (p + one), fx),
+            setz_case(sy, ey - one, ex + one, (sx,), ey - (p + one), fx),
+        ),
+    )
 
     # verifier("SETZ-4A1-X", diff_sign & (ex == fy + (p+1)) & (fx == ey + p) & (ex == fx)) do lemma
     #     add_case!(lemma, (sx, ex-1, ex-(p-1):ey+1), (!sy, fy:ex-(p+1), fy))
@@ -1664,6 +1932,14 @@ def two_sum_setz_lemmas(
     # verifier("SETZ-4A1-Y", diff_sign & (ey == fx + (p+1)) & (fy == ex + p) & (ey == fy)) do lemma
     #     add_case!(lemma, (sy, ey-1, ey-(p-1):ex+1), (!sx, fx:ey-(p+1), fx))
     # end
+    result["TwoSum-SETZ-4A1-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == fy + (p + one), fx == ey + p, ex == fx),
+        setz_case(sx, ex - one, (ex - (p - one), ey + one), (sy,), ex - (p + one), fy),
+    )
+    result["TwoSum-SETZ-4A1-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey == fx + (p + one), fy == ex + p, ey == fy),
+        setz_case(sy, ey - one, (ey - (p - one), ex + one), (sx,), ey - (p + one), fx),
+    )
 
     # verifier("SETZ-4B-X", diff_sign & (ex > fy + (p+1)) & (fx == ey + (p+1)) & (ex == fx)) do lemma
     #     add_case!(lemma, (sx, ex-1, ex-p:ey+1), (!sy, fy:ex-(p+2), fy))
@@ -1671,5 +1947,17 @@ def two_sum_setz_lemmas(
     # verifier("SETZ-4B-Y", diff_sign & (ey > fx + (p+1)) & (fy == ex + (p+1)) & (ey == fy)) do lemma
     #     add_case!(lemma, (sy, ey-1, ey-p:ex+1), (!sx, fx:ey-(p+2), fx))
     # end
+    result["TwoSum-SETZ-4B-X"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ex > fy + (p + one), fx == ey + (p + one), ex == fx
+        ),
+        setz_case(sx, ex - one, (ex - p, ey + one), (sy,), ex - (p + two), fy),
+    )
+    result["TwoSum-SETZ-4B-Y"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ey > fx + (p + one), fy == ex + (p + one), ey == fy
+        ),
+        setz_case(sy, ey - one, (ey - p, ex + one), (sx,), ey - (p + two), fx),
+    )
 
     return result
