@@ -3,7 +3,7 @@
 import time
 import z3
 
-from se_lemmas import two_sum_se_lemmas
+from setz_lemmas import two_sum_setz_lemmas
 
 
 class FPVariable(object):
@@ -134,7 +134,7 @@ def two_sum(
     s = FPVariable(solver, sum_name, precision=p, zero_exponent=zx)
     e = FPVariable(solver, err_name, precision=p, zero_exponent=zx)
 
-    lemmas: dict[str, z3.BoolRef] = two_sum_se_lemmas(
+    lemmas: dict[str, z3.BoolRef] = two_sum_setz_lemmas(
         x,
         y,
         s,
@@ -143,26 +143,14 @@ def two_sum(
         y.sign_bit,
         s.sign_bit,
         e.sign_bit,
-        # x.leading_bit,
-        # y.leading_bit,
-        # s.leading_bit,
-        # e.leading_bit,
-        # x.trailing_bit,
-        # y.trailing_bit,
-        # s.trailing_bit,
-        # e.trailing_bit,
         x.exponent,
         y.exponent,
         s.exponent,
         e.exponent,
-        # x.num_leading_bits,
-        # y.num_leading_bits,
-        # s.num_leading_bits,
-        # e.num_leading_bits,
-        # x.num_trailing_bits,
-        # y.num_trailing_bits,
-        # s.num_trailing_bits,
-        # e.num_trailing_bits,
+        z3.If(x.trailing_bit, z3.IntVal(0), x.num_trailing_bits),
+        z3.If(y.trailing_bit, z3.IntVal(0), y.num_trailing_bits),
+        z3.If(s.trailing_bit, z3.IntVal(0), s.num_trailing_bits),
+        z3.If(e.trailing_bit, z3.IntVal(0), e.num_trailing_bits),
         lambda v: v.is_zero,
         lambda v: z3.Not(v.sign_bit),
         lambda v: v.sign_bit,
@@ -170,8 +158,47 @@ def two_sum(
         z3.IntVal(p),
         z3.IntVal(1),
         z3.IntVal(2),
-        # z3.IntVal(3),
+        z3.IntVal(3),
     )
+
+    # lemmas: dict[str, z3.BoolRef] = two_sum_se_lemmas(
+    #     x,
+    #     y,
+    #     s,
+    #     e,
+    #     x.sign_bit,
+    #     y.sign_bit,
+    #     s.sign_bit,
+    #     e.sign_bit,
+    #     # x.leading_bit,
+    #     # y.leading_bit,
+    #     # s.leading_bit,
+    #     # e.leading_bit,
+    #     # x.trailing_bit,
+    #     # y.trailing_bit,
+    #     # s.trailing_bit,
+    #     # e.trailing_bit,
+    #     x.exponent,
+    #     y.exponent,
+    #     s.exponent,
+    #     e.exponent,
+    #     # x.num_leading_bits,
+    #     # y.num_leading_bits,
+    #     # s.num_leading_bits,
+    #     # e.num_leading_bits,
+    #     # x.num_trailing_bits,
+    #     # y.num_trailing_bits,
+    #     # s.num_trailing_bits,
+    #     # e.num_trailing_bits,
+    #     lambda v: v.is_zero,
+    #     lambda v: z3.Not(v.sign_bit),
+    #     lambda v: v.sign_bit,
+    #     lambda v, w: v.maybe_equal(w),
+    #     z3.IntVal(p),
+    #     z3.IntVal(1),
+    #     z3.IntVal(2),
+    #     # z3.IntVal(3),
+    # )
 
     for claim in lemmas.values():
         solver.add(claim)
@@ -308,7 +335,10 @@ def verify_joldes_2017_algorithm_4(p: int, suffix: str = "") -> None:
         [a1, b2, a3, b3],
     ]
 
-    prove(solver, c2.is_smaller_than(a3, 2 * p - 4), "A4E" + suffix, variables)
+    # SE: 2p - 4
+    # SETZ: 2p - 3
+    prove(solver, a3.is_ulp_nonoverlapping(b3), "A4N" + suffix, variables)
+    prove(solver, c2.is_smaller_than(a3, 2 * p - 3), "A4E" + suffix, variables)
 
 
 def verify_joldes_2017_algorithm_6(p: int, suffix: str = "") -> None:
@@ -340,7 +370,10 @@ def verify_joldes_2017_algorithm_6(p: int, suffix: str = "") -> None:
         [c2, d4, c5, d5],
     ]
 
-    prove(solver, c5.is_smaller_than(a5, 2 * p - 7), "A6E" + suffix, variables)
+    # SE: 2p - 7
+    # SETZ: 2p - 4
+    prove(solver, a5.is_ulp_nonoverlapping(b5), "A6N" + suffix, variables)
+    prove(solver, c5.is_smaller_than(a5, 2 * p - 4), "A6E" + suffix, variables)
 
 
 def verify_zhang_addition(p: int, suffix: str = "") -> None:
@@ -372,7 +405,10 @@ def verify_zhang_addition(p: int, suffix: str = "") -> None:
         [c3, d2, c4, d4],
     ]
 
-    prove(solver, c4.is_smaller_than(a4, 2 * p - 6), "ZAE" + suffix, variables)
+    # SE: 2p - 6
+    # SETZ: 2p - 3
+    prove(solver, a4.is_ulp_nonoverlapping(b4), "ZAN" + suffix, variables)
+    prove(solver, c4.is_smaller_than(a4, 2 * p - 3), "ZAE" + suffix, variables)
 
 
 if __name__ == "__main__":
