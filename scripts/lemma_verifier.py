@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
 
-import operator
 import os
-import subprocess
 import sys
-import time
 import z3
 
-from fp_lemmas import (
+from fp_lemmas import two_sum_lemmas
+from operator import eq
+from se_lemmas import two_sum_se_lemmas
+from smt_utils import (
+    SMT_SOLVERS,
+    SMTJob,
+    create_smt_job,
     count_leading_zeros,
     count_leading_ones,
     count_trailing_zeros,
     count_trailing_ones,
-    two_sum_lemmas,
 )
-from smt_utils import SMT_SOLVERS, SMTJob, create_smt_job
+from subprocess import run
+from time import sleep
 
 
 ONE: z3.BitVecNumRef = z3.BitVecVal(1, 1)
@@ -25,6 +28,7 @@ def create_two_sum_jobs(
     exponent_width: int,
     promoted_exponent_width: int,
     precision: int,
+    model: str,
     *,
     prefix: str = "",
     suffix: str = "",
@@ -94,76 +98,99 @@ def create_two_sum_jobs(
     s_trailing_bit: z3.BoolRef = z3.Extract(0, 0, s_mantissa) == ONE
     e_trailing_bit: z3.BoolRef = z3.Extract(0, 0, e_mantissa) == ONE
 
-    lemmas: dict[str, z3.BoolRef] = two_sum_lemmas(
-        x,
-        y,
-        s,
-        e,
-        x_sign_bit,
-        y_sign_bit,
-        s_sign_bit,
-        e_sign_bit,
-        x_leading_bit,
-        y_leading_bit,
-        s_leading_bit,
-        e_leading_bit,
-        x_trailing_bit,
-        y_trailing_bit,
-        s_trailing_bit,
-        e_trailing_bit,
-        z3.Concat(exponent_padding, x_exponent) - exponent_bias,
-        z3.Concat(exponent_padding, y_exponent) - exponent_bias,
-        z3.Concat(exponent_padding, s_exponent) - exponent_bias,
-        z3.Concat(exponent_padding, e_exponent) - exponent_bias,
-        z3.If(
+    if model == "SE":
+        lemmas: dict[str, z3.BoolRef] = two_sum_se_lemmas(
+            x,
+            y,
+            s,
+            e,
+            x_sign_bit,
+            y_sign_bit,
+            s_sign_bit,
+            e_sign_bit,
+            z3.Concat(exponent_padding, x_exponent) - exponent_bias,
+            z3.Concat(exponent_padding, y_exponent) - exponent_bias,
+            z3.Concat(exponent_padding, s_exponent) - exponent_bias,
+            z3.Concat(exponent_padding, e_exponent) - exponent_bias,
+            z3.fpIsZero,
+            z3.fpIsPositive,
+            z3.fpIsNegative,
+            eq,
+            z3.BitVecVal(precision, promoted_exponent_width),
+            z3.BitVecVal(1, promoted_exponent_width),
+            z3.BitVecVal(2, promoted_exponent_width),
+        )
+    else:
+        lemmas: dict[str, z3.BoolRef] = two_sum_lemmas(
+            x,
+            y,
+            s,
+            e,
+            x_sign_bit,
+            y_sign_bit,
+            s_sign_bit,
+            e_sign_bit,
             x_leading_bit,
-            count_leading_ones(x_mantissa, promoted_exponent_width),
-            count_leading_zeros(x_mantissa, promoted_exponent_width),
-        ),
-        z3.If(
             y_leading_bit,
-            count_leading_ones(y_mantissa, promoted_exponent_width),
-            count_leading_zeros(y_mantissa, promoted_exponent_width),
-        ),
-        z3.If(
             s_leading_bit,
-            count_leading_ones(s_mantissa, promoted_exponent_width),
-            count_leading_zeros(s_mantissa, promoted_exponent_width),
-        ),
-        z3.If(
             e_leading_bit,
-            count_leading_ones(e_mantissa, promoted_exponent_width),
-            count_leading_zeros(e_mantissa, promoted_exponent_width),
-        ),
-        z3.If(
             x_trailing_bit,
-            count_trailing_ones(x_mantissa, promoted_exponent_width),
-            count_trailing_zeros(x_mantissa, promoted_exponent_width),
-        ),
-        z3.If(
             y_trailing_bit,
-            count_trailing_ones(y_mantissa, promoted_exponent_width),
-            count_trailing_zeros(y_mantissa, promoted_exponent_width),
-        ),
-        z3.If(
             s_trailing_bit,
-            count_trailing_ones(s_mantissa, promoted_exponent_width),
-            count_trailing_zeros(s_mantissa, promoted_exponent_width),
-        ),
-        z3.If(
             e_trailing_bit,
-            count_trailing_ones(e_mantissa, promoted_exponent_width),
-            count_trailing_zeros(e_mantissa, promoted_exponent_width),
-        ),
-        z3.fpIsZero,
-        z3.fpIsPositive,
-        z3.fpIsNegative,
-        operator.eq,
-        z3.BitVecVal(precision, promoted_exponent_width),
-        z3.BitVecVal(1, promoted_exponent_width),
-        z3.BitVecVal(2, promoted_exponent_width),
-        z3.BitVecVal(3, promoted_exponent_width),
-    )
+            z3.Concat(exponent_padding, x_exponent) - exponent_bias,
+            z3.Concat(exponent_padding, y_exponent) - exponent_bias,
+            z3.Concat(exponent_padding, s_exponent) - exponent_bias,
+            z3.Concat(exponent_padding, e_exponent) - exponent_bias,
+            z3.If(
+                x_leading_bit,
+                count_leading_ones(x_mantissa, promoted_exponent_width),
+                count_leading_zeros(x_mantissa, promoted_exponent_width),
+            ),
+            z3.If(
+                y_leading_bit,
+                count_leading_ones(y_mantissa, promoted_exponent_width),
+                count_leading_zeros(y_mantissa, promoted_exponent_width),
+            ),
+            z3.If(
+                s_leading_bit,
+                count_leading_ones(s_mantissa, promoted_exponent_width),
+                count_leading_zeros(s_mantissa, promoted_exponent_width),
+            ),
+            z3.If(
+                e_leading_bit,
+                count_leading_ones(e_mantissa, promoted_exponent_width),
+                count_leading_zeros(e_mantissa, promoted_exponent_width),
+            ),
+            z3.If(
+                x_trailing_bit,
+                count_trailing_ones(x_mantissa, promoted_exponent_width),
+                count_trailing_zeros(x_mantissa, promoted_exponent_width),
+            ),
+            z3.If(
+                y_trailing_bit,
+                count_trailing_ones(y_mantissa, promoted_exponent_width),
+                count_trailing_zeros(y_mantissa, promoted_exponent_width),
+            ),
+            z3.If(
+                s_trailing_bit,
+                count_trailing_ones(s_mantissa, promoted_exponent_width),
+                count_trailing_zeros(s_mantissa, promoted_exponent_width),
+            ),
+            z3.If(
+                e_trailing_bit,
+                count_trailing_ones(e_mantissa, promoted_exponent_width),
+                count_trailing_zeros(e_mantissa, promoted_exponent_width),
+            ),
+            z3.fpIsZero,
+            z3.fpIsPositive,
+            z3.fpIsNegative,
+            eq,
+            z3.BitVecVal(precision, promoted_exponent_width),
+            z3.BitVecVal(1, promoted_exponent_width),
+            z3.BitVecVal(2, promoted_exponent_width),
+            z3.BitVecVal(3, promoted_exponent_width),
+        )
 
     return [
         create_smt_job(solver, "QF_BVFP", prefix + name + suffix, lemma)
@@ -171,7 +198,7 @@ def create_two_sum_jobs(
     ]
 
 
-def main() -> None:
+def main(model: str) -> None:
 
     cpu_count: int | None = os.cpu_count()
     if cpu_count is None:
@@ -184,26 +211,28 @@ def main() -> None:
     remaining_jobs: list[SMTJob] = []
 
     print("Constructing f16 lemmas...")
-    f16_jobs: list[SMTJob] = create_two_sum_jobs(5, 8, 11, suffix="-F16")
+    f16_jobs: list[SMTJob] = create_two_sum_jobs(5, 8, 11, model, suffix="-F16")
     remaining_jobs += f16_jobs
 
     print("Constructing bf16 lemmas...")
-    bf16_jobs: list[SMTJob] = create_two_sum_jobs(8, 12, 8, suffix="-BF16")
+    bf16_jobs: list[SMTJob] = create_two_sum_jobs(8, 12, 8, model, suffix="-BF16")
     remaining_jobs += bf16_jobs
 
     if "--verify-f32" in sys.argv:
         print("Constructing f32 lemmas...")
-        f32_jobs: list[SMTJob] = create_two_sum_jobs(8, 12, 24, suffix="-F32")
+        f32_jobs: list[SMTJob] = create_two_sum_jobs(8, 12, 24, model, suffix="-F32")
         remaining_jobs += f32_jobs
 
     if "--verify-f64" in sys.argv:
         print("Constructing f64 lemmas...")
-        f64_jobs: list[SMTJob] = create_two_sum_jobs(11, 16, 53, suffix="-F64")
+        f64_jobs: list[SMTJob] = create_two_sum_jobs(11, 16, 53, model, suffix="-F64")
         remaining_jobs += f64_jobs
 
     if "--verify-f128" in sys.argv:
         print("Constructing f128 lemmas...")
-        f128_jobs: list[SMTJob] = create_two_sum_jobs(15, 20, 113, suffix="-F128")
+        f128_jobs: list[SMTJob] = create_two_sum_jobs(
+            15, 20, 113, model, suffix="-F128"
+        )
         remaining_jobs += f128_jobs
 
     running_jobs: list[SMTJob] = []
@@ -261,13 +290,11 @@ def main() -> None:
                     with open(job.filename, "a") as f:
                         f.write("(get-model)\n")
                     if solver_name == "cvc5":
-                        subprocess.run(
-                            ["cvc5", "--fp-exp", "--produce-models", job.filename]
-                        )
+                        run(["cvc5", "--fp-exp", "--produce-models", job.filename])
                     elif solver_name == "bitwuzla":
-                        subprocess.run(["bitwuzla", "--produce-models", job.filename])
+                        run(["bitwuzla", "--produce-models", job.filename])
                     elif solver_name == "z3":
-                        subprocess.run(["z3", job.filename])
+                        run(["z3", job.filename])
                     sys.exit(1)
                 else:
                     assert False
@@ -278,8 +305,8 @@ def main() -> None:
 
         # Sleep for a short time to avoid busy waiting. (Even the fastest SMT
         # solvers take a few milliseconds, so 0.1ms is a reasonable interval.)
-        time.sleep(0.0001)
+        sleep(0.0001)
 
 
 if __name__ == "__main__":
-    main()
+    main("SE")
