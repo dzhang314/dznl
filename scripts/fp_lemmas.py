@@ -1,52 +1,6 @@
-import typing
 import z3
-
-
-def count_leading_zeros(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
-    result: z3.BitVecRef = z3.BitVecVal(0, result_width)
-    for i in range(1, b.size() + 1):
-        substr: z3.BitVecRef = z3.Extract(b.size() - 1, b.size() - i, b)
-        zeros: z3.BitVecRef = z3.BitVecVal(0, i)
-        result = z3.If(substr == zeros, z3.BitVecVal(i, result_width), result)
-    return result
-
-
-def count_leading_ones(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
-    result: z3.BitVecRef = z3.BitVecVal(0, result_width)
-    for i in range(1, b.size() + 1):
-        substr: z3.BitVecRef = z3.Extract(b.size() - 1, b.size() - i, b)
-        ones: z3.BitVecRef = z3.BitVecVal(2**i - 1, i)
-        result = z3.If(substr == ones, z3.BitVecVal(i, result_width), result)
-    return result
-
-
-def count_trailing_zeros(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
-    result: z3.BitVecRef = z3.BitVecVal(0, result_width)
-    for i in range(1, b.size() + 1):
-        substr: z3.BitVecRef = z3.Extract(i - 1, 0, b)
-        zeros: z3.BitVecRef = z3.BitVecVal(0, i)
-        result = z3.If(substr == zeros, z3.BitVecVal(i, result_width), result)
-    return result
-
-
-def count_trailing_ones(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
-    result: z3.BitVecRef = z3.BitVecVal(0, result_width)
-    for i in range(1, b.size() + 1):
-        substr: z3.BitVecRef = z3.Extract(i - 1, 0, b)
-        ones: z3.BitVecRef = z3.BitVecVal(2**i - 1, i)
-        result = z3.If(substr == ones, z3.BitVecVal(i, result_width), result)
-    return result
-
-
-BoolVar = typing.TypeVar("BoolVar", z3.BoolRef, z3.BitVecRef)
-IntVar = typing.TypeVar("IntVar", z3.ArithRef, z3.BitVecRef)
-FloatVar = typing.TypeVar("FloatVar")
-
-
-# This wrapper function works around Python type checkers
-# being unable to resolve overloads through type variables.
-def z3_If(c: z3.BoolRef, a: IntVar, b: IntVar) -> IntVar:
-    return z3.If(c, a, b)  # type: ignore
+from smt_utils import BoolVar, IntVar, FloatVar, z3_If
+from typing import Callable
 
 
 def two_sum_lemmas(
@@ -78,10 +32,10 @@ def two_sum_lemmas(
     ntby: IntVar,
     ntbs: IntVar,
     ntbe: IntVar,
-    is_zero: typing.Callable[[FloatVar], z3.BoolRef],
-    is_positive: typing.Callable[[FloatVar], z3.BoolRef],
-    is_negative: typing.Callable[[FloatVar], z3.BoolRef],
-    is_equal: typing.Callable[[FloatVar, FloatVar], z3.BoolRef],
+    is_zero: Callable[[FloatVar], z3.BoolRef],
+    is_positive: Callable[[FloatVar], z3.BoolRef],
+    is_negative: Callable[[FloatVar], z3.BoolRef],
+    is_equal: Callable[[FloatVar, FloatVar], z3.BoolRef],
     p: IntVar,
     one: IntVar,
     two: IntVar,

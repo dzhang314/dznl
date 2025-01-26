@@ -1,8 +1,57 @@
 import os
-import random
 import subprocess
-import time
 import z3
+
+from random import shuffle
+from time import perf_counter_ns
+from typing import TypeVar
+
+
+def count_leading_zeros(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
+    result: z3.BitVecRef = z3.BitVecVal(0, result_width)
+    for i in range(1, b.size() + 1):
+        substr: z3.BitVecRef = z3.Extract(b.size() - 1, b.size() - i, b)
+        zeros: z3.BitVecRef = z3.BitVecVal(0, i)
+        result = z3.If(substr == zeros, z3.BitVecVal(i, result_width), result)
+    return result
+
+
+def count_leading_ones(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
+    result: z3.BitVecRef = z3.BitVecVal(0, result_width)
+    for i in range(1, b.size() + 1):
+        substr: z3.BitVecRef = z3.Extract(b.size() - 1, b.size() - i, b)
+        ones: z3.BitVecRef = z3.BitVecVal(2**i - 1, i)
+        result = z3.If(substr == ones, z3.BitVecVal(i, result_width), result)
+    return result
+
+
+def count_trailing_zeros(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
+    result: z3.BitVecRef = z3.BitVecVal(0, result_width)
+    for i in range(1, b.size() + 1):
+        substr: z3.BitVecRef = z3.Extract(i - 1, 0, b)
+        zeros: z3.BitVecRef = z3.BitVecVal(0, i)
+        result = z3.If(substr == zeros, z3.BitVecVal(i, result_width), result)
+    return result
+
+
+def count_trailing_ones(b: z3.BitVecRef, result_width: int) -> z3.BitVecRef:
+    result: z3.BitVecRef = z3.BitVecVal(0, result_width)
+    for i in range(1, b.size() + 1):
+        substr: z3.BitVecRef = z3.Extract(i - 1, 0, b)
+        ones: z3.BitVecRef = z3.BitVecVal(2**i - 1, i)
+        result = z3.If(substr == ones, z3.BitVecVal(i, result_width), result)
+    return result
+
+
+BoolVar = TypeVar("BoolVar", z3.BoolRef, z3.BitVecRef)
+IntVar = TypeVar("IntVar", z3.ArithRef, z3.BitVecRef)
+FloatVar = TypeVar("FloatVar")
+
+
+# This wrapper function works around Python type checkers
+# being unable to resolve overloads through type variables.
+def z3_If(c: z3.BoolRef, a: IntVar, b: IntVar) -> IntVar:
+    return z3.If(c, a, b)  # type: ignore
 
 
 def detect_smt_solvers() -> list[str]:
@@ -53,14 +102,14 @@ class SMTJob(object):
     def start(self) -> None:
         assert not self.processes
         assert self.result is None
-        random.shuffle(SMT_SOLVERS)
+        shuffle(SMT_SOLVERS)
         for smt_solver in SMT_SOLVERS:
             command: list[str] = [smt_solver]
             if smt_solver == "cvc5":
                 command.append("--fp-exp")
             command.append(self.filename)
             self.processes[smt_solver] = (
-                time.perf_counter_ns(),
+                perf_counter_ns(),
                 subprocess.Popen(
                     command,
                     stdout=subprocess.PIPE,
@@ -79,7 +128,7 @@ class SMTJob(object):
             if process.poll() is not None:
 
                 # Measure elapsed time.
-                stop: int = time.perf_counter_ns()
+                stop: int = perf_counter_ns()
                 elapsed: float = (stop - start) / 1.0e9
 
                 # Verify successful termination.
@@ -98,7 +147,7 @@ class SMTJob(object):
                     self.result = (elapsed, z3.unknown)
                 else:
                     raise RuntimeError(
-                        f"Unexpected output from {smt_solver} on {self.filename}: "
+                        f"Unexpected output from {smt_solver} on {self.filename}:\n"
                         + stdout
                     )
 
