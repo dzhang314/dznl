@@ -1,3 +1,5 @@
+#!/usr/bin/env -S julia --startup-file=no
+
 using BFloat16s: BFloat16
 
 push!(LOAD_PATH, @__DIR__)
