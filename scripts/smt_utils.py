@@ -3,6 +3,7 @@ import subprocess
 import z3
 
 from random import shuffle
+from sys import argv
 from time import perf_counter_ns
 from typing import TypeVar
 
@@ -57,33 +58,37 @@ def z3_If(c: z3.BoolRef, a: IntVar, b: IntVar) -> IntVar:
 def detect_smt_solvers() -> list[str]:
     result: list[str] = []
 
-    try:
-        v: str = subprocess.check_output(["bitwuzla", "--version"], text=True)
-        print("Found Bitwuzla version:", v.strip())
-        result.append("bitwuzla")
-    except FileNotFoundError:
-        print("Bitwuzla not found in current PATH.")
+    if "--no-bitwuzla" not in argv:
+        try:
+            v: str = subprocess.check_output(["bitwuzla", "--version"], text=True)
+            print("Found Bitwuzla:", v.strip())
+            result.append("bitwuzla")
+        except FileNotFoundError:
+            print("Bitwuzla not found.")
 
-    try:
-        v: str = subprocess.check_output(["cvc5", "--version"], text=True)
-        print("Found CVC5 version:", v.splitlines()[0].strip())
-        result.append("cvc5")
-    except FileNotFoundError:
-        print("CVC5 not found in current PATH.")
+    if "--no-cvc5" not in argv:
+        try:
+            v: str = subprocess.check_output(["cvc5", "--version"], text=True)
+            print("Found CVC5:", v.splitlines()[0].strip())
+            result.append("cvc5")
+        except FileNotFoundError:
+            print("CVC5 not found.")
 
-    try:
-        v: str = subprocess.check_output(["mathsat", "-version"], text=True)
-        print("Found MathSAT version:", v.strip())
-        result.append("mathsat")
-    except FileNotFoundError:
-        print("MathSAT not found in current PATH.")
+    if "--no-mathsat" not in argv:
+        try:
+            v: str = subprocess.check_output(["mathsat", "-version"], text=True)
+            print("Found MathSAT:", v.strip())
+            result.append("mathsat")
+        except FileNotFoundError:
+            print("MathSAT not found.")
 
-    try:
-        v: str = subprocess.check_output(["z3", "--version"], text=True)
-        print("Found Z3 version:", v.strip())
-        result.append("z3")
-    except FileNotFoundError:
-        print("Z3 not found in current PATH.")
+    if "--no-z3" not in argv:
+        try:
+            v: str = subprocess.check_output(["z3", "--version"], text=True)
+            print("Found Z3:", v.strip())
+            result.append("z3")
+        except FileNotFoundError:
+            print("Z3 not found.")
 
     print()
     return result
