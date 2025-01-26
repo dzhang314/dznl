@@ -1,9 +1,34 @@
 #!/usr/bin/env python3
 
-import time
 import z3
 
 from setz_lemmas import two_sum_setz_lemmas
+from time import perf_counter_ns
+
+
+def decide(
+    solver: z3.Solver,
+    claim: z3.BoolRef,
+    name: str,
+) -> z3.ModelRef | None:
+    start: int = perf_counter_ns()
+    result: z3.CheckSatResult = solver.check(z3.Not(claim))
+    stop: int = perf_counter_ns()
+    elapsed: float = (stop - start) / 1.0e9
+    if result == z3.unsat:
+        if name:
+            print(f"Verified {name} in {elapsed:.3f} seconds.")
+        return None
+    elif result == z3.unknown:
+        if name:
+            print(f"Failed to determine {name} in {elapsed:.3f} seconds.")
+        return None
+    elif result == z3.sat:
+        if name:
+            print(f"Refuted {name} in {elapsed:.3f} seconds.")
+        return solver.model()
+    else:
+        raise RuntimeError(f"SMT solver returned unknown result {result}.")
 
 
 class FPVariable(object):
@@ -206,29 +231,19 @@ def two_sum(
     return (s, e)
 
 
-def decide(
+def fast_two_sum(
     solver: z3.Solver,
-    claim: z3.BoolRef,
-    name: str,
-) -> z3.ModelRef | None:
-    start: int = time.perf_counter_ns()
-    result: z3.CheckSatResult = solver.check(z3.Not(claim))
-    stop: int = time.perf_counter_ns()
-    elapsed: float = (stop - start) / 1.0e9
-    if result == z3.unsat:
-        if name:
-            print(f"Verified {name} in {elapsed} seconds.")
-        return None
-    elif result == z3.unknown:
-        if name:
-            print(f"Failed to determine {name} in {elapsed} seconds.")
-        return None
-    elif result == z3.sat:
-        if name:
-            print(f"Refuted {name} in {elapsed} seconds.")
-        return solver.model()
-    else:
-        raise RuntimeError(f"SMT solver returned unknown result {result}.")
+    x: FPVariable,
+    y: FPVariable,
+    sum_name: str,
+    err_name: str,
+) -> tuple[FPVariable, FPVariable]:
+    decide(
+        solver,
+        z3.Or(x.is_zero, y.is_zero, x.exponent >= y.exponent),
+        f"FastTwoSum({x.name}, {y.name})",
+    )
+    return two_sum(solver, x, y, sum_name, err_name)
 
 
 def bool_value(var: z3.BoolRef) -> bool:
@@ -327,7 +342,7 @@ def verify_joldes_2017_algorithm_4(p: int, suffix: str = "") -> None:
 
     a1, b1 = two_sum(solver, a0, b0, "a1", "b1")
     b2, c2 = two_sum(solver, b1, c0, "b2", "c2")
-    a3, b3 = two_sum(solver, a1, b2, "a3", "b3")
+    a3, b3 = fast_two_sum(solver, a1, b2, "a3", "b3")
 
     variables = [
         [a0, b0, a1, b1],
@@ -355,10 +370,10 @@ def verify_joldes_2017_algorithm_6(p: int, suffix: str = "") -> None:
     a1, b1 = two_sum(solver, a0, b0, "a1", "b1")
     c1, d1 = two_sum(solver, c0, d0, "c1", "d1")
     b2, c2 = two_sum(solver, b1, c1, "b2", "c2")
-    a3, b3 = two_sum(solver, a1, b2, "a3", "b3")
-    b4, d4 = two_sum(solver, b3, d1, "b4", "d4")
-    a5, b5 = two_sum(solver, a3, b4, "a5", "b5")
-    c5, d5 = two_sum(solver, c2, d4, "c5", "d5")
+    a3, b3 = fast_two_sum(solver, a1, b2, "a3", "b3")
+    b4, d4 = fast_two_sum(solver, b3, d1, "b4", "d4")
+    a5, b5 = fast_two_sum(solver, a3, b4, "a5", "b5")
+    c5, d5 = fast_two_sum(solver, c2, d4, "c5", "d5")
 
     variables = [
         [a0, b0, a1, b1],
@@ -389,11 +404,11 @@ def verify_zhang_addition(p: int, suffix: str = "") -> None:
 
     a1, b1 = two_sum(solver, a0, b0, "a1", "b1")
     c1, d1 = two_sum(solver, c0, d0, "c1", "d1")
-    a2, c2 = two_sum(solver, a1, c1, "a2", "c2")
-    b2, d2 = two_sum(solver, b1, d1, "b2", "d2")
+    a2, c2 = fast_two_sum(solver, a1, c1, "a2", "c2")
+    b2, d2 = fast_two_sum(solver, b1, d1, "b2", "d2")
     b3, c3 = two_sum(solver, b2, c2, "b3", "c3")
-    a4, b4 = two_sum(solver, a2, b3, "a4", "b4")
-    c4, d4 = two_sum(solver, c3, d2, "c4", "d4")
+    a4, b4 = fast_two_sum(solver, a2, b3, "a4", "b4")
+    c4, d4 = fast_two_sum(solver, c3, d2, "c4", "d4")
 
     variables = [
         [a0, b0, a1, b1],
