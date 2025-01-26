@@ -151,12 +151,13 @@ def two_sum_setz_lemmas(
     ########################################################### HELPER FUNCTIONS
 
     def setz_case_zero(
-        ss_value: BoolVar,
+        ss_value: BoolVar | None,
         es_range: IntVar | tuple[IntVar, IntVar],
         fs_range: IntVar | tuple[IntVar, IntVar],
     ) -> z3.BoolRef:
         conditions: list[z3.BoolRef] = []
-        conditions.append(ss == ss_value)
+        if ss_value is not None:
+            conditions.append(ss == ss_value)
         if isinstance(es_range, tuple):
             conditions.append(es >= es_range[0])
             conditions.append(es <= es_range[1])
@@ -170,7 +171,7 @@ def two_sum_setz_lemmas(
         conditions.append(e_pos_zero)
         return z3.And(*conditions)
 
-    ############################################################# LEMMA FAMILY F
+    #################################################### LEMMA FAMILY SETZ-F (7)
 
     # Lemmas in Family SETZ-F apply to addends
     # with the same trailing exponent (fx == fy).
@@ -332,76 +333,41 @@ def two_sum_setz_lemmas(
         ),
     )
 
-    return result
+    ################################################### LEMMA FAMILY SETZ-E (15)
 
-    ############################################################# LEMMA FAMILY E
+    # Lemmas in Family SETZ-E (for "exact") apply to addends with
+    # different trailing exponents whose floating-point sum is exact.
 
-    # # Lemma E1
-    # if same_sign & (ex == ey) & (fx < fy) & (ex < fx + (p - 1)) & (ey < fy + (p - 1))
-    #         push_range!(t, (sx, ex+1:ex+1, fx), pos_zero)
-    # if same_sign & (ex == ey) & (fx > fy) & (ex < fx + (p - 1)) & (ey < fy + (p - 1))
-    #         push_range!(t, (sx, ex+1:ex+1, fy), pos_zero)
-    result["TwoSum-E1-X"] = z3.Implies(
-        z3.And(same_sign, ex == ey, fx < fy, ex < fx + (p - one), ey < fy + (p - one)),
-        setz_case_zero(sx, ex + one, fx),
-    )
-    result["TwoSum-E1-Y"] = z3.Implies(
-        z3.And(same_sign, ex == ey, fx > fy, ex < fx + (p - one), ey < fy + (p - one)),
-        setz_case_zero(sy, ey + one, fy),
-    )
-
-    # # Lemma E2.G
-    # if diff_sign & (ex == ey) & (fx < fy) & (ex > fx + 1) & (ey > fy + 1)
-    #         push_range!(t, (±, fx:ex-1, fx), pos_zero)
-    # if diff_sign & (ex == ey) & (fx > fy) & (ex > fx + 1) & (ey > fy + 1)
-    #         push_range!(t, (±, fy:ey-1, fy), pos_zero)
-    result["TwoSum-E2-G-X"] = z3.Implies(
-        z3.And(diff_sign, ex == ey, fx < fy, ex > fx + one, ey > fy + one),
-        z3.And(es >= fx, es <= ex - one, fs == fx, e_pos_zero),
-    )
-    result["TwoSum-E2-G-Y"] = z3.Implies(
-        z3.And(diff_sign, ex == ey, fx > fy, ex > fx + one, ey > fy + one),
-        z3.And(es >= fy, es <= ey - one, fs == fy, e_pos_zero),
-    )
-
-    # # Lemma E2.1: Boundary case of E2 where two leading bits cancel.
-    # if diff_sign & (ex == ey) & (ex > fx + 1) & (ey == fy + 1)
-    #         push_range!(t, (±, fx:ex-2, fx), pos_zero)
-    # if diff_sign & (ex == ey) & (ex == fx + 1) & (ey > fy + 1)
-    #         push_range!(t, (±, fy:ey-2, fy), pos_zero)
-    result["TwoSum-E2-1-X"] = z3.Implies(
-        z3.And(diff_sign, ex == ey, ex > fx + one, ey == fy + one),
-        z3.And(es >= fx, es <= ex - two, fs == fx, e_pos_zero),
-    )
-    result["TwoSum-E2-1-Y"] = z3.Implies(
-        z3.And(diff_sign, ex == ey, ex == fx + one, ey > fy + one),
-        z3.And(es >= fy, es <= ey - two, fs == fy, e_pos_zero),
-    )
-
-    # # Lemma E3.G
-    # if (same_sign | (ex > fx)) & (fx > ey) & (ex < fy + p)
-    #     @assert only(s) == ((sx, ex, fy), pos_zero)
-    # if (same_sign | (ey > fy)) & (fy > ex) & (ey < fx + p)
-    #     @assert only(s) == ((sy, ey, fx), pos_zero)
-    result["TwoSum-E3-G-X"] = z3.Implies(
-        z3.And(xy_nonzero, z3.Or(same_sign, (ex > fx)), fx > ey, ex < fy + p),
+    # # Lemma SETZ-EN0: Addends do not overlap.
+    # verifier("SETZ-EN0-X", (same_sign | (ex > fx)) & (fx > ey) & (ex < fy + p)) do lemma
+    #     add_case!(lemma, (sx, ex, fy), pos_zero)
+    # end
+    # verifier("SETZ-EN0-Y", (same_sign | (ey > fy)) & (fy > ex) & (ey < fx + p)) do lemma
+    #     add_case!(lemma, (sy, ey, fx), pos_zero)
+    # end
+    result["TwoSum-SETZ-EN0-X"] = z3.Implies(
+        z3.And(xy_nonzero, z3.Or(same_sign, ex > fx), fx > ey, ex < fy + p),
         setz_case_zero(sx, ex, fy),
     )
-    result["TwoSum-E3-G-Y"] = z3.Implies(
-        z3.And(xy_nonzero, z3.Or(same_sign, (ey > fy)), fy > ex, ey < fx + p),
+    result["TwoSum-SETZ-EN0-Y"] = z3.Implies(
+        z3.And(xy_nonzero, z3.Or(same_sign, ey > fy), fy > ex, ey < fx + p),
         setz_case_zero(sy, ey, fx),
     )
 
-    # # Lemma E3.1
-    # if diff_sign & (
-    #         ((ex == fx) & (fx > ey + 1) & (ex < fy + (p + 1))) |
-    #         ((ex == fx + 1) & (fx == ey) & (ey > fy)))
-    #         push_range!(t, (sx, ex-1:ex-1, fy), pos_zero)
-    # if diff_sign & (
-    #         ((ey == fy) & (fy > ex + 1) & (ey < fx + (p + 1))) |
-    #         ((ey == fy + 1) & (fy == ex) & (ex > fx)))
-    #         push_range!(t, (sy, ey-1:ey-1, fx), pos_zero)
-    result["TwoSum-E3-1-X"] = z3.Implies(
+    # # Lemma SETZ-EN1: Boundary case of SETZ-EN0.
+    # verifier("SETZ-EN1-X", diff_sign & (
+    #     ((ex == fx) & (fx > ey + 1) & (ex < fy + (p+1))) |
+    #     ((ex == fx + 1) & (fx == ey) & (ey > fy))
+    # )) do lemma
+    #     add_case!(lemma, (sx, ex-1, fy), pos_zero)
+    # end
+    # verifier("SETZ-EN1-Y", diff_sign & (
+    #     ((ey == fy) & (fy > ex + 1) & (ey < fx + (p+1))) |
+    #     ((ey == fy + 1) & (fy == ex) & (ex > fx))
+    # )) do lemma
+    #     add_case!(lemma, (sy, ey-1, fx), pos_zero)
+    # end
+    result["TwoSum-SETZ-EN1-X"] = z3.Implies(
         z3.And(
             xy_nonzero,
             diff_sign,
@@ -412,7 +378,7 @@ def two_sum_setz_lemmas(
         ),
         setz_case_zero(sx, ex - one, fy),
     )
-    result["TwoSum-E3-1-Y"] = z3.Implies(
+    result["TwoSum-SETZ-EN1-Y"] = z3.Implies(
         z3.And(
             xy_nonzero,
             diff_sign,
@@ -424,39 +390,44 @@ def two_sum_setz_lemmas(
         setz_case_zero(sy, ey - one, fx),
     )
 
-    # # Lemma E4.G
-    # if same_sign & ((ex > ey > fx > fy) | (ex > ey + 1 > fx > fy)) & (ex < fy + (p - 1))
-    #         push_range!(t, (sx, ex:ex+1, fy), pos_zero)
-    # if same_sign & ((ey > ex > fy > fx) | (ey > ex + 1 > fy > fx)) & (ey < fx + (p - 1))
-    #         push_range!(t, (sy, ey:ey+1, fx), pos_zero)
-    result["TwoSum-E4-G-X"] = z3.Implies(
+    # # Lemma SETZ-ESP0: Addends have same sign and partially overlap.
+    # verifier("SETZ-ESP0-X", same_sign & ((ex > ey > fx > fy) | (ex > ey + 1 > fx > fy)) & (ex < fy + (p-1))) do lemma
+    #     add_case!(lemma, (sx, ex:ex+1, fy), pos_zero)
+    # end
+    # verifier("SETZ-ESP0-Y", same_sign & ((ey > ex > fy > fx) | (ey > ex + 1 > fy > fx)) & (ey < fx + (p-1))) do lemma
+    #     add_case!(lemma, (sy, ey:ey+1, fx), pos_zero)
+    # end
+    result["TwoSum-SETZ-ESP0-X"] = z3.Implies(
         z3.And(
+            xy_nonzero,
             same_sign,
-            z3.Or(
-                z3.And(ex > ey, ey > fx, fx > fy, ex < fy + (p - one)),
-                z3.And(ex > ey + one, ey + one > fx, fx > fy, ex < fy + (p - one)),
-            ),
+            z3.Or(z3.And(ex > ey, ey > fx), z3.And(ex > ey + one, ey + one > fx)),
+            fx > fy,
+            ex < fy + (p - one),
         ),
         setz_case_zero(sx, (ex, ex + one), fy),
     )
-    result["TwoSum-E4-G-Y"] = z3.Implies(
+    result["TwoSum-SETZ-ESP0-Y"] = z3.Implies(
         z3.And(
+            xy_nonzero,
             same_sign,
-            z3.Or(
-                z3.And(ey > ex, ex > fy, fy > fx, ey < fx + (p - one)),
-                z3.And(ey > ex + one, ex + one > fy, fy > fx, ey < fx + (p - one)),
-            ),
+            z3.Or(z3.And(ey > ex, ex > fy), z3.And(ey > ex + one, ex + one > fy)),
+            fy > fx,
+            ey < fx + (p - one),
         ),
         setz_case_zero(sy, (ey, ey + one), fx),
     )
 
-    # # Lemma E4.1
-    # if same_sign & (ex == ey + 1) & (ey == fx > fy) & (ex < fy + (p - 1))
-    #         push_range!(t, (sx, ex+1:ex+1, fy), pos_zero)
-    # if same_sign & (ey == ex + 1) & (ex == fy > fx) & (ey < fx + (p - 1))
-    #         push_range!(t, (sy, ey+1:ey+1, fx), pos_zero)
-    result["TwoSum-E4-1-X"] = z3.Implies(
+    # # Lemma SETZ-ESP1: Boundary case of SETZ-ESP0 with guaranteed carry.
+    # verifier("SETZ-ESP1-X", same_sign & (ex == ey + 1) & (ey == fx > fy) & (ex < fy + (p-1))) do lemma
+    #     add_case!(lemma, (sx, ex+1, fy), pos_zero)
+    # end
+    # verifier("SETZ-ESP1-Y", same_sign & (ey == ex + 1) & (ex == fy > fx) & (ey < fx + (p-1))) do lemma
+    #     add_case!(lemma, (sy, ey+1, fx), pos_zero)
+    # end
+    result["TwoSum-SETZ-ESP1-X"] = z3.Implies(
         z3.And(
+            xy_nonzero,
             same_sign,
             ex == ey + one,
             ey == fx,
@@ -465,8 +436,9 @@ def two_sum_setz_lemmas(
         ),
         setz_case_zero(sx, ex + one, fy),
     )
-    result["TwoSum-E4-1-Y"] = z3.Implies(
+    result["TwoSum-SETZ-ESP1-Y"] = z3.Implies(
         z3.And(
+            xy_nonzero,
             same_sign,
             ey == ex + one,
             ex == fy,
@@ -476,117 +448,201 @@ def two_sum_setz_lemmas(
         setz_case_zero(sy, ey + one, fx),
     )
 
-    # # Lemma E5.G
-    # if diff_sign & (ex > ey + 1 > fx > fy) & (ex < fy + p)
-    #         push_range!(t, (sx, ex-1:ex, fy), pos_zero)
-    # if diff_sign & (ey > ex + 1 > fy > fx) & (ey < fx + p)
-    #         push_range!(t, (sy, ey-1:ey, fx), pos_zero)
-    result["TwoSum-E5-G-X"] = z3.Implies(
-        z3.And(diff_sign, ex > ey + one, ey + one > fx, fx > fy, ex < fy + p),
-        setz_case_zero(sx, (ex - one, ex), fy),
-    )
-    result["TwoSum-E5-G-Y"] = z3.Implies(
-        z3.And(diff_sign, ey > ex + one, ex + one > fy, fy > fx, ey < fx + p),
-        setz_case_zero(sy, (ey - one, ey), fx),
-    )
-
-    # # Lemma E5.1
-    # if diff_sign & (ex == ey + 1) & (ey > fx > fy) & (ex < fy + p)
-    #         push_range!(t, (sx, fx:ex, fy), pos_zero)
-    # if diff_sign & (ey == ex + 1) & (ex > fy > fx) & (ey < fx + p)
-    #         push_range!(t, (sy, fy:ey, fx), pos_zero)
-    result["TwoSum-E5-1-X"] = z3.Implies(
-        z3.And(diff_sign, ex == ey + one, ey > fx, fx > fy, ex < fy + p),
-        setz_case_zero(sx, (fx, ex), fy),
-    )
-    result["TwoSum-E5-1-Y"] = z3.Implies(
-        z3.And(diff_sign, ey == ex + one, ex > fy, fy > fx, ey < fx + p),
-        setz_case_zero(sy, (fy, ey), fx),
-    )
-
-    # # Lemma E5.2
-    # if diff_sign & (ex == ey + 1 == fx) & (fx > fy + 1)
-    #         push_range!(t, (sx, fy:ex-2, fy), pos_zero)
-    # if diff_sign & (ey == ex + 1 == fy) & (fy > fx + 1)
-    #         push_range!(t, (sy, fx:ey-2, fx), pos_zero)
-    result["TwoSum-E5-2-X"] = z3.Implies(
-        z3.And(diff_sign, ex == ey + one, ex == fx, fx > fy + one),
-        setz_case_zero(sx, (fy, ex - two), fy),
-    )
-    result["TwoSum-E5-2-Y"] = z3.Implies(
-        z3.And(diff_sign, ey == ex + one, ey == fy, fy > fx + one),
-        setz_case_zero(sy, (fx, ey - two), fx),
-    )
-
-    # # Lemma E5.3
-    # if diff_sign & (ex == ey + 1 == fx == fy + 1)
-    #         push_range!(t, (sx, fy:ex-1, fy), pos_zero)
-    # if diff_sign & (ey == ex + 1 == fy == fx + 1)
-    #         push_range!(t, (sy, fx:ey-1, fx), pos_zero)
-    result["TwoSum-E5-3-X"] = z3.Implies(
-        z3.And(xy_nonzero, diff_sign, ex == ey + one, ex == fx, ey == fy),
-        setz_case_zero(sx, (fy, ex - one), fy),
-    )
-    result["TwoSum-E5-3-Y"] = z3.Implies(
-        z3.And(xy_nonzero, diff_sign, ey == ex + one, ey == fy, ex == fx),
-        setz_case_zero(sy, (fx, ey - one), fx),
-    )
-
-    # # Lemma E6
-    # if same_sign & (ex > ey) & (fx < fy) & (ex < fx + (p - 1))
-    #         push_range!(t, (sx, ex:ex+1, fx), pos_zero)
-    # if same_sign & (ey > ex) & (fy < fx) & (ey < fy + (p - 1))
-    #         push_range!(t, (sy, ey:ey+1, fy), pos_zero)
-    result["TwoSum-E6-X"] = z3.Implies(
-        z3.And(same_sign, ex > ey, fx < fy, ex < fx + (p - one)),
+    # # Lemma SETZ-ESC: Addends have same sign and completely overlap.
+    # verifier("SETZ-ESC-X", same_sign & (ex > ey) & (fx < fy) & (ex < fx + (p-1))) do lemma
+    #     add_case!(lemma, (sx, ex:ex+1, fx), pos_zero)
+    # end
+    # verifier("SETZ-ESC-Y", same_sign & (ey > ex) & (fy < fx) & (ey < fy + (p-1))) do lemma
+    #     add_case!(lemma, (sy, ey:ey+1, fy), pos_zero)
+    # end
+    result["TwoSum-SETZ-ESC-X"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, ex > ey, fx < fy, ex < fx + (p - one)),
         setz_case_zero(sx, (ex, ex + one), fx),
     )
-    result["TwoSum-E6-Y"] = z3.Implies(
-        z3.And(same_sign, ey > ex, fy < fx, ey < fy + (p - one)),
+    result["TwoSum-SETZ-ESC-Y"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, ey > ex, fy < fx, ey < fy + (p - one)),
         setz_case_zero(sy, (ey, ey + one), fy),
     )
 
-    # # Lemma E7.G
-    # if diff_sign & (ex > ey + 1) & (fx < fy)
-    #         push_range!(t, (sx, ex-1:ex, fx), pos_zero)
-    # if diff_sign & (ey > ex + 1) & (fy < fx)
-    #         push_range!(t, (sy, ey-1:ey, fy), pos_zero)
-    result["TwoSum-E7-G-X"] = z3.Implies(
-        z3.And(diff_sign, ex > ey + one, fx < fy),
+    # # Lemma SETZ-ESS: Addends have same sign and exponent.
+    # verifier("SETZ-ESS-X", same_sign & (ex == ey) & (fx < fy) & (ex < fx + (p-1)) & (ey < fy + (p-1))) do lemma
+    #     add_case!(lemma, (sx, ex+1, fx), pos_zero)
+    # end
+    # verifier("SETZ-ESS-Y", same_sign & (ex == ey) & (fx > fy) & (ex < fx + (p-1)) & (ey < fy + (p-1))) do lemma
+    #     add_case!(lemma, (sx, ex+1, fy), pos_zero)
+    # end
+    result["TwoSum-SETZ-ESS-X"] = z3.Implies(
+        z3.And(
+            xy_nonzero,
+            same_sign,
+            ex == ey,
+            fx < fy,
+            ex < fx + (p - one),
+            ey < fy + (p - one),
+        ),
+        setz_case_zero(sx, ex + one, fx),
+    )
+    result["TwoSum-SETZ-ESS-Y"] = z3.Implies(
+        z3.And(
+            xy_nonzero,
+            same_sign,
+            ex == ey,
+            fx > fy,
+            ex < fx + (p - one),
+            ey < fy + (p - one),
+        ),
+        setz_case_zero(sx, ex + one, fy),
+    )
+
+    # # Lemma SETZ-EDP0: Addends have different signs and partially overlap.
+    # verifier("SETZ-EDP0-X", diff_sign & (ex > ey + 1 > fx > fy) & (ex < fy + p)) do lemma
+    #     add_case!(lemma, (sx, ex-1:ex, fy), pos_zero)
+    # end
+    # verifier("SETZ-EDP0-Y", diff_sign & (ey > ex + 1 > fy > fx) & (ey < fx + p)) do lemma
+    #     add_case!(lemma, (sy, ey-1:ey, fx), pos_zero)
+    # end
+    result["TwoSum-SETZ-EDP0-X"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ex > ey + one, ey + one > fx, fx > fy, ex < fy + p
+        ),
+        setz_case_zero(sx, (ex - one, ex), fy),
+    )
+    result["TwoSum-SETZ-EDP0-Y"] = z3.Implies(
+        z3.And(
+            xy_nonzero, diff_sign, ey > ex + one, ex + one > fy, fy > fx, ey < fx + p
+        ),
+        setz_case_zero(sy, (ey - one, ey), fx),
+    )
+
+    # # Lemma SETZ-EDP1: Boundary case of SETZ-EDP0 with more possible cancellation.
+    # verifier("SETZ-EDP1-X", diff_sign & (ex == ey + 1) & (ey > fx > fy) & (ex < fy + p)) do lemma
+    #     add_case!(lemma, (sx, fx:ex, fy), pos_zero)
+    # end
+    # verifier("SETZ-EDP1-Y", diff_sign & (ey == ex + 1) & (ex > fy > fx) & (ey < fx + p)) do lemma
+    #     add_case!(lemma, (sy, fy:ey, fx), pos_zero)
+    # end
+    result["TwoSum-SETZ-EDP1-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == ey + one, ey > fx, fx > fy, ex < fy + p),
+        setz_case_zero(sx, (fx, ex), fy),
+    )
+    result["TwoSum-SETZ-EDP1-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey == ex + one, ex > fy, fy > fx, ey < fx + p),
+        setz_case_zero(sy, (fy, ey), fx),
+    )
+
+    # # Lemma SETZ-EDP2: Boundary case of SETZ-EDP1 with guaranteed cancellation.
+    # verifier("SETZ-EDP2-X", diff_sign & (ex == ey + 1 == fx) & (fx > fy + 1)) do lemma
+    #     add_case!(lemma, (sx, fy:ex-2, fy), pos_zero)
+    # end
+    # verifier("SETZ-EDP2-Y", diff_sign & (ey == ex + 1 == fy) & (fy > fx + 1)) do lemma
+    #     add_case!(lemma, (sy, fx:ey-2, fx), pos_zero)
+    # end
+    result["TwoSum-SETZ-EDP2-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == ey + one, ey + one == fx, fx > fy + one),
+        setz_case_zero(sx, (fy, ex - two), fy),
+    )
+    result["TwoSum-SETZ-EDP2-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey == ex + one, ex + one == fy, fy > fx + one),
+        setz_case_zero(sy, (fx, ey - two), fx),
+    )
+
+    # # Lemma SETZ-EDP3: Boundary case of SETZ-EDP2 with less guaranteed cancellation.
+    # verifier("SETZ-EDP3-X", diff_sign & (ex == ey + 1 == fx == fy + 1)) do lemma
+    #     add_case!(lemma, (sx, fy:ex-1, fy), pos_zero)
+    # end
+    # verifier("SETZ-EDP3-Y", diff_sign & (ey == ex + 1 == fy == fx + 1)) do lemma
+    #     add_case!(lemma, (sy, fx:ey-1, fx), pos_zero)
+    # end
+    result["TwoSum-SETZ-EDP3-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == ey + one, ey + one == fx, fx == fy + one),
+        setz_case_zero(sx, (fy, ex - one), fy),
+    )
+    result["TwoSum-SETZ-EDP3-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey == ex + one, ex + one == fy, fy == fx + one),
+        setz_case_zero(sy, (fx, ey - one), fx),
+    )
+
+    # # Lemma SETZ-EDC0: Addends have different signs and completely overlap.
+    # verifier("SETZ-EDC0-X", diff_sign & (ex > ey + 1) & (fx < fy)) do lemma
+    #     add_case!(lemma, (sx, ex-1:ex, fx), pos_zero)
+    # end
+    # verifier("SETZ-EDC0-Y", diff_sign & (ey > ex + 1) & (fy < fx)) do lemma
+    #     add_case!(lemma, (sy, ey-1:ey, fy), pos_zero)
+    # end
+    result["TwoSum-SETZ-EDC0-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex > ey + one, fx < fy),
         setz_case_zero(sx, (ex - one, ex), fx),
     )
-    result["TwoSum-E7-G-Y"] = z3.Implies(
-        z3.And(diff_sign, ey > ex + one, fy < fx),
+    result["TwoSum-SETZ-EDC0-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey > ex + one, fy < fx),
         setz_case_zero(sy, (ey - one, ey), fy),
     )
 
-    # # Lemma E7.1
-    # if diff_sign & (ex == ey + 1) & (fx < fy)
-    #         push_range!(t, (sx, fy:ex, fx), pos_zero)
-    # if diff_sign & (ey == ex + 1) & (fy < fx)
-    #         push_range!(t, (sy, fx:ey, fy), pos_zero)
-    result["TwoSum-E7-1-X"] = z3.Implies(
-        z3.And(diff_sign, ex == ey + one, fx < fy),
+    # # Lemma SETZ-EDC1: Boundary case of SETZ-EDC0 with more possible cancellation.
+    # verifier("SETZ-EDC1-X", diff_sign & (ex == ey + 1) & (fx < fy)) do lemma
+    #     add_case!(lemma, (sx, fy:ex, fx), pos_zero)
+    # end
+    # verifier("SETZ-EDC1-Y", diff_sign & (ey == ex + 1) & (fy < fx)) do lemma
+    #     add_case!(lemma, (sy, fx:ey, fy), pos_zero)
+    # end
+    result["TwoSum-SETZ-EDC1-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == ey + one, fx < fy),
         setz_case_zero(sx, (fy, ex), fx),
     )
-    result["TwoSum-E7-1-Y"] = z3.Implies(
-        z3.And(diff_sign, ey == ex + one, fy < fx),
+    result["TwoSum-SETZ-EDC1-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey == ex + one, fy < fx),
         setz_case_zero(sy, (fx, ey), fy),
     )
 
-    # # Lemma E7.2
-    # if diff_sign & (ex == ey == fy) & (fx < fy)
-    #         push_range!(t, (sx, fx:ex-1, fx), pos_zero)
-    # if diff_sign & (ey == ex == fx) & (fy < fx)
-    #         push_range!(t, (sy, fy:ey-1, fy), pos_zero)
-    result["TwoSum-E7-2-X"] = z3.Implies(
-        z3.And(diff_sign, ex == ey, ey == fy, fx < fy),
+    # # Lemma SETZ-EDC2: Boundary case of SETZ-EDC0 with guaranteed cancellation.
+    # verifier("SETZ-EDC2-X", diff_sign & (ex == ey == fy) & (fx < fy)) do lemma
+    #     add_case!(lemma, (sx, fx:ex-1, fx), pos_zero)
+    # end
+    # verifier("SETZ-EDC2-Y", diff_sign & (ey == ex == fx) & (fy < fx)) do lemma
+    #     add_case!(lemma, (sy, fy:ey-1, fy), pos_zero)
+    # end
+    result["TwoSum-SETZ-EDC2-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == ey, ey == fy, fx < fy),
         setz_case_zero(sx, (fx, ex - one), fx),
     )
-    result["TwoSum-E7-2-Y"] = z3.Implies(
-        z3.And(diff_sign, ey == ex, ex == fx, fy < fx),
+    result["TwoSum-SETZ-EDC2-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ey == ex, ex == fx, fy < fx),
         setz_case_zero(sy, (fy, ey - one), fy),
     )
+
+    # # Lemma SETZ-EDS0: Addends have same exponent and different signs.
+    # verifier("SETZ-EDS0-X", diff_sign & (ex == ey) & (fx < fy) & (ex > fx + 1) & (ey > fy + 1)) do lemma
+    #     add_case!(lemma, (±, fx:ex-1, fx), pos_zero)
+    # end
+    # verifier("SETZ-EDS0-Y", diff_sign & (ex == ey) & (fx > fy) & (ex > fx + 1) & (ey > fy + 1)) do lemma
+    #     add_case!(lemma, (±, fy:ey-1, fy), pos_zero)
+    # end
+    result["TwoSum-SETZ-EDS0-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == ey, fx < fy, ex > fx + one, ey > fy + one),
+        setz_case_zero(None, (fx, ex - one), fx),
+    )
+    result["TwoSum-SETZ-EDS0-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == ey, fx > fy, ex > fx + one, ey > fy + one),
+        setz_case_zero(None, (fy, ey - one), fy),
+    )
+
+    # # Lemma SETZ-EDS1: Boundary case of SETZ-EDS0 where two leading bits cancel.
+    # verifier("SETZ-EDS1-X", diff_sign & (ex == ey) & (ex > fx + 1) & (ey == fy + 1)) do lemma
+    #     add_case!(lemma, (±, fx:ex-2, fx), pos_zero)
+    # end
+    # verifier("SETZ-EDS1-Y", diff_sign & (ex == ey) & (ex == fx + 1) & (ey > fy + 1)) do lemma
+    #     add_case!(lemma, (±, fy:ey-2, fy), pos_zero)
+    # end
+    result["TwoSum-SETZ-EDS1-X"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == ey, ex > fx + one, ey == fy + one),
+        setz_case_zero(None, (fx, ex - two), fx),
+    )
+    result["TwoSum-SETZ-EDS1-Y"] = z3.Implies(
+        z3.And(xy_nonzero, diff_sign, ex == ey, ex == fx + one, ey > fy + one),
+        setz_case_zero(None, (fy, ey - two), fy),
+    )
+
+    return result
 
     ############################################################# LEMMA FAMILY O
 
