@@ -4,10 +4,10 @@ import os
 import sys
 import z3
 
-from fp_lemmas import two_sum_lemmas
 from operator import eq
 from se_lemmas import two_sum_se_lemmas
 from setz_lemmas import two_sum_setz_lemmas
+from seltzo_lemmas import two_sum_seltzo_lemmas
 from smt_utils import (
     SMT_SOLVERS,
     SMTJob,
@@ -158,8 +158,8 @@ def create_two_sum_jobs(
             z3.BitVecVal(2, promoted_exponent_width),
             z3.BitVecVal(3, promoted_exponent_width),
         )
-    else:
-        lemmas: dict[str, z3.BoolRef] = two_sum_lemmas(
+    elif model == "SELTZO":
+        lemmas: dict[str, z3.BoolRef] = two_sum_seltzo_lemmas(
             x,
             y,
             s,
@@ -229,6 +229,8 @@ def create_two_sum_jobs(
             z3.BitVecVal(2, promoted_exponent_width),
             z3.BitVecVal(3, promoted_exponent_width),
         )
+    else:
+        raise ValueError(f"Unknown floating-point model: {model}")
 
     return [
         create_smt_job(solver, "QF_BVFP", prefix + name + suffix, lemma)
@@ -236,34 +238,43 @@ def create_two_sum_jobs(
     ]
 
 
-def main(model: str) -> None:
+def main() -> None:
 
     remaining_jobs: list[SMTJob] = []
 
     print("Constructing f16 lemmas...")
-    f16_jobs: list[SMTJob] = create_two_sum_jobs(5, 8, 11, model, suffix="-F16")
-    remaining_jobs += f16_jobs
+    remaining_jobs += create_two_sum_jobs(5, 8, 11, "SE", suffix="-F16")
+    remaining_jobs += create_two_sum_jobs(5, 8, 11, "SETZ", suffix="-F16")
+    remaining_jobs += create_two_sum_jobs(5, 8, 11, "SELTZO", suffix="-F16")
 
     print("Constructing bf16 lemmas...")
-    bf16_jobs: list[SMTJob] = create_two_sum_jobs(8, 12, 8, model, suffix="-BF16")
-    remaining_jobs += bf16_jobs
+    remaining_jobs += create_two_sum_jobs(8, 12, 8, "SE", suffix="-BF16")
+    remaining_jobs += create_two_sum_jobs(8, 12, 8, "SETZ", suffix="-BF16")
+    remaining_jobs += create_two_sum_jobs(8, 12, 8, "SELTZO", suffix="-BF16")
 
     if "--verify-f32" in sys.argv:
         print("Constructing f32 lemmas...")
-        f32_jobs: list[SMTJob] = create_two_sum_jobs(8, 12, 24, model, suffix="-F32")
-        remaining_jobs += f32_jobs
+        remaining_jobs += create_two_sum_jobs(8, 12, 24, "SE", suffix="-F32")
+        remaining_jobs += create_two_sum_jobs(8, 12, 24, "SETZ", suffix="-F32")
+        remaining_jobs += create_two_sum_jobs(8, 12, 24, "SELTZO", suffix="-F32")
 
     if "--verify-f64" in sys.argv:
         print("Constructing f64 lemmas...")
-        f64_jobs: list[SMTJob] = create_two_sum_jobs(11, 16, 53, model, suffix="-F64")
-        remaining_jobs += f64_jobs
+        remaining_jobs += create_two_sum_jobs(11, 16, 53, "SE", suffix="-F64")
+        remaining_jobs += create_two_sum_jobs(11, 16, 53, "SETZ", suffix="-F64")
+        remaining_jobs += create_two_sum_jobs(11, 16, 53, "SELTZO", suffix="-F64")
 
     if "--verify-f128" in sys.argv:
         print("Constructing f128 lemmas...")
-        f128_jobs: list[SMTJob] = create_two_sum_jobs(
-            15, 20, 113, model, suffix="-F128"
-        )
-        remaining_jobs += f128_jobs
+        remaining_jobs += create_two_sum_jobs(15, 20, 113, "SE", suffix="-F128")
+        remaining_jobs += create_two_sum_jobs(15, 20, 113, "SETZ", suffix="-F128")
+        remaining_jobs += create_two_sum_jobs(15, 20, 113, "SELTZO", suffix="-F128")
+
+    if "--verify-f256" in sys.argv:
+        print("Constructing f256 lemmas...")
+        remaining_jobs += create_two_sum_jobs(19, 24, 237, "SE", suffix="-F256")
+        remaining_jobs += create_two_sum_jobs(19, 24, 237, "SETZ", suffix="-F256")
+        remaining_jobs += create_two_sum_jobs(19, 24, 237, "SELTZO", suffix="-F256")
 
     running_jobs: list[SMTJob] = []
     solver_len: int = max(map(len, SMT_SOLVERS))
@@ -335,5 +346,4 @@ def main(model: str) -> None:
 
 
 if __name__ == "__main__":
-    main("SE")
-    main("SETZ")
+    main()
