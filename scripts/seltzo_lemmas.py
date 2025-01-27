@@ -47,6 +47,8 @@ def two_sum_seltzo_lemmas(
     x_zero: z3.BoolRef = is_zero(x)
     y_zero: z3.BoolRef = is_zero(y)
     xy_nonzero: z3.BoolRef = z3.And(z3.Not(x_zero), z3.Not(y_zero))
+    s_nonzero: z3.BoolRef = z3.Not(is_zero(s))
+    e_nonzero: z3.BoolRef = z3.Not(is_zero(e))
     e_pos_zero: z3.BoolRef = z3.And(is_positive(e), is_zero(e))
 
     # cx - index of first 0
@@ -83,8 +85,8 @@ def two_sum_seltzo_lemmas(
 
     fx: IntVar = z3_If(tbx, ex, ex + ntbx) - (p - one)
     fy: IntVar = z3_If(tby, ey, ey + ntby) - (p - one)
-    # fs: IntVar = z3_If(tbs, es, es + ntbs) - (p - one)
-    # fe: IntVar = z3_If(tbe, ee, ee + ntbe) - (p - one)
+    fs: IntVar = z3_If(tbs, es, es + ntbs) - (p - one)
+    fe: IntVar = z3_If(tbe, ee, ee + ntbe) - (p - one)
 
     gx: IntVar = z3_If(lbx, ex, ex - nlbx) - one
     gy: IntVar = z3_If(lby, ey, ey - nlby) - one
@@ -169,5 +171,30 @@ def two_sum_seltzo_lemmas(
     # then it must have a lot of leading ones.
     result["TwoSum-SELTZO-5-X"] = z3.Implies(es < ex, cs <= ey)
     result["TwoSum-SELTZO-5-Y"] = z3.Implies(es < ey, cs <= ex)
+
+    result["TwoSum-SELTZO-6-X"] = z3.Implies(z3.And(es < ex, ex > ey + one), gs >= cy)
+    result["TwoSum-SELTZO-6-Y"] = z3.Implies(z3.And(es < ey, ey > ex + one), gs >= cx)
+
+    result["TwoSum-SELTZO-7-X"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, ey > cx), es > ex
+    )
+    result["TwoSum-SELTZO-7-Y"] = z3.Implies(
+        z3.And(xy_nonzero, same_sign, ex > cy), es > ey
+    )
+
+    result["TwoSum-SELTZO-8-X"] = z3.Implies(
+        z3.And(xy_nonzero, fx < fy),
+        z3.Or(
+            z3.And(s_nonzero, e_pos_zero, fs == fx),
+            z3.And(s_nonzero, e_nonzero, fe == fx),
+        ),
+    )
+    result["TwoSum-SELTZO-8-Y"] = z3.Implies(
+        z3.And(xy_nonzero, fx > fy),
+        z3.Or(
+            z3.And(s_nonzero, e_pos_zero, fs == fy),
+            z3.And(s_nonzero, e_nonzero, fe == fy),
+        ),
+    )
 
     return result
