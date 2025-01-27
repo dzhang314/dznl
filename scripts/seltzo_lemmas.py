@@ -45,23 +45,9 @@ def two_sum_seltzo_lemmas(
     result: dict[str, z3.BoolRef] = {}
 
     x_zero: z3.BoolRef = is_zero(x)
-    x_pos_zero: z3.BoolRef = z3.And(is_positive(x), x_zero)
-    x_neg_zero: z3.BoolRef = z3.And(is_negative(x), x_zero)
-
     y_zero: z3.BoolRef = is_zero(y)
-    y_pos_zero: z3.BoolRef = z3.And(is_positive(y), y_zero)
-    y_neg_zero: z3.BoolRef = z3.And(is_negative(y), y_zero)
     xy_nonzero: z3.BoolRef = z3.And(z3.Not(x_zero), z3.Not(y_zero))
-
-    s_zero: z3.BoolRef = is_zero(s)
-    s_pos_zero: z3.BoolRef = z3.And(is_positive(s), s_zero)
-    s_neg_zero: z3.BoolRef = z3.And(is_negative(s), s_zero)
     e_pos_zero: z3.BoolRef = z3.And(is_positive(e), is_zero(e))
-
-    s_equals_x: z3.BoolRef = is_equal(s, x)
-    s_equals_y: z3.BoolRef = is_equal(s, y)
-    e_equals_x: z3.BoolRef = is_equal(e, x)
-    e_equals_y: z3.BoolRef = is_equal(e, y)
 
     # cx - index of first 0
     # dx - index of last 0
@@ -88,22 +74,22 @@ def two_sum_seltzo_lemmas(
     cx: IntVar = z3_If(lbx, ex - nlbx, ex) - one
     cy: IntVar = z3_If(lby, ey - nlby, ey) - one
     cs: IntVar = z3_If(lbs, es - nlbs, es) - one
-    ce: IntVar = z3_If(lbe, ee - nlbe, ee) - one
+    # ce: IntVar = z3_If(lbe, ee - nlbe, ee) - one
 
-    dx: IntVar = z3_If(tbx, ex + ntbx, ex) - (p - one)
-    dy: IntVar = z3_If(tby, ey + ntby, ey) - (p - one)
-    ds: IntVar = z3_If(tbs, es + ntbs, es) - (p - one)
-    de: IntVar = z3_If(tbe, ee + ntbe, ee) - (p - one)
+    # dx: IntVar = z3_If(tbx, ex + ntbx, ex) - (p - one)
+    # dy: IntVar = z3_If(tby, ey + ntby, ey) - (p - one)
+    # ds: IntVar = z3_If(tbs, es + ntbs, es) - (p - one)
+    # de: IntVar = z3_If(tbe, ee + ntbe, ee) - (p - one)
 
     fx: IntVar = z3_If(tbx, ex, ex + ntbx) - (p - one)
     fy: IntVar = z3_If(tby, ey, ey + ntby) - (p - one)
-    fs: IntVar = z3_If(tbs, es, es + ntbs) - (p - one)
-    fe: IntVar = z3_If(tbe, ee, ee + ntbe) - (p - one)
+    # fs: IntVar = z3_If(tbs, es, es + ntbs) - (p - one)
+    # fe: IntVar = z3_If(tbe, ee, ee + ntbe) - (p - one)
 
     gx: IntVar = z3_If(lbx, ex, ex - nlbx) - one
     gy: IntVar = z3_If(lby, ey, ey - nlby) - one
     gs: IntVar = z3_If(lbs, es, es - nlbs) - one
-    ge: IntVar = z3_If(lbe, ee, ee - nlbe) - one
+    # ge: IntVar = z3_If(lbe, ee, ee - nlbe) - one
 
     same_sign: z3.BoolRef = sx == sy
     diff_sign: z3.BoolRef = sx != sy
@@ -155,21 +141,21 @@ def two_sum_seltzo_lemmas(
     # Lemma SELTZO-3A: One number fits completely inside the other's leading zeros.
     result["TwoSum-SELTZO-3A-X"] = z3.Implies(
         z3.And(xy_nonzero, same_sign, ex > ey, fy > gx),
-        z3.And(ss == sx, es == ex, gs == ey),
+        z3.And(ss == sx, es == ex, gs == ey, e_pos_zero),
     )
     result["TwoSum-SELTZO-3A-Y"] = z3.Implies(
         z3.And(xy_nonzero, same_sign, ey > ex, fx > gy),
-        z3.And(ss == sy, es == ey, gs == ex),
+        z3.And(ss == sy, es == ey, gs == ex, e_pos_zero),
     )
 
     # Lemma SELTZO-3B: One number fits completely inside the other's leading ones.
     result["TwoSum-SELTZO-3B-X"] = z3.Implies(
         z3.And(xy_nonzero, diff_sign, ex > ey, fy > cx),
-        z3.And(ss == sx, es == ex, cs == ey),
+        z3.And(ss == sx, es == ex, cs == ey, e_pos_zero),
     )
     result["TwoSum-SELTZO-3B-Y"] = z3.Implies(
         z3.And(xy_nonzero, diff_sign, ey > ex, fx > cy),
-        z3.And(ss == sy, es == ey, cs == ex),
+        z3.And(ss == sy, es == ey, cs == ex, e_pos_zero),
     )
 
     # These lemmas suggest a notion of duality between addition/subtraction
