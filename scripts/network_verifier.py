@@ -128,14 +128,69 @@ class FPVariable(object):
             self.num_trailing_bits == self.precision - 1,
         )
 
-    def is_ulp_nonoverlapping(self, other: "FPVariable") -> z3.BoolRef:
+    def s_dominates(self, other: "FPVariable") -> z3.BoolRef:
         assert self.precision == other.precision
         assert self.zero_exponent == other.zero_exponent
-        pow_two: z3.BoolRef = other.is_power_of_two()
+        ntz: z3.ArithRef = z3.If(
+            self.trailing_bit, z3.IntVal(0), self.num_trailing_bits
+        )
         return z3.Or(
             other.is_zero,
-            other.exponent < self.exponent - self.precision,
-            z3.And(other.exponent == self.exponent - self.precision, pow_two),
+            self.exponent >= other.exponent + (self.precision - ntz),
+        )
+
+    def p_dominates(self, other: "FPVariable") -> z3.BoolRef:
+        assert self.precision == other.precision
+        assert self.zero_exponent == other.zero_exponent
+        return z3.Or(
+            other.is_zero,
+            self.exponent >= other.exponent + self.precision,
+        )
+
+    def ulp_dominates(self, other: "FPVariable") -> z3.BoolRef:
+        assert self.precision == other.precision
+        assert self.zero_exponent == other.zero_exponent
+        return z3.Or(
+            other.is_zero,
+            self.exponent > other.exponent + (self.precision - 1),
+            z3.And(
+                self.exponent == other.exponent + (self.precision - 1),
+                other.is_power_of_two(),
+            ),
+        )
+
+    def qd_dominates(self, other: "FPVariable") -> z3.BoolRef:
+        assert self.precision == other.precision
+        assert self.zero_exponent == other.zero_exponent
+        return z3.Or(
+            other.is_zero,
+            self.exponent > other.exponent + self.precision,
+            z3.And(
+                self.exponent == other.exponent + self.precision,
+                other.is_power_of_two(),
+            ),
+        )
+
+    def two_sum_dominates(self, other: "FPVariable") -> z3.BoolRef:
+        assert self.precision == other.precision
+        assert self.zero_exponent == other.zero_exponent
+        return z3.Or(
+            other.is_zero,
+            self.exponent > other.exponent + (self.precision + 1),
+            z3.And(
+                self.exponent == other.exponent + (self.precision + 1),
+                z3.Or(
+                    self.sign_bit == other.sign_bit,
+                    z3.Not(self.is_power_of_two()),
+                    other.is_power_of_two(),
+                ),
+            ),
+            z3.And(
+                self.exponent == other.exponent + self.precision,
+                other.is_power_of_two(),
+                z3.Not(self.trailing_bit),
+                z3.Or(self.sign_bit == other.sign_bit, z3.Not(self.is_power_of_two())),
+            ),
         )
 
     def is_smaller_than(self, other: "FPVariable", magnitude: int) -> z3.BoolRef:
@@ -257,6 +312,9 @@ def two_sum(
     return (s, e)
 
 
+CHECK_FAST_TWO_SUM: bool = "--check-fast-two-sum" in argv
+
+
 def fast_two_sum(
     solver: z3.Solver,
     x: FPVariable,
@@ -264,11 +322,12 @@ def fast_two_sum(
     sum_name: str,
     err_name: str,
 ) -> tuple[FPVariable, FPVariable]:
-    decide(
-        solver,
-        z3.Or(x.is_zero, y.is_zero, x.exponent >= y.exponent),
-        f"FastTwoSum({x.name}, {y.name})",
-    )
+    if CHECK_FAST_TWO_SUM:
+        decide(
+            solver,
+            z3.Or(x.is_zero, y.is_zero, x.exponent >= y.exponent),
+            f"FastTwoSum({x.name}, {y.name})",
+        )
     return two_sum(solver, x, y, sum_name, err_name)
 
 
@@ -364,7 +423,7 @@ def verify_joldes_2017_algorithm_4(p: int, suffix: str = "") -> None:
     b0 = FPVariable(solver, "b0", precision=p, zero_exponent=-1)
     c0 = FPVariable(solver, "c0", precision=p, zero_exponent=-1)
 
-    solver.add(a0.is_ulp_nonoverlapping(c0))
+    solver.add(a0.two_sum_dominates(c0))
 
     a1, b1 = two_sum(solver, a0, b0, "a1", "b1")
     b2, c2 = two_sum(solver, b1, c0, "b2", "c2")
@@ -378,7 +437,7 @@ def verify_joldes_2017_algorithm_4(p: int, suffix: str = "") -> None:
 
     # SE: 2p - 4
     # SETZ: 2p - 3
-    prove(solver, a3.is_ulp_nonoverlapping(b3), "A4N" + suffix, variables)
+    prove(solver, a3.two_sum_dominates(b3), "A4N" + suffix, variables)
     prove(solver, c2.is_smaller_than(a3, 2 * p - 2), "A4E" + suffix, variables)
 
 
@@ -390,8 +449,8 @@ def verify_joldes_2017_algorithm_6(p: int, suffix: str = "") -> None:
     c0 = FPVariable(solver, "c0", precision=p, zero_exponent=-1)
     d0 = FPVariable(solver, "d0", precision=p, zero_exponent=-1)
 
-    solver.add(a0.is_ulp_nonoverlapping(c0))
-    solver.add(b0.is_ulp_nonoverlapping(d0))
+    solver.add(a0.two_sum_dominates(c0))
+    solver.add(b0.two_sum_dominates(d0))
 
     a1, b1 = two_sum(solver, a0, b0, "a1", "b1")
     c1, d1 = two_sum(solver, c0, d0, "c1", "d1")
@@ -413,7 +472,7 @@ def verify_joldes_2017_algorithm_6(p: int, suffix: str = "") -> None:
 
     # SE: 2p - 7
     # SETZ: 2p - 4
-    prove(solver, a5.is_ulp_nonoverlapping(b5), "A6N" + suffix, variables)
+    prove(solver, a5.two_sum_dominates(b5), "A6N" + suffix, variables)
     prove(solver, c5.is_smaller_than(a5, 2 * p - 4), "A6E" + suffix, variables)
 
 
@@ -425,8 +484,8 @@ def verify_zhang_addition(p: int, suffix: str = "") -> None:
     c0 = FPVariable(solver, "c0", precision=p, zero_exponent=-1)
     d0 = FPVariable(solver, "d0", precision=p, zero_exponent=-1)
 
-    solver.add(a0.is_ulp_nonoverlapping(c0))
-    solver.add(b0.is_ulp_nonoverlapping(d0))
+    solver.add(a0.two_sum_dominates(c0))
+    solver.add(b0.two_sum_dominates(d0))
 
     a1, b1 = two_sum(solver, a0, b0, "a1", "b1")
     c1, d1 = two_sum(solver, c0, d0, "c1", "d1")
@@ -448,7 +507,7 @@ def verify_zhang_addition(p: int, suffix: str = "") -> None:
 
     # SE: 2p - 6
     # SETZ: 2p - 3
-    prove(solver, a4.is_ulp_nonoverlapping(b4), "ZAN" + suffix, variables)
+    prove(solver, a4.two_sum_dominates(b4), "ZAN" + suffix, variables)
     prove(solver, c4.is_smaller_than(a4, 2 * p - 2), "ZAE" + suffix, variables)
 
 
