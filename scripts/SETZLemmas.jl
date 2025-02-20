@@ -25,6 +25,7 @@ function verify_two_sum_setz_lemmas(
 
     for x in possible_inputs, y in possible_inputs
 
+        #! format: off
         verifier = LemmaVerifier(summaries, x, y, lemma_dict)
         sx = signbit(x)
         ex = unsafe_exponent(x)
@@ -783,6 +784,7 @@ function verify_two_sum_setz_lemmas(
             end
 
         end
+        #! format: on
         @assert isone(verifier.count[])
     end
 
