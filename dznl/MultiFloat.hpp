@@ -197,6 +197,16 @@ public:
 }; // struct MultiFloat<T, N>
 
 
+using f32x1 = MultiFloat<f32, 1>;
+using f32x2 = MultiFloat<f32, 2>;
+using f32x3 = MultiFloat<f32, 3>;
+using f32x4 = MultiFloat<f32, 4>;
+using f32x5 = MultiFloat<f32, 5>;
+using f32x6 = MultiFloat<f32, 6>;
+using f32x7 = MultiFloat<f32, 7>;
+using f32x8 = MultiFloat<f32, 8>;
+
+
 using f64x1 = MultiFloat<f64, 1>;
 using f64x2 = MultiFloat<f64, 2>;
 using f64x3 = MultiFloat<f64, 3>;
