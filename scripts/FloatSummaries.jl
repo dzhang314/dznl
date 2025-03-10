@@ -411,7 +411,7 @@ function (helper::LemmaHelper)(
     for sr in _lemma_range(helper, sr_range)
         for er in _lemma_range_e(helper, er_range)
             for fr in _lemma_range_f(helper, fr_range)
-                push!(v, (FloatSummary(sr, er, (p-1) - (er-fr)), e_summary))
+                push!(v, (FloatSummary(sr, er, (p - 1) - (er - fr)), e_summary))
             end
         end
     end
@@ -450,8 +450,8 @@ function (helper::LemmaHelper)(
                     for ee in _lemma_range_e(helper, ee_range)
                         for fe in _lemma_range_f(helper, fe_range)
                             push!(v, (
-                                FloatSummary(sr, er, (p-1) - (er-fr)),
-                                FloatSummary(se, ee, (p-1) - (ee-fe))))
+                                FloatSummary(sr, er, (p - 1) - (er - fr)),
+                                FloatSummary(se, ee, (p - 1) - (ee - fe))))
                         end
                     end
                 end

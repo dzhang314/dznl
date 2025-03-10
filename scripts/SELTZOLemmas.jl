@@ -37,7 +37,7 @@ end
     return (signbit(x), mantissa_leading_bit(x), mantissa_trailing_bit(x),
         unsafe_exponent(x),
         unsafe_exponent(x) - (mantissa_leading_bits(x) + 1),
-        unsafe_exponent(x) - ((p-1) - mantissa_trailing_bits(x)))
+        unsafe_exponent(x) - ((p - 1) - mantissa_trailing_bits(x)))
 end
 
 
@@ -109,15 +109,15 @@ function verify_two_sum_seltzo_lemmas(
             # returned unchanged by the TwoSum algorithm.
 
             verifier("SELTZO-I-X",
-                (ex > ey + (p+1)) |
-                ((ex == ey + (p+1)) & (y_pow2 | same_sign | !x_pow2)) |
+                (ex > ey + (p + 1)) |
+                ((ex == ey + (p + 1)) & (y_pow2 | same_sign | !x_pow2)) |
                 ((ex == ey + p) & y_pow2 & (same_sign | !x_pow2) & !tbx)
             ) do lemma
                 add_case!(lemma, x, y)
             end
             verifier("SELTZO-I-Y",
-                (ey > ex + (p+1)) |
-                ((ey == ex + (p+1)) & (x_pow2 | same_sign | !y_pow2)) |
+                (ey > ex + (p + 1)) |
+                ((ey == ex + (p + 1)) & (x_pow2 | same_sign | !y_pow2)) |
                 ((ey == ex + p) & x_pow2 & (same_sign | !y_pow2) & !tby)
             ) do lemma
                 add_case!(lemma, y, x)
@@ -145,12 +145,12 @@ function verify_two_sum_seltzo_lemmas(
         sx, lbx, tbx, ex, lx, tx = unpack(T, x)
         sy, lby, tby, ey, ly, ty = unpack(T, y)
         println("    (sx = $sx, lbx = $lbx, tbx = $tbx, ex = $ex, lx = $lx, tx = $tx)",
-                " (sy = $sy, lby = $lby, tby = $tby, ey = $ey, ly = $ly, ty = $ty)")
+            " (sy = $sy, lby = $lby, tby = $tby, ey = $ey, ly = $ly, ty = $ty)")
         for (r, e) in possible_results
             sr, lbr, tbr, er, lr, tr = unpack(T, r)
             se, lbe, tbe, ee, le, te = unpack(T, e)
             println("        (sr = $sr, lbr = $lbr, tbr = $tbr, er = $er, lr = $lr, tr = $tr)",
-                    " (se = $se, lbe = $lbe, tbe = $tbe, ee = $ee, le = $le, te = $te)")
+                " (se = $se, lbe = $lbe, tbe = $tbe, ee = $ee, le = $le, te = $te)")
         end
     end
 
