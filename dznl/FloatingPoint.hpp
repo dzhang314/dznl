@@ -288,10 +288,8 @@ ieee_binary_float_to_string(const FLOAT_T &x, bool include_plus_sign = false) {
         return (
             (data.sign ? "-" : (include_plus_sign ? "+" : "")) +
             binary_float_to_string(
-                data.exponent(),
-                data.mantissa(),
-                data.lies_on_exponent_boundary(),
-                false
+                data.exponent(), data.mantissa(),
+                data.lies_on_exponent_boundary(), false
             )
         );
     }

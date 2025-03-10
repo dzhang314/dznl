@@ -8,12 +8,8 @@ template <int N>
 bool test_sqrt_2_f32() {
 
     constexpr dznl::f32 SQRT_2_LIMBS[6] = {
-        +0x1.6A09E6p+000F,
-        +0x1.9FCEF4p-026F,
-        -0x1.B7BA68p-051F,
-        -0x1.3B2646p-078F,
-        +0x1.4ABEA0p-103F,
-        -0x1.C52140p-128F,
+        +0x1.6A09E6p+000F, +0x1.9FCEF4p-026F, -0x1.B7BA68p-051F,
+        -0x1.3B2646p-078F, +0x1.4ABEA0p-103F, -0x1.C52140p-128F,
     };
 
     using f32xN = dznl::MultiFloat<dznl::f32, N>;
@@ -76,12 +72,8 @@ template <int N>
 bool test_fourth_root_2_f32() {
 
     constexpr dznl::f32 FOURTH_ROOT_2_LIMBS[7] = {
-        +0x1.306FE0p+000F,
-        +0x1.4636E2p-025F,
-        +0x1.4B7A36p-050F,
-        -0x1.2DCE7Ep-075F,
-        +0x1.C85EDEp-100F,
-        +0x1.9784E6p-125F,
+        +0x1.306FE0p+000F, +0x1.4636E2p-025F, +0x1.4B7A36p-050F,
+        -0x1.2DCE7Ep-075F, +0x1.C85EDEp-100F, +0x1.9784E6p-125F,
         +0x1.000000p-149F,
     };
 
@@ -147,12 +139,8 @@ template <int N>
 bool test_inv_fourth_root_2_f32() {
 
     constexpr dznl::f32 INV_FOURTH_ROOT_2_LIMBS[6] = {
-        +0x1.AE89FAp-001F,
-        -0x1.A94B14p-027F,
-        -0x1.50BC66p-052F,
-        +0x1.A2EE64p-078F,
-        +0x1.69FEF0p-107F,
-        +0x1.D73380p-132F,
+        +0x1.AE89FAp-001F, -0x1.A94B14p-027F, -0x1.50BC66p-052F,
+        +0x1.A2EE64p-078F, +0x1.69FEF0p-107F, +0x1.D73380p-132F,
     };
 
     using f32xN = dznl::MultiFloat<dznl::f32, N>;
@@ -219,12 +207,8 @@ template <int N>
 bool test_pi_f32() {
 
     constexpr dznl::f32 PI_LIMBS[6] = {
-        +0x1.921FB6p+001F,
-        -0x1.777A5Cp-024F,
-        -0x1.EE59DAp-049F,
-        +0x1.98A2E0p-076F,
-        +0x1.B839A2p-103F,
-        +0x1.481270p-129F,
+        +0x1.921FB6p+001F, -0x1.777A5Cp-024F, -0x1.EE59DAp-049F,
+        +0x1.98A2E0p-076F, +0x1.B839A2p-103F, +0x1.481270p-129F,
     };
 
     using f32xN = dznl::MultiFloat<dznl::f32, N>;
@@ -283,12 +267,8 @@ template <int N>
 bool test_e_f32() {
 
     constexpr dznl::f32 E_LIMBS[6] = {
-        +0x1.5BF0A8p+001F,
-        +0x1.628AEEp-024F,
-        -0x1.AB2A82p-049F,
-        +0x1.C56202p-074F,
-        +0x1.CF4F3Cp-100F,
-        +0x1.D8B9C6p-126F,
+        +0x1.5BF0A8p+001F, +0x1.628AEEp-024F, -0x1.AB2A82p-049F,
+        +0x1.C56202p-074F, +0x1.CF4F3Cp-100F, +0x1.D8B9C6p-126F,
     };
 
     using f32xN = dznl::MultiFloat<dznl::f32, N>;

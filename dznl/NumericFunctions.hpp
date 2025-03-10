@@ -183,8 +183,8 @@ struct NumTraits<unsigned char> {
     static constexpr unsigned char twice_impl(const unsigned char &x) noexcept {
         return static_cast<unsigned char>(x + x);
     }
-    static constexpr unsigned char square_impl(const unsigned char &x
-    ) noexcept {
+    static constexpr unsigned char
+    square_impl(const unsigned char &x) noexcept {
         return static_cast<unsigned char>(x * x);
     }
 }; // struct NumTraits<unsigned char>
@@ -243,12 +243,12 @@ struct NumTraits<unsigned short> {
     static constexpr bool is_finite_impl(const unsigned short &) noexcept {
         return true;
     }
-    static constexpr unsigned short twice_impl(const unsigned short &x
-    ) noexcept {
+    static constexpr unsigned short
+    twice_impl(const unsigned short &x) noexcept {
         return static_cast<unsigned short>(x + x);
     }
-    static constexpr unsigned short square_impl(const unsigned short &x
-    ) noexcept {
+    static constexpr unsigned short
+    square_impl(const unsigned short &x) noexcept {
         return static_cast<unsigned short>(x * x);
     }
 }; // struct NumTraits<unsigned short>
@@ -360,8 +360,8 @@ struct NumTraits<unsigned long> {
     static constexpr unsigned long twice_impl(const unsigned long &x) noexcept {
         return x + x;
     }
-    static constexpr unsigned long square_impl(const unsigned long &x
-    ) noexcept {
+    static constexpr unsigned long
+    square_impl(const unsigned long &x) noexcept {
         return x * x;
     }
 }; // struct NumTraits<unsigned long>
@@ -428,12 +428,12 @@ struct NumTraits<unsigned long long> {
     static constexpr bool is_finite_impl(const unsigned long long &) noexcept {
         return true;
     }
-    static constexpr unsigned long long twice_impl(const unsigned long long &x
-    ) noexcept {
+    static constexpr unsigned long long
+    twice_impl(const unsigned long long &x) noexcept {
         return x + x;
     }
-    static constexpr unsigned long long square_impl(const unsigned long long &x
-    ) noexcept {
+    static constexpr unsigned long long
+    square_impl(const unsigned long long &x) noexcept {
         return x * x;
     }
 }; // struct NumTraits<unsigned long long>

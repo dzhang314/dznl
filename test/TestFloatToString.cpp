@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <string>
 
 #if (defined(__GNUC__) && (!defined(__clang__)) && (!defined(__NVCOMPILER)) && \
      (__GNUC__ >= 12)) ||                                                      \

@@ -337,8 +337,8 @@ struct NumTraits<MultiFloat<T, N>> {
     }
 
 
-    static constexpr MultiFloat<T, N> twice_impl(const MultiFloat<T, N> &x
-    ) noexcept {
+    static constexpr MultiFloat<T, N>
+    twice_impl(const MultiFloat<T, N> &x) noexcept {
         static_assert(compute_radix<T>().second == 2);
         MultiFloat<T, N> result;
         for (int i = 0; i < N; ++i) { result.limbs[i] = twice(x.limbs[i]); }
@@ -349,14 +349,14 @@ struct NumTraits<MultiFloat<T, N>> {
     // TODO: fma
 
 
-    static constexpr MultiFloat<T, N> inv_impl(const MultiFloat<T, N> &x
-    ) noexcept {
+    static constexpr MultiFloat<T, N>
+    inv_impl(const MultiFloat<T, N> &x) noexcept {
         return multifloat_inv<N>(x);
     }
 
 
-    static constexpr MultiFloat<T, N> halve_impl(const MultiFloat<T, N> &x
-    ) noexcept {
+    static constexpr MultiFloat<T, N>
+    halve_impl(const MultiFloat<T, N> &x) noexcept {
         static_assert(compute_radix<T>().second == 2);
         MultiFloat<T, N> result;
         for (int i = 0; i < N; ++i) { result.limbs[i] = halve(x.limbs[i]); }
@@ -364,14 +364,14 @@ struct NumTraits<MultiFloat<T, N>> {
     }
 
 
-    static constexpr MultiFloat<T, N> sqrt_impl(const MultiFloat<T, N> &x
-    ) noexcept {
+    static constexpr MultiFloat<T, N>
+    sqrt_impl(const MultiFloat<T, N> &x) noexcept {
         return multifloat_sqrt<N>(x);
     }
 
 
-    static constexpr MultiFloat<T, N> rsqrt_impl(const MultiFloat<T, N> &x
-    ) noexcept {
+    static constexpr MultiFloat<T, N>
+    rsqrt_impl(const MultiFloat<T, N> &x) noexcept {
         return multifloat_rsqrt<N>(x);
     }
 
@@ -405,9 +405,11 @@ namespace internal {
 
 
 template <int N, typename T, int L, int R>
-[[deprecated("WARNING: You are using a large or unusual MultiFloat size that"
-             " no optimized addition algorithm has been developed for."
-             " A slow fallback algorithm will be used instead.")]]
+[[deprecated(
+    "WARNING: You are using a large or unusual MultiFloat size that"
+    " no optimized addition algorithm has been developed for."
+    " A slow fallback algorithm will be used instead."
+)]]
 constexpr MultiFloat<T, N> multifloat_add_fallback(
     const MultiFloat<T, L> &lhs, const MultiFloat<T, R> &rhs
 ) noexcept {
@@ -435,9 +437,11 @@ constexpr int multifloat_mul_fallback_limb_count(int N, int L, int R) noexcept {
 
 
 template <int N, typename T, int L, int R>
-[[deprecated("WARNING: You are using a large or unusual MultiFloat size that"
-             " no optimized multiplication algorithm has been developed for."
-             " A slow fallback algorithm will be used instead.")]]
+[[deprecated(
+    "WARNING: You are using a large or unusual MultiFloat size that"
+    " no optimized multiplication algorithm has been developed for."
+    " A slow fallback algorithm will be used instead."
+)]]
 constexpr MultiFloat<T, N> multifloat_mul_fallback(
     const MultiFloat<T, L> &lhs, const MultiFloat<T, R> &rhs
 ) noexcept {
@@ -660,8 +664,8 @@ constexpr MultiFloat<T, N> multifloat_div(
 
 
 template <int N, typename T, int X>
-constexpr MultiFloat<T, N> multifloat_rsqrt(const MultiFloat<T, X> &x
-) noexcept {
+constexpr MultiFloat<T, N>
+multifloat_rsqrt(const MultiFloat<T, X> &x) noexcept {
     return internal::multifloat_rsqrt_impl<N>(
         x, MultiFloat<T, 1>(one<T>() / sqrt(x.limbs[0]))
     );
@@ -782,8 +786,7 @@ template <typename SIGNED_T, typename UNSIGNED_T, typename FLOAT_T, int N>
             return (
                 (head.sign ? "-" : (include_plus_sign ? "+" : "")) +
                 binary_float_to_string(
-                    tail_exponent,
-                    total_mantissa,
+                    tail_exponent, total_mantissa,
                     tail_boundary && (head.sign == tail.sign),
                     tail_boundary && (head.sign != tail.sign)
                 )
