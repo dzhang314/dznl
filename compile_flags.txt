@@ -1,4 +1,5 @@
 -Weverything
 -Wno-c++98-compat-pedantic
 -Wno-float-equal
+-Wno-padded
 -I.

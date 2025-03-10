@@ -11,7 +11,17 @@ using size_t = decltype(sizeof(0));
 
 constexpr void *memcpy(void *dst, const void *src, size_t n) noexcept {
 #if DZNL_HAS_BUILTIN(__builtin_memcpy)
+
+#if defined(__clang__) && (__clang_major__ >= 20)
+#pragma clang unsafe_buffer_usage begin
+#endif // defined(__clang__) && (__clang_major__ >= 20)
+
     return __builtin_memcpy(dst, src, n);
+
+#if defined(__clang__) && (__clang_major__ >= 20)
+#pragma clang unsafe_buffer_usage end
+#endif // defined(__clang__) && (__clang_major__ >= 20)
+
 #else
     char *dst_char = static_cast<char *>(dst);
     const char *src_char = static_cast<const char *>(src);
