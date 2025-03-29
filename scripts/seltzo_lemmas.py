@@ -73,25 +73,25 @@ def two_sum_seltzo_lemmas(
     #   |   |       |       |       |
     #   ex  gx      cx      dx      fx
 
-    cx: IntVar = z3_If(lbx, ex - nlbx, ex) - one
-    cy: IntVar = z3_If(lby, ey - nlby, ey) - one
-    cs: IntVar = z3_If(lbs, es - nlbs, es) - one
-    # ce: IntVar = z3_If(lbe, ee - nlbe, ee) - one
+    cx: IntVar = ex - z3_If(lbx, nlbx + one, one)
+    cy: IntVar = ey - z3_If(lby, nlby + one, one)
+    cs: IntVar = es - z3_If(lbs, nlbs + one, one)
+    # ce: IntVar = ee - z3_If(lbe, nlbe + one, one)
 
-    # dx: IntVar = z3_If(tbx, ex + ntbx, ex) - (p - one)
-    # dy: IntVar = z3_If(tby, ey + ntby, ey) - (p - one)
-    # ds: IntVar = z3_If(tbs, es + ntbs, es) - (p - one)
-    # de: IntVar = z3_If(tbe, ee + ntbe, ee) - (p - one)
+    # dx: IntVar = ex - z3_If(tbx, (p - one) - ntbx, (p - one))
+    # dy: IntVar = ey - z3_If(tby, (p - one) - ntby, (p - one))
+    # ds: IntVar = es - z3_If(tbs, (p - one) - ntbs, (p - one))
+    # de: IntVar = ee - z3_If(tbe, (p - one) - ntbe, (p - one))
 
-    fx: IntVar = z3_If(tbx, ex, ex + ntbx) - (p - one)
-    fy: IntVar = z3_If(tby, ey, ey + ntby) - (p - one)
-    fs: IntVar = z3_If(tbs, es, es + ntbs) - (p - one)
-    fe: IntVar = z3_If(tbe, ee, ee + ntbe) - (p - one)
+    fx: IntVar = ex - z3_If(tbx, (p - one), (p - one) - ntbx)
+    fy: IntVar = ey - z3_If(tby, (p - one), (p - one) - ntby)
+    fs: IntVar = es - z3_If(tbs, (p - one), (p - one) - ntbs)
+    fe: IntVar = ee - z3_If(tbe, (p - one), (p - one) - ntbe)
 
-    gx: IntVar = z3_If(lbx, ex, ex - nlbx) - one
-    gy: IntVar = z3_If(lby, ey, ey - nlby) - one
-    gs: IntVar = z3_If(lbs, es, es - nlbs) - one
-    # ge: IntVar = z3_If(lbe, ee, ee - nlbe) - one
+    gx: IntVar = ex - z3_If(lbx, one, nlbx + one)
+    gy: IntVar = ey - z3_If(lby, one, nlby + one)
+    gs: IntVar = es - z3_If(lbs, one, nlbs + one)
+    # ge: IntVar = ee - z3_If(lbe, one, nlbe + one)
 
     same_sign: z3.BoolRef = sx == sy
     diff_sign: z3.BoolRef = sx != sy
@@ -167,10 +167,15 @@ def two_sum_seltzo_lemmas(
     result["TwoSum-SELTZO-4-X"] = z3.Implies(same_sign, z3.Or(es > ex, cs <= cx))
     result["TwoSum-SELTZO-4-Y"] = z3.Implies(same_sign, z3.Or(es > ey, cs <= cy))
 
-    # Lemma SELTZO-5: If the difference has a smaller exponent,
+    # Lemma SELTZO-5A: If the difference has a smaller exponent,
     # then it must have a lot of leading ones.
-    result["TwoSum-SELTZO-5-X"] = z3.Implies(es < ex, cs <= ey)
-    result["TwoSum-SELTZO-5-Y"] = z3.Implies(es < ey, cs <= ex)
+    result["TwoSum-SELTZO-5A-X"] = z3.Implies(es < ex, cs <= ey)
+    result["TwoSum-SELTZO-5A-Y"] = z3.Implies(es < ey, cs <= ex)
+
+    # Lemma SELTZO-5B: If the sum has a larger exponent,
+    # then it must have a lot of leading zeros.
+    result["TwoSum-SELTZO-5B-X"] = z3.Implies(es > ex, gs <= ey + one)
+    result["TwoSum-SELTZO-5B-Y"] = z3.Implies(es > ey, gs <= ex + one)
 
     result["TwoSum-SELTZO-6-X"] = z3.Implies(z3.And(es < ex, ex > ey + one), gs >= cy)
     result["TwoSum-SELTZO-6-Y"] = z3.Implies(z3.And(es < ey, ey > ex + one), gs >= cx)
@@ -195,6 +200,22 @@ def two_sum_seltzo_lemmas(
             z3.And(s_nonzero, e_pos_zero, fs == fy),
             z3.And(s_nonzero, e_nonzero, fe == fy),
         ),
+    )
+
+    result["TwoSum-SELTZO-9"] = z3.Or(
+        e_pos_zero,
+        es > ee + (p + one),
+        z3.And(es == ee + (p + one), z3.Or(ee == fe, ss == se, es > fs)),
+        z3.And(es == ee + p, ee == fe, z3.Or(ss == se, es > fs), es < fs + (p + one)),
+    )
+
+    result["TwoSum-SELTZO-10-X"] = z3.Implies(
+        z3.And(diff_sign, ex == cx + two, cx > ey),
+        z3.And(ss == sx, es == ex, gs >= cx),
+    )
+    result["TwoSum-SELTZO-10-Y"] = z3.Implies(
+        z3.And(diff_sign, ey == cy + two, cy > ex),
+        z3.And(ss == sy, es == ey, gs >= cy),
     )
 
     return result
