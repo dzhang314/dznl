@@ -9,6 +9,11 @@ from sys import argv
 from time import perf_counter_ns
 
 
+GLOBAL_PRECISION: z3.ArithRef = z3.Int("PRECISION")
+GLOBAL_ZERO_EXPONENT: z3.ArithRef = z3.Int("ZERO_EXPONENT")
+GLOBAL_MANTISSA_WIDTH: z3.ArithRef = GLOBAL_PRECISION - 1
+
+
 def decide(
     solver: z3.Solver,
     claim: z3.BoolRef,
@@ -40,13 +45,8 @@ class FPVariable(object):
         self,
         solver: z3.Solver,
         name: str,
-        *,
-        precision: int,
-        zero_exponent: int,
     ) -> None:
         self.name: str = name
-        self.precision: int = precision
-        self.zero_exponent: int = zero_exponent
         self.sign_bit: z3.BoolRef = z3.Bool(name + "_sign_bit")
         self.leading_bit: z3.BoolRef = z3.Bool(name + "_leading_bit")
         self.trailing_bit: z3.BoolRef = z3.Bool(name + "_trailing_bit")
@@ -65,20 +65,19 @@ class FPVariable(object):
         # When analyzing floating-point accumulation networks,
         # only relative exponent values matter, not absolute values.
         # We can set the zero point anywhere without loss of generality.
-        solver.add(self.exponent >= self.zero_exponent)
-        self.is_zero: z3.BoolRef = self.exponent == self.zero_exponent
+        solver.add(self.exponent >= GLOBAL_ZERO_EXPONENT)
+        self.is_zero: z3.BoolRef = self.exponent == GLOBAL_ZERO_EXPONENT
 
         solver.add(self.num_leading_bits > 0)
         solver.add(self.num_trailing_bits > 0)
-        mantissa_width: int = self.precision - 1
         solver.add(
             z3.Implies(
                 self.is_zero,
                 z3.And(
                     z3.Not(self.leading_bit),
                     z3.Not(self.trailing_bit),
-                    self.num_leading_bits == mantissa_width,
-                    self.num_trailing_bits == mantissa_width,
+                    self.num_leading_bits == GLOBAL_MANTISSA_WIDTH,
+                    self.num_trailing_bits == GLOBAL_MANTISSA_WIDTH,
                 ),
             )
         )
@@ -86,10 +85,11 @@ class FPVariable(object):
             z3.Implies(
                 self.leading_bit == self.trailing_bit,
                 z3.Or(
-                    self.num_leading_bits + self.num_trailing_bits < mantissa_width,
+                    self.num_leading_bits + self.num_trailing_bits
+                    < GLOBAL_MANTISSA_WIDTH,
                     z3.And(
-                        self.num_leading_bits == mantissa_width,
-                        self.num_trailing_bits == mantissa_width,
+                        self.num_leading_bits == GLOBAL_MANTISSA_WIDTH,
+                        self.num_trailing_bits == GLOBAL_MANTISSA_WIDTH,
                     ),
                 ),
             )
@@ -98,15 +98,15 @@ class FPVariable(object):
             z3.Implies(
                 self.leading_bit != self.trailing_bit,
                 z3.Or(
-                    self.num_leading_bits + self.num_trailing_bits < mantissa_width - 1,
-                    self.num_leading_bits + self.num_trailing_bits == mantissa_width,
+                    self.num_leading_bits + self.num_trailing_bits
+                    < GLOBAL_MANTISSA_WIDTH - 1,
+                    self.num_leading_bits + self.num_trailing_bits
+                    == GLOBAL_MANTISSA_WIDTH,
                 ),
             )
         )
 
     def maybe_equal(self, other: "FPVariable") -> z3.BoolRef:
-        assert self.precision == other.precision
-        assert self.zero_exponent == other.zero_exponent
         return z3.Or(
             z3.And(self.is_zero, other.is_zero),
             z3.And(
@@ -124,61 +124,51 @@ class FPVariable(object):
             z3.Not(self.is_zero),
             z3.Not(self.leading_bit),
             z3.Not(self.trailing_bit),
-            self.num_leading_bits == self.precision - 1,
-            self.num_trailing_bits == self.precision - 1,
+            self.num_leading_bits == GLOBAL_MANTISSA_WIDTH,
+            self.num_trailing_bits == GLOBAL_MANTISSA_WIDTH,
         )
 
     def s_dominates(self, other: "FPVariable") -> z3.BoolRef:
-        assert self.precision == other.precision
-        assert self.zero_exponent == other.zero_exponent
         ntz: z3.ArithRef = z3.If(
             self.trailing_bit, z3.IntVal(0), self.num_trailing_bits
         )
         return z3.Or(
             other.is_zero,
-            self.exponent >= other.exponent + (self.precision - ntz),
+            self.exponent >= other.exponent + (GLOBAL_PRECISION - ntz),
         )
 
     def p_dominates(self, other: "FPVariable") -> z3.BoolRef:
-        assert self.precision == other.precision
-        assert self.zero_exponent == other.zero_exponent
         return z3.Or(
             other.is_zero,
-            self.exponent >= other.exponent + self.precision,
+            self.exponent >= other.exponent + GLOBAL_PRECISION,
         )
 
     def ulp_dominates(self, other: "FPVariable") -> z3.BoolRef:
-        assert self.precision == other.precision
-        assert self.zero_exponent == other.zero_exponent
         return z3.Or(
             other.is_zero,
-            self.exponent > other.exponent + (self.precision - 1),
+            self.exponent > other.exponent + (GLOBAL_PRECISION - 1),
             z3.And(
-                self.exponent == other.exponent + (self.precision - 1),
+                self.exponent == other.exponent + (GLOBAL_PRECISION - 1),
                 other.is_power_of_two(),
             ),
         )
 
     def qd_dominates(self, other: "FPVariable") -> z3.BoolRef:
-        assert self.precision == other.precision
-        assert self.zero_exponent == other.zero_exponent
         return z3.Or(
             other.is_zero,
-            self.exponent > other.exponent + self.precision,
+            self.exponent > other.exponent + GLOBAL_PRECISION,
             z3.And(
-                self.exponent == other.exponent + self.precision,
+                self.exponent == other.exponent + GLOBAL_PRECISION,
                 other.is_power_of_two(),
             ),
         )
 
     def two_sum_dominates(self, other: "FPVariable") -> z3.BoolRef:
-        assert self.precision == other.precision
-        assert self.zero_exponent == other.zero_exponent
         return z3.Or(
             other.is_zero,
-            self.exponent > other.exponent + (self.precision + 1),
+            self.exponent > other.exponent + (GLOBAL_PRECISION + 1),
             z3.And(
-                self.exponent == other.exponent + (self.precision + 1),
+                self.exponent == other.exponent + (GLOBAL_PRECISION + 1),
                 z3.Or(
                     self.sign_bit == other.sign_bit,
                     z3.Not(self.is_power_of_two()),
@@ -186,16 +176,16 @@ class FPVariable(object):
                 ),
             ),
             z3.And(
-                self.exponent == other.exponent + self.precision,
+                self.exponent == other.exponent + GLOBAL_PRECISION,
                 other.is_power_of_two(),
                 z3.Not(self.trailing_bit),
                 z3.Or(self.sign_bit == other.sign_bit, z3.Not(self.is_power_of_two())),
             ),
         )
 
-    def is_smaller_than(self, other: "FPVariable", magnitude: int) -> z3.BoolRef:
-        assert self.precision == other.precision
-        assert self.zero_exponent == other.zero_exponent
+    def is_smaller_than(
+        self, other: "FPVariable", magnitude: int | z3.ArithRef
+    ) -> z3.BoolRef:
         return z3.Or(self.is_zero, self.exponent + magnitude < other.exponent)
 
 
@@ -210,12 +200,8 @@ def two_sum(
     Create two new FPVariables that represent the floating-point sum and error
     computed by the TwoSum algorithm applied to two existing FPVariables.
     """
-    p: int = x.precision
-    assert p == y.precision
-    zx: int = x.zero_exponent
-    assert zx == y.zero_exponent
-    s = FPVariable(solver, sum_name, precision=p, zero_exponent=zx)
-    e = FPVariable(solver, err_name, precision=p, zero_exponent=zx)
+    s = FPVariable(solver, sum_name)
+    e = FPVariable(solver, err_name)
 
     if "--se" in argv:
         lemmas: dict[str, z3.BoolRef] = two_sum_se_lemmas(
@@ -235,7 +221,7 @@ def two_sum(
             lambda v: z3.Not(v.sign_bit),
             lambda v: v.sign_bit,
             lambda v, w: v.maybe_equal(w),
-            z3.IntVal(p),
+            GLOBAL_PRECISION,
             z3.IntVal(1),
             z3.IntVal(2),
         )
@@ -261,7 +247,7 @@ def two_sum(
             lambda v: z3.Not(v.sign_bit),
             lambda v: v.sign_bit,
             lambda v, w: v.maybe_equal(w),
-            z3.IntVal(p),
+            GLOBAL_PRECISION,
             z3.IntVal(1),
             z3.IntVal(2),
             z3.IntVal(3),
@@ -300,7 +286,7 @@ def two_sum(
                 lambda v: z3.Not(v.sign_bit),
                 lambda v: v.sign_bit,
                 lambda v, w: v.maybe_equal(w),
-                z3.IntVal(p),
+                GLOBAL_PRECISION,
                 z3.IntVal(1),
                 z3.IntVal(2),
                 z3.IntVal(3),
@@ -349,11 +335,13 @@ def float_str(
 ) -> str:
     sign_str: str = "-" if bool_value(model[var.sign_bit]) else "+"
     exponent: int = model[var.exponent].as_long()
-    if exponent == var.zero_exponent:
+    zero_exponent: int = model[GLOBAL_ZERO_EXPONENT].as_long()
+    if exponent == zero_exponent:
         return f"{sign_str}0"
 
     exponent += exponent_delta
-    mantissa: list[str] = ["?" for _ in range(var.precision - 1)]
+    precision: int = model[GLOBAL_PRECISION].as_long()
+    mantissa: list[str] = ["?" for _ in range(precision - 1)]
 
     leading_bit: bool = bool_value(model[var.leading_bit])
     leading_char: str = "1" if leading_bit else "0"
@@ -362,7 +350,7 @@ def float_str(
     for i in range(num_leading_bits):
         assert mantissa[i] in {"?", leading_char}
         mantissa[i] = leading_char
-    if num_leading_bits < var.precision - 1:
+    if num_leading_bits < precision - 1:
         assert mantissa[num_leading_bits] in {"?", terminator}
         mantissa[num_leading_bits] = terminator
 
@@ -373,7 +361,7 @@ def float_str(
     for i in range(1, num_trailing_bits + 1):
         assert mantissa[-i] == "?" or mantissa[-i] == trailing_char
         mantissa[-i] = trailing_char
-    if num_trailing_bits < var.precision - 1:
+    if num_trailing_bits < precision - 1:
         assert mantissa[-num_trailing_bits - 1] in {"?", terminator}
         mantissa[-num_trailing_bits - 1] = terminator
 
@@ -384,11 +372,12 @@ def float_str(
 
 def print_model(model: z3.ModelRef, variables: list[list[FPVariable]]) -> None:
     # TODO: Handle the case where every variable is zero.
+    zero_exponent: int = model[GLOBAL_ZERO_EXPONENT].as_long()
     min_exponent: int = min(
         model[var.exponent].as_long()
         for row in variables
         for var in row
-        if model[var.exponent].as_long() != var.zero_exponent
+        if model[var.exponent].as_long() != zero_exponent
     )
     head_length: int = 3 + max(
         len(str(model[var.exponent].as_long() - min_exponent))
@@ -416,12 +405,12 @@ def prove(
         print_model(counterexample, variables)
 
 
-def verify_joldes_2017_algorithm_4(p: int, suffix: str = "") -> None:
+def verify_joldes_2017_algorithm_4() -> None:
     solver: z3.Solver = z3.SolverFor("QF_LIA")
 
-    a0 = FPVariable(solver, "a0", precision=p, zero_exponent=-1)
-    b0 = FPVariable(solver, "b0", precision=p, zero_exponent=-1)
-    c0 = FPVariable(solver, "c0", precision=p, zero_exponent=-1)
+    a0 = FPVariable(solver, "a0")
+    b0 = FPVariable(solver, "b0")
+    c0 = FPVariable(solver, "c0")
 
     solver.add(a0.two_sum_dominates(c0))
 
@@ -437,17 +426,22 @@ def verify_joldes_2017_algorithm_4(p: int, suffix: str = "") -> None:
 
     # SE: 2p - 4
     # SETZ: 2p - 3
-    prove(solver, a3.two_sum_dominates(b3), "A4N" + suffix, variables)
-    prove(solver, c2.is_smaller_than(a3, 2 * p - 2), "A4E" + suffix, variables)
+    prove(solver, a3.two_sum_dominates(b3), "A4N", variables)
+    prove(
+        solver,
+        c2.is_smaller_than(a3, GLOBAL_PRECISION + GLOBAL_PRECISION - 2),
+        "A4E",
+        variables,
+    )
 
 
-def verify_joldes_2017_algorithm_6(p: int, suffix: str = "") -> None:
+def verify_joldes_2017_algorithm_6() -> None:
     solver: z3.Solver = z3.SolverFor("QF_LIA")
 
-    a0 = FPVariable(solver, "a0", precision=p, zero_exponent=-1)
-    b0 = FPVariable(solver, "b0", precision=p, zero_exponent=-1)
-    c0 = FPVariable(solver, "c0", precision=p, zero_exponent=-1)
-    d0 = FPVariable(solver, "d0", precision=p, zero_exponent=-1)
+    a0 = FPVariable(solver, "a0")
+    b0 = FPVariable(solver, "b0")
+    c0 = FPVariable(solver, "c0")
+    d0 = FPVariable(solver, "d0")
 
     solver.add(a0.two_sum_dominates(c0))
     solver.add(b0.two_sum_dominates(d0))
@@ -472,17 +466,22 @@ def verify_joldes_2017_algorithm_6(p: int, suffix: str = "") -> None:
 
     # SE: 2p - 7
     # SETZ: 2p - 4
-    prove(solver, a5.two_sum_dominates(b5), "A6N" + suffix, variables)
-    prove(solver, c5.is_smaller_than(a5, 2 * p - 4), "A6E" + suffix, variables)
+    prove(solver, a5.two_sum_dominates(b5), "A6N", variables)
+    prove(
+        solver,
+        c5.is_smaller_than(a5, GLOBAL_PRECISION + GLOBAL_PRECISION - 3),
+        "A6E",
+        variables,
+    )
 
 
-def verify_zhang_addition(p: int, suffix: str = "") -> None:
+def verify_zhang_addition() -> None:
     solver: z3.Solver = z3.SolverFor("QF_LIA")
 
-    a0 = FPVariable(solver, "a0", precision=p, zero_exponent=-1)
-    b0 = FPVariable(solver, "b0", precision=p, zero_exponent=-1)
-    c0 = FPVariable(solver, "c0", precision=p, zero_exponent=-1)
-    d0 = FPVariable(solver, "d0", precision=p, zero_exponent=-1)
+    a0 = FPVariable(solver, "a0")
+    b0 = FPVariable(solver, "b0")
+    c0 = FPVariable(solver, "c0")
+    d0 = FPVariable(solver, "d0")
 
     solver.add(a0.two_sum_dominates(c0))
     solver.add(b0.two_sum_dominates(d0))
@@ -507,29 +506,16 @@ def verify_zhang_addition(p: int, suffix: str = "") -> None:
 
     # SE: 2p - 6
     # SETZ: 2p - 3
-    prove(solver, a4.two_sum_dominates(b4), "ZAN" + suffix, variables)
-    prove(solver, c4.is_smaller_than(a4, 2 * p - 2), "ZAE" + suffix, variables)
+    prove(solver, a4.two_sum_dominates(b4), "ZAN", variables)
+    prove(
+        solver,
+        c4.is_smaller_than(a4, GLOBAL_PRECISION + GLOBAL_PRECISION - 2),
+        "ZAE",
+        variables,
+    )
 
 
 if __name__ == "__main__":
-    verify_joldes_2017_algorithm_4(8, "-BF16")
-    verify_joldes_2017_algorithm_6(8, "-BF16")
-    verify_zhang_addition(8, "-BF16")
-    verify_joldes_2017_algorithm_4(11, "-F16")
-    verify_joldes_2017_algorithm_6(11, "-F16")
-    verify_zhang_addition(11, "-F16")
-    verify_joldes_2017_algorithm_4(24, "-F32")
-    verify_joldes_2017_algorithm_6(24, "-F32")
-    verify_zhang_addition(24, "-F32")
-    verify_joldes_2017_algorithm_4(53, "-F64")
-    verify_joldes_2017_algorithm_6(53, "-F64")
-    verify_zhang_addition(53, "-F64")
-    verify_joldes_2017_algorithm_4(64, "-F80")
-    verify_joldes_2017_algorithm_6(64, "-F80")
-    verify_zhang_addition(64, "-F80")
-    verify_joldes_2017_algorithm_4(113, "-F128")
-    verify_joldes_2017_algorithm_6(113, "-F128")
-    verify_zhang_addition(113, "-F128")
-    verify_joldes_2017_algorithm_4(237, "-F256")
-    verify_joldes_2017_algorithm_6(237, "-F256")
-    verify_zhang_addition(237, "-F256")
+    verify_joldes_2017_algorithm_4()
+    verify_joldes_2017_algorithm_6()
+    verify_zhang_addition()
