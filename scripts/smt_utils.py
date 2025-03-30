@@ -82,6 +82,14 @@ def detect_smt_solvers() -> list[str]:
         except FileNotFoundError:
             print("MathSAT not found.")
 
+    if "--no-yices" not in argv:
+        try:
+            v: str = subprocess.check_output(["yices-smt2", "--version"], text=True)
+            print("Found Yices:", v.splitlines()[0].strip())
+            result.append("yices-smt2")
+        except FileNotFoundError:
+            print("Yices not found.")
+
     if "--no-z3" not in argv:
         try:
             v: str = subprocess.check_output(["z3", "--version"], text=True)
@@ -98,9 +106,10 @@ SMT_SOLVERS: list[str] = detect_smt_solvers()
 
 
 class SMTJob(object):
-    def __init__(self, filename: str) -> None:
+    def __init__(self, filename: str, logic: str) -> None:
         assert os.path.isfile(filename)
         self.filename: str = filename
+        self.logic: str = logic
         self.processes: dict[str, tuple[int, subprocess.Popen[str]]] = {}
         self.result: tuple[float, z3.CheckSatResult] | None = None
 
@@ -109,6 +118,10 @@ class SMTJob(object):
         assert self.result is None
         shuffle(SMT_SOLVERS)
         for smt_solver in SMT_SOLVERS:
+            if smt_solver == "bitwuzla" and self.logic == "QF_LIA":
+                continue
+            if smt_solver == "yices-smt2" and self.logic == "QF_BVFP":
+                continue
             command: list[str] = [smt_solver]
             if smt_solver == "cvc5":
                 command.append("--fp-exp")
@@ -184,4 +197,4 @@ def create_smt_job(
     with open(filename, "w") as f:
         f.write(contents)
 
-    return SMTJob(filename)
+    return SMTJob(filename, logic)
