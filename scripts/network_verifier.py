@@ -5,8 +5,9 @@ import z3
 from se_lemmas import two_sum_se_lemmas
 from setz_lemmas import two_sum_setz_lemmas
 from seltzo_lemmas import two_sum_seltzo_lemmas
+from smt_utils import *
 from sys import argv
-from time import perf_counter_ns
+from time import perf_counter_ns, sleep
 
 
 GLOBAL_PRECISION: z3.ArithRef = z3.Int("PRECISION")
@@ -298,24 +299,175 @@ def two_sum(
     return (s, e)
 
 
-CHECK_FAST_TWO_SUM: bool = "--check-fast-two-sum" in argv
-
-
-def fast_two_sum(
+def setup_network(
     solver: z3.Solver,
-    x: FPVariable,
-    y: FPVariable,
-    sum_name: str,
-    err_name: str,
-) -> tuple[FPVariable, FPVariable]:
-    if CHECK_FAST_TWO_SUM:
-        decide(
+    comparators: list[tuple[int, int]],
+    names: list[str],
+) -> tuple[list[FPVariable], list[tuple[FPVariable, FPVariable]], list[FPVariable]]:
+    n: int = len(names)
+    generations: list[int] = [0 for _ in names]
+    variables: list[FPVariable] = [FPVariable(solver, name + "_0") for name in names]
+    initial_variables: list[FPVariable] = variables.copy()
+    gate_inputs: list[tuple[FPVariable, FPVariable]] = []
+    for i, j in comparators:
+        assert 0 <= i < j < n
+        g: int = max(generations[i], generations[j]) + 1
+        generations[i] = g
+        generations[j] = g
+        gate_inputs.append((variables[i], variables[j]))
+        variables[i], variables[j] = two_sum(
             solver,
-            z3.Or(x.is_zero, y.is_zero, x.exponent >= y.exponent),
-            f"FastTwoSum({x.name}, {y.name})",
+            variables[i],
+            variables[j],
+            names[i] + "_" + str(g),
+            names[j] + "_" + str(g),
         )
-    return two_sum(solver, x, y, sum_name, err_name)
+    return initial_variables, gate_inputs, variables
 
+
+if __name__ == "__main__":
+
+    nx = 4
+    ny = 2
+    nz = 4
+    comparators: list[tuple[int, int]] = [
+        (1, 2),
+        (3, 4),
+        (2, 3),
+        (4, 5),
+        (1, 2),
+        (3, 4),
+        (5, 6),
+        (3, 5),
+        (2, 3),
+        (4, 5),
+        (1, 2),
+        (3, 4),
+        (2, 3),
+        (4, 6),
+        (1, 2),
+        (3, 4),
+        (2, 3),
+        (3, 4),
+    ]
+
+    solver: z3.Solver = z3.SolverFor("QF_LIA")
+    x_names: list[str] = ["x" + str(i) for i in range(nx, 0, -1)]
+    y_names: list[str] = ["y" + str(i) for i in range(ny, 0, -1)]
+    names: list[str] = []
+    while x_names or y_names:
+        if x_names:
+            names.append(x_names.pop())
+        if y_names:
+            names.append(y_names.pop())
+
+    initial_variables: list[FPVariable]
+    gate_inputs: list[tuple[FPVariable, FPVariable]]
+    final_variables: list[FPVariable]
+    initial_variables, gate_inputs, final_variables = setup_network(
+        solver, [(i - 1, j - 1) for (i, j) in comparators], names
+    )
+
+    xs: list[FPVariable] = []
+    ys: list[FPVariable] = []
+    for i, name in enumerate(names):
+        if name.startswith("x"):
+            xs.append(initial_variables[i])
+        elif name.startswith("y"):
+            ys.append(initial_variables[i])
+        else:
+            assert False
+    for i in range(len(xs) - 1):
+        solver.add(xs[i].two_sum_dominates(xs[i + 1]))
+    for i in range(len(ys) - 1):
+        solver.add(ys[i].two_sum_dominates(ys[i + 1]))
+
+    ss: list[FPVariable] = final_variables[:nz]
+    es: list[FPVariable] = final_variables[nz:]
+
+    nz_precision: z3.ArithRef = GLOBAL_PRECISION
+    for _ in range(nz - 1):
+        nz_precision += GLOBAL_PRECISION
+    padded_precision: z3.ArithRef = nz_precision - 64 * (nx + ny)
+
+    properties: list[tuple[str, z3.BoolRef]] = []
+    for i in range(len(ss) - 1):
+        properties.append(
+            (
+                f"N{i + 1}",
+                ss[i].p_dominates(ss[i + 1]),
+            )
+        )
+    for i in range(len(es)):
+        properties.append(
+            (
+                f"E{i + 1}",
+                es[i].is_smaller_than(ss[0], padded_precision),
+            )
+        )
+    for i, (a, b) in enumerate(gate_inputs):
+        properties.append(
+            (
+                f"F{i + 1}",
+                z3.Or(a.is_zero, b.is_zero, a.exponent >= b.exponent),
+            )
+        )
+
+    remaining_jobs: list[SMTJob] = []
+    for name, property in properties:
+        job: SMTJob = create_smt_job(solver, "QF_LIA", name, property)
+        remaining_jobs.append(job)
+
+    JOB_COUNT = 12
+    running_jobs: list[SMTJob] = []
+    solver_len: int = max(map(len, SMT_SOLVERS))
+    filename_len: int = max(len(job.filename) for job in remaining_jobs)
+    while running_jobs or remaining_jobs:
+
+        # Start new jobs until all job slots are filled.
+        while remaining_jobs and (len(running_jobs) < JOB_COUNT):
+            next_job: SMTJob = remaining_jobs.pop(0)
+            next_job.start()
+            running_jobs.append(next_job)
+
+        # Check status of all running jobs.
+        finished_jobs: list[SMTJob] = []
+        for job in running_jobs:
+            if job.poll():
+                assert job.result is not None
+                finished_jobs.append(job)
+
+                # Print results of finished jobs.
+                assert len(job.processes) == 1
+                solver_name: str = job.processes.popitem()[0]
+
+                if job.result[1] == z3.unsat:
+                    print(
+                        solver_name.rjust(solver_len),
+                        "proved",
+                        job.filename.ljust(filename_len),
+                        f"in{job.result[0]:8.3f} seconds.",
+                    )
+                elif job.result[1] == z3.sat:
+                    print(
+                        solver_name.rjust(solver_len),
+                        "refuted",
+                        job.filename.ljust(filename_len),
+                        f"in{job.result[0]:8.3f} seconds.",
+                    )
+                else:
+                    assert False
+
+        # Vacate slots of finished jobs.
+        for job in finished_jobs:
+            running_jobs.remove(job)
+
+        # Sleep for a short time to avoid busy waiting. (Even the fastest SMT
+        # solvers take a few milliseconds, so 0.1ms is a reasonable interval.)
+        sleep(0.0001)
+
+
+"""
 
 def bool_value(var: z3.BoolRef) -> bool:
     if z3.is_true(var):
@@ -519,3 +671,5 @@ if __name__ == "__main__":
     verify_joldes_2017_algorithm_4()
     verify_joldes_2017_algorithm_6()
     verify_zhang_addition()
+
+"""
